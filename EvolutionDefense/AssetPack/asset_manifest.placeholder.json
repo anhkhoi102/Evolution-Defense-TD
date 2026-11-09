@@ -1,0 +1,1890 @@
+{
+ "version": 1,
+ "name": "Procedural placeholders",
+ "textureScale": 2,
+ "layout": {
+  "tower.pips.spacing": 9,
+  "tower.pips.offsetY": -31,
+  "tower.pips.curve": 0.12,
+  "tower.disabledMark.offsetY": 22,
+  "projectile.arc.maxHeight": 70,
+  "projectile.arc.distanceFactor": 0.35,
+  "projectile.arc.scalePerPoint": 0.0111,
+  "enemy.bossBreathing": 0.035,
+  "ui.iconHeadAngle": 0.785
+ },
+ "sprites": {
+  "base.futuristic": {
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "base",
+       "key": "futuristic"
+      }
+     ]
+    }
+   }
+  },
+  "base.industrial": {
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "base",
+       "key": "industrial"
+      }
+     ]
+    }
+   }
+  },
+  "base.medieval": {
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "base",
+       "key": "medieval"
+      }
+     ]
+    }
+   }
+  },
+  "base.primitive": {
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "base",
+       "key": "primitive"
+      }
+     ]
+    }
+   }
+  },
+  "enemy.alphaBeast": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "alphaBeast",
+       "radius": 32,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "alphaBeast",
+       "radius": 32,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "alphaBeast",
+       "radius": 32,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "alphaBeast",
+       "radius": 32,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 24.0
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 41,
+    "healthBarWidth": 70,
+    "shieldDiameter": 83.2
+   }
+  },
+  "enemy.ancientDragon": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "ancientDragon",
+       "radius": 36,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "ancientDragon",
+       "radius": 36,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "ancientDragon",
+       "radius": 36,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "ancientDragon",
+       "radius": 36,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 27.0
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 45,
+    "healthBarWidth": 70,
+    "shieldDiameter": 93.6
+   }
+  },
+  "enemy.armoredBeast": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "armoredBeast",
+       "radius": 19,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "armoredBeast",
+       "radius": 19,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "armoredBeast",
+       "radius": 19,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "armoredBeast",
+       "radius": 19,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 14.25
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 28,
+    "healthBarWidth": 36.1,
+    "shieldDiameter": 49.4
+   }
+  },
+  "enemy.armoredMonster": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "armoredMonster",
+       "radius": 22,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "armoredMonster",
+       "radius": 22,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "armoredMonster",
+       "radius": 22,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "armoredMonster",
+       "radius": 22,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 16.5
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 31,
+    "healthBarWidth": 41.8,
+    "shieldDiameter": 57.2
+   }
+  },
+  "enemy.assaultRobot": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "assaultRobot",
+       "radius": 20,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "assaultRobot",
+       "radius": 20,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "assaultRobot",
+       "radius": 20,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "assaultRobot",
+       "radius": 20,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 15.0
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 29,
+    "healthBarWidth": 38.0,
+    "shieldDiameter": 52.0
+   }
+  },
+  "enemy.bear": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "bear",
+       "radius": 21,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "bear",
+       "radius": 21,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "bear",
+       "radius": 21,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "bear",
+       "radius": 21,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 15.75
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 30,
+    "healthBarWidth": 39.9,
+    "shieldDiameter": 54.6
+   }
+  },
+  "enemy.boar": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "boar",
+       "radius": 16,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "boar",
+       "radius": 16,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "boar",
+       "radius": 16,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "boar",
+       "radius": 16,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 12.0
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 25,
+    "healthBarWidth": 30.4,
+    "shieldDiameter": 41.6
+   }
+  },
+  "enemy.flyingMonster": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "flyingMonster",
+       "radius": 17,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "flyingMonster",
+       "radius": 17,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "flyingMonster",
+       "radius": 17,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "flyingMonster",
+       "radius": 17,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 12.75
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 26,
+    "healthBarWidth": 32.3,
+    "shieldDiameter": 44.2
+   }
+  },
+  "enemy.giantMutant": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "giantMutant",
+       "radius": 27,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "giantMutant",
+       "radius": 27,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "giantMutant",
+       "radius": 27,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "giantMutant",
+       "radius": 27,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 20.25
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 36,
+    "healthBarWidth": 51.3,
+    "shieldDiameter": 70.2
+   }
+  },
+  "enemy.giantWolf": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "giantWolf",
+       "radius": 17,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "giantWolf",
+       "radius": 17,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "giantWolf",
+       "radius": 17,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "giantWolf",
+       "radius": 17,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 12.75
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 26,
+    "healthBarWidth": 32.3,
+    "shieldDiameter": 44.2
+   }
+  },
+  "enemy.heavyMech": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "heavyMech",
+       "radius": 28,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "heavyMech",
+       "radius": 28,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "heavyMech",
+       "radius": 28,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "heavyMech",
+       "radius": 28,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 21.0
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 37,
+    "healthBarWidth": 53.2,
+    "shieldDiameter": 72.8
+   }
+  },
+  "enemy.mutantBeast": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "mutantBeast",
+       "radius": 18,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "mutantBeast",
+       "radius": 18,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "mutantBeast",
+       "radius": 18,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "mutantBeast",
+       "radius": 18,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 13.5
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 27,
+    "healthBarWidth": 34.2,
+    "shieldDiameter": 46.8
+   }
+  },
+  "enemy.mutantTitan": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "mutantTitan",
+       "radius": 40,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "mutantTitan",
+       "radius": 40,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "mutantTitan",
+       "radius": 40,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "mutantTitan",
+       "radius": 40,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 30.0
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 49,
+    "healthBarWidth": 70,
+    "shieldDiameter": 104.0
+   }
+  },
+  "enemy.scoutRobot": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "scoutRobot",
+       "radius": 15,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "scoutRobot",
+       "radius": 15,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "scoutRobot",
+       "radius": 15,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "scoutRobot",
+       "radius": 15,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 11.25
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 24,
+    "healthBarWidth": 28.5,
+    "shieldDiameter": 39.0
+   }
+  },
+  "enemy.stealthRobot": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "stealthRobot",
+       "radius": 16,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "stealthRobot",
+       "radius": 16,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "stealthRobot",
+       "radius": 16,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "stealthRobot",
+       "radius": 16,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 12.0
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 25,
+    "healthBarWidth": 30.4,
+    "shieldDiameter": 41.6
+   }
+  },
+  "enemy.swarmCreature": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "swarmCreature",
+       "radius": 10,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "swarmCreature",
+       "radius": 10,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "swarmCreature",
+       "radius": 10,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "swarmCreature",
+       "radius": 10,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 7.5
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 19,
+    "healthBarWidth": 24,
+    "shieldDiameter": 26.0
+   }
+  },
+  "enemy.titanWarMachine": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "titanWarMachine",
+       "radius": 46,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "titanWarMachine",
+       "radius": 46,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "titanWarMachine",
+       "radius": 46,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "titanWarMachine",
+       "radius": 46,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 34.5
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 55,
+    "healthBarWidth": 70,
+    "shieldDiameter": 119.6
+   }
+  },
+  "enemy.troll": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "troll",
+       "radius": 24,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "troll",
+       "radius": 24,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "troll",
+       "radius": 24,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "troll",
+       "radius": 24,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 18.0
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 33,
+    "healthBarWidth": 45.6,
+    "shieldDiameter": 62.4
+   }
+  },
+  "enemy.wolf": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "wolf",
+       "radius": 14,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "wolf",
+       "radius": 14,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "wolf",
+       "radius": 14,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "wolf",
+       "radius": 14,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 10.5
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 23,
+    "healthBarWidth": 26.6,
+    "shieldDiameter": 36.4
+   }
+  },
+  "fx.disabled": {
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "fx",
+       "key": "disabled"
+      }
+     ]
+    }
+   }
+  },
+  "fx.explosion": {
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "fx",
+       "key": "explosion"
+      }
+     ]
+    }
+   }
+  },
+  "fx.missile": {
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "fx",
+       "key": "missile"
+      }
+     ]
+    }
+   }
+  },
+  "fx.puff": {
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "fx",
+       "key": "puff"
+      }
+     ]
+    }
+   }
+  },
+  "fx.ring": {
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "fx",
+       "key": "ring"
+      }
+     ]
+    }
+   }
+  },
+  "fx.shadow": {
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "fx",
+       "key": "shadow"
+      }
+     ]
+    }
+   }
+  },
+  "fx.shield": {
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "fx",
+       "key": "shield"
+      }
+     ]
+    }
+   }
+  },
+  "fx.spark": {
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "fx",
+       "key": "spark"
+      }
+     ]
+    }
+   }
+  },
+  "map.meadow.background": {
+   "anchor": {
+    "x": 0,
+    "y": 0
+   },
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "mapBackground",
+       "key": "meadow"
+      }
+     ]
+    }
+   }
+  },
+  "map.slot": {
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "slot",
+       "key": "normal"
+      }
+     ]
+    }
+   }
+  },
+  "map.slot.highlighted": {
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "slot",
+       "key": "highlighted"
+      }
+     ]
+    }
+   }
+  },
+  "map.spawn": {
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "spawn"
+      }
+     ]
+    }
+   }
+  },
+  "projectile.arrow": {
+   "facing": "rotate",
+   "motion": "straight",
+   "animations": {
+    "flight": {
+     "frames": [
+      {
+       "procedural": "projectile",
+       "key": "arrow"
+      }
+     ]
+    }
+   }
+  },
+  "projectile.ballistaBolt": {
+   "facing": "rotate",
+   "motion": "straight",
+   "animations": {
+    "flight": {
+     "frames": [
+      {
+       "procedural": "projectile",
+       "key": "ballistaBolt"
+      }
+     ]
+    }
+   }
+  },
+  "projectile.bolt": {
+   "facing": "rotate",
+   "motion": "straight",
+   "animations": {
+    "flight": {
+     "frames": [
+      {
+       "procedural": "projectile",
+       "key": "bolt"
+      }
+     ]
+    }
+   }
+  },
+  "projectile.boulder": {
+   "facing": "rotate",
+   "motion": "arc",
+   "animations": {
+    "flight": {
+     "frames": [
+      {
+       "procedural": "projectile",
+       "key": "boulder"
+      }
+     ]
+    }
+   },
+   "metrics": {
+    "spinPerSecond": 15
+   }
+  },
+  "projectile.bullet": {
+   "facing": "rotate",
+   "motion": "straight",
+   "animations": {
+    "flight": {
+     "frames": [
+      {
+       "procedural": "projectile",
+       "key": "bullet"
+      }
+     ]
+    }
+   },
+   "tint": "#FFBF59"
+  },
+  "projectile.cannonball": {
+   "facing": "rotate",
+   "motion": "arc",
+   "animations": {
+    "flight": {
+     "frames": [
+      {
+       "procedural": "projectile",
+       "key": "cannonball"
+      }
+     ]
+    }
+   },
+   "metrics": {
+    "spinPerSecond": 15
+   },
+   "tint": "#FFBF59"
+  },
+  "projectile.heavyShell": {
+   "facing": "rotate",
+   "motion": "straight",
+   "animations": {
+    "flight": {
+     "frames": [
+      {
+       "procedural": "projectile",
+       "key": "heavyShell"
+      }
+     ]
+    }
+   },
+   "tint": "#FFBF59"
+  },
+  "projectile.laser": {
+   "facing": "rotate",
+   "motion": "straight",
+   "animations": {
+    "flight": {
+     "frames": [
+      {
+       "procedural": "projectile",
+       "key": "laser"
+      }
+     ]
+    }
+   },
+   "tint": "#80E6FF"
+  },
+  "projectile.longArrow": {
+   "facing": "rotate",
+   "motion": "straight",
+   "animations": {
+    "flight": {
+     "frames": [
+      {
+       "procedural": "projectile",
+       "key": "longArrow"
+      }
+     ]
+    }
+   }
+  },
+  "projectile.orbitalBeam": {
+   "facing": "rotate",
+   "motion": "straight",
+   "animations": {
+    "flight": {
+     "frames": [
+      {
+       "procedural": "projectile",
+       "key": "orbitalBeam"
+      }
+     ]
+    }
+   },
+   "tint": "#80E6FF"
+  },
+  "projectile.pellet": {
+   "facing": "rotate",
+   "motion": "straight",
+   "animations": {
+    "flight": {
+     "frames": [
+      {
+       "procedural": "projectile",
+       "key": "pellet"
+      }
+     ]
+    }
+   }
+  },
+  "projectile.plasmaOrb": {
+   "facing": "rotate",
+   "motion": "arc",
+   "animations": {
+    "flight": {
+     "frames": [
+      {
+       "procedural": "projectile",
+       "key": "plasmaOrb"
+      }
+     ]
+    }
+   },
+   "metrics": {
+    "spinPerSecond": 15
+   },
+   "tint": "#80E6FF"
+  },
+  "projectile.railSlug": {
+   "facing": "rotate",
+   "motion": "straight",
+   "animations": {
+    "flight": {
+     "frames": [
+      {
+       "procedural": "projectile",
+       "key": "railSlug"
+      }
+     ]
+    }
+   },
+   "tint": "#80E6FF"
+  },
+  "projectile.rocket": {
+   "facing": "rotate",
+   "motion": "straight",
+   "animations": {
+    "flight": {
+     "frames": [
+      {
+       "procedural": "projectile",
+       "key": "rocket"
+      }
+     ]
+    }
+   },
+   "tint": "#FFBF59"
+  },
+  "projectile.shell": {
+   "facing": "rotate",
+   "motion": "arc",
+   "animations": {
+    "flight": {
+     "frames": [
+      {
+       "procedural": "projectile",
+       "key": "shell"
+      }
+     ]
+    }
+   },
+   "metrics": {
+    "spinPerSecond": 15
+   },
+   "tint": "#FFBF59"
+  },
+  "projectile.spear": {
+   "facing": "rotate",
+   "motion": "straight",
+   "animations": {
+    "flight": {
+     "frames": [
+      {
+       "procedural": "projectile",
+       "key": "spear"
+      }
+     ]
+    }
+   }
+  },
+  "projectile.stone": {
+   "facing": "rotate",
+   "motion": "arc",
+   "animations": {
+    "flight": {
+     "frames": [
+      {
+       "procedural": "projectile",
+       "key": "stone"
+      }
+     ]
+    }
+   },
+   "metrics": {
+    "spinPerSecond": 15
+   }
+  },
+  "tower.heavy.1.base": {
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "towerBase",
+       "key": "heavy",
+       "level": 1
+      }
+     ]
+    }
+   }
+  },
+  "tower.heavy.1.head": {
+   "facing": "rotate",
+   "animations": {
+    "idle": {
+     "frames": [
+      {
+       "procedural": "towerHead",
+       "key": "heavy",
+       "level": 1
+      }
+     ]
+    }
+   },
+   "metrics": {
+    "muzzleDistance": 24,
+    "recoil": 4
+   }
+  },
+  "tower.heavy.2.base": {
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "towerBase",
+       "key": "heavy",
+       "level": 2
+      }
+     ]
+    }
+   }
+  },
+  "tower.heavy.2.head": {
+   "facing": "rotate",
+   "animations": {
+    "idle": {
+     "frames": [
+      {
+       "procedural": "towerHead",
+       "key": "heavy",
+       "level": 2
+      }
+     ]
+    }
+   },
+   "metrics": {
+    "muzzleDistance": 24,
+    "recoil": 4
+   }
+  },
+  "tower.heavy.3.base": {
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "towerBase",
+       "key": "heavy",
+       "level": 3
+      }
+     ]
+    }
+   }
+  },
+  "tower.heavy.3.head": {
+   "facing": "rotate",
+   "animations": {
+    "idle": {
+     "frames": [
+      {
+       "procedural": "towerHead",
+       "key": "heavy",
+       "level": 3
+      }
+     ]
+    }
+   },
+   "metrics": {
+    "muzzleDistance": 24,
+    "recoil": 4
+   }
+  },
+  "tower.heavy.4.base": {
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "towerBase",
+       "key": "heavy",
+       "level": 4
+      }
+     ]
+    }
+   }
+  },
+  "tower.heavy.4.head": {
+   "facing": "rotate",
+   "animations": {
+    "idle": {
+     "frames": [
+      {
+       "procedural": "towerHead",
+       "key": "heavy",
+       "level": 4
+      }
+     ]
+    }
+   },
+   "metrics": {
+    "muzzleDistance": 24,
+    "recoil": 4
+   }
+  },
+  "tower.heavy.5.base": {
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "towerBase",
+       "key": "heavy",
+       "level": 5
+      }
+     ]
+    }
+   }
+  },
+  "tower.heavy.5.head": {
+   "facing": "rotate",
+   "animations": {
+    "idle": {
+     "frames": [
+      {
+       "procedural": "towerHead",
+       "key": "heavy",
+       "level": 5
+      }
+     ]
+    }
+   },
+   "metrics": {
+    "muzzleDistance": 24,
+    "recoil": 4
+   }
+  },
+  "tower.rapid.1.base": {
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "towerBase",
+       "key": "rapid",
+       "level": 1
+      }
+     ]
+    }
+   }
+  },
+  "tower.rapid.1.head": {
+   "facing": "rotate",
+   "animations": {
+    "idle": {
+     "frames": [
+      {
+       "procedural": "towerHead",
+       "key": "rapid",
+       "level": 1
+      }
+     ]
+    }
+   },
+   "metrics": {
+    "muzzleDistance": 24,
+    "recoil": 4
+   }
+  },
+  "tower.rapid.2.base": {
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "towerBase",
+       "key": "rapid",
+       "level": 2
+      }
+     ]
+    }
+   }
+  },
+  "tower.rapid.2.head": {
+   "facing": "rotate",
+   "animations": {
+    "idle": {
+     "frames": [
+      {
+       "procedural": "towerHead",
+       "key": "rapid",
+       "level": 2
+      }
+     ]
+    }
+   },
+   "metrics": {
+    "muzzleDistance": 24,
+    "recoil": 4
+   }
+  },
+  "tower.rapid.3.base": {
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "towerBase",
+       "key": "rapid",
+       "level": 3
+      }
+     ]
+    }
+   }
+  },
+  "tower.rapid.3.head": {
+   "facing": "rotate",
+   "animations": {
+    "idle": {
+     "frames": [
+      {
+       "procedural": "towerHead",
+       "key": "rapid",
+       "level": 3
+      }
+     ]
+    }
+   },
+   "metrics": {
+    "muzzleDistance": 24,
+    "recoil": 4
+   }
+  },
+  "tower.rapid.4.base": {
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "towerBase",
+       "key": "rapid",
+       "level": 4
+      }
+     ]
+    }
+   }
+  },
+  "tower.rapid.4.head": {
+   "facing": "rotate",
+   "animations": {
+    "idle": {
+     "frames": [
+      {
+       "procedural": "towerHead",
+       "key": "rapid",
+       "level": 4
+      }
+     ]
+    }
+   },
+   "metrics": {
+    "muzzleDistance": 24,
+    "recoil": 4
+   }
+  },
+  "tower.rapid.5.base": {
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "towerBase",
+       "key": "rapid",
+       "level": 5
+      }
+     ]
+    }
+   }
+  },
+  "tower.rapid.5.head": {
+   "facing": "rotate",
+   "animations": {
+    "idle": {
+     "frames": [
+      {
+       "procedural": "towerHead",
+       "key": "rapid",
+       "level": 5
+      }
+     ]
+    }
+   },
+   "metrics": {
+    "muzzleDistance": 24,
+    "recoil": 4
+   }
+  },
+  "tower.sniper.1.base": {
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "towerBase",
+       "key": "sniper",
+       "level": 1
+      }
+     ]
+    }
+   }
+  },
+  "tower.sniper.1.head": {
+   "facing": "rotate",
+   "animations": {
+    "idle": {
+     "frames": [
+      {
+       "procedural": "towerHead",
+       "key": "sniper",
+       "level": 1
+      }
+     ]
+    }
+   },
+   "metrics": {
+    "muzzleDistance": 24,
+    "recoil": 4
+   }
+  },
+  "tower.sniper.2.base": {
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "towerBase",
+       "key": "sniper",
+       "level": 2
+      }
+     ]
+    }
+   }
+  },
+  "tower.sniper.2.head": {
+   "facing": "rotate",
+   "animations": {
+    "idle": {
+     "frames": [
+      {
+       "procedural": "towerHead",
+       "key": "sniper",
+       "level": 2
+      }
+     ]
+    }
+   },
+   "metrics": {
+    "muzzleDistance": 24,
+    "recoil": 4
+   }
+  },
+  "tower.sniper.3.base": {
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "towerBase",
+       "key": "sniper",
+       "level": 3
+      }
+     ]
+    }
+   }
+  },
+  "tower.sniper.3.head": {
+   "facing": "rotate",
+   "animations": {
+    "idle": {
+     "frames": [
+      {
+       "procedural": "towerHead",
+       "key": "sniper",
+       "level": 3
+      }
+     ]
+    }
+   },
+   "metrics": {
+    "muzzleDistance": 24,
+    "recoil": 4
+   }
+  },
+  "tower.sniper.4.base": {
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "towerBase",
+       "key": "sniper",
+       "level": 4
+      }
+     ]
+    }
+   }
+  },
+  "tower.sniper.4.head": {
+   "facing": "rotate",
+   "animations": {
+    "idle": {
+     "frames": [
+      {
+       "procedural": "towerHead",
+       "key": "sniper",
+       "level": 4
+      }
+     ]
+    }
+   },
+   "metrics": {
+    "muzzleDistance": 24,
+    "recoil": 4
+   }
+  },
+  "tower.sniper.5.base": {
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "towerBase",
+       "key": "sniper",
+       "level": 5
+      }
+     ]
+    }
+   }
+  },
+  "tower.sniper.5.head": {
+   "facing": "rotate",
+   "animations": {
+    "idle": {
+     "frames": [
+      {
+       "procedural": "towerHead",
+       "key": "sniper",
+       "level": 5
+      }
+     ]
+    }
+   },
+   "metrics": {
+    "muzzleDistance": 24,
+    "recoil": 4
+   }
+  },
+  "tower.splash.1.base": {
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "towerBase",
+       "key": "splash",
+       "level": 1
+      }
+     ]
+    }
+   }
+  },
+  "tower.splash.1.head": {
+   "facing": "rotate",
+   "animations": {
+    "idle": {
+     "frames": [
+      {
+       "procedural": "towerHead",
+       "key": "splash",
+       "level": 1
+      }
+     ]
+    }
+   },
+   "metrics": {
+    "muzzleDistance": 24,
+    "recoil": 4
+   }
+  },
+  "tower.splash.2.base": {
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "towerBase",
+       "key": "splash",
+       "level": 2
+      }
+     ]
+    }
+   }
+  },
+  "tower.splash.2.head": {
+   "facing": "rotate",
+   "animations": {
+    "idle": {
+     "frames": [
+      {
+       "procedural": "towerHead",
+       "key": "splash",
+       "level": 2
+      }
+     ]
+    }
+   },
+   "metrics": {
+    "muzzleDistance": 24,
+    "recoil": 4
+   }
+  },
+  "tower.splash.3.base": {
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "towerBase",
+       "key": "splash",
+       "level": 3
+      }
+     ]
+    }
+   }
+  },
+  "tower.splash.3.head": {
+   "facing": "rotate",
+   "animations": {
+    "idle": {
+     "frames": [
+      {
+       "procedural": "towerHead",
+       "key": "splash",
+       "level": 3
+      }
+     ]
+    }
+   },
+   "metrics": {
+    "muzzleDistance": 24,
+    "recoil": 4
+   }
+  },
+  "tower.splash.4.base": {
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "towerBase",
+       "key": "splash",
+       "level": 4
+      }
+     ]
+    }
+   }
+  },
+  "tower.splash.4.head": {
+   "facing": "rotate",
+   "animations": {
+    "idle": {
+     "frames": [
+      {
+       "procedural": "towerHead",
+       "key": "splash",
+       "level": 4
+      }
+     ]
+    }
+   },
+   "metrics": {
+    "muzzleDistance": 24,
+    "recoil": 4
+   }
+  },
+  "tower.splash.5.base": {
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "towerBase",
+       "key": "splash",
+       "level": 5
+      }
+     ]
+    }
+   }
+  },
+  "tower.splash.5.head": {
+   "facing": "rotate",
+   "animations": {
+    "idle": {
+     "frames": [
+      {
+       "procedural": "towerHead",
+       "key": "splash",
+       "level": 5
+      }
+     ]
+    }
+   },
+   "metrics": {
+    "muzzleDistance": 24,
+    "recoil": 4
+   }
+  },
+  "ui.levelPip.off": {
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "ui",
+       "key": "levelPip.off"
+      }
+     ]
+    }
+   }
+  },
+  "ui.levelPip.on": {
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "ui",
+       "key": "levelPip.on"
+      }
+     ]
+    }
+   }
+  }
+ }
+}

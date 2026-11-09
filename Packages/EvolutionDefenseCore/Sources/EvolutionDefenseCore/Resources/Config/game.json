@@ -1,0 +1,43 @@
+{
+  "economy": {
+    "startingGold": 220,
+    "sellRefundRatio": 0.7,
+    "perfectWaveBonus": 15,
+    "earlyStartGoldPerSecond": 1.0,
+    "defaultWaveClearReward": 40,
+    "waveClearRewardGrowth": 10
+  },
+  "base": {
+    "maxHP": 100,
+    "startingHP": 100
+  },
+  "waveTiming": {
+    "initialPreparationTime": 30,
+    "preparationTime": 15
+  },
+  "repair": {
+    "options": [
+      {
+        "cost": 100,
+        "hp": 10
+      },
+      {
+        "cost": 200,
+        "hp": 20
+      }
+    ]
+  },
+  "retargetInterval": 0.12,
+  "laneSpread": 9,
+  "minimumDamageFraction": 0.15,
+  "research": {
+    "startingPoints": 2,
+    "perfectWave": 1,
+    "eraCompletion": 3
+  },
+  "randomEvents": {
+    "firstAfterWave": 3,
+    "minGap": 3,
+    "maxGap": 4
+  }
+}

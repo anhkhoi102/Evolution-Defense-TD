@@ -1,0 +1,141 @@
+{
+ "effects": {
+  "achievement": {
+   "file": "sfx_achievement.wav",
+   "gain": 0.8,
+   "source": "kenney-interface-sounds/confirmation_004.ogg"
+  },
+  "baseHit": {
+   "file": "sfx_baseHit.wav",
+   "gain": 0.9,
+   "source": "kenney-impact-sounds/impactWood_heavy_000.ogg"
+  },
+  "bossDeath": {
+   "file": "sfx_bossDeath.wav",
+   "gain": 1.0,
+   "source": "kenney-sci-fi-sounds/lowFrequency_explosion_001.ogg"
+  },
+  "build": {
+   "file": "sfx_build.wav",
+   "gain": 0.8,
+   "source": "kenney-impact-sounds/impactPlank_medium_002.ogg"
+  },
+  "click": {
+   "file": "sfx_click.wav",
+   "gain": 0.6,
+   "source": "kenney-interface-sounds/click_002.ogg"
+  },
+  "empBlast": {
+   "file": "sfx_empBlast.wav",
+   "gain": 0.8,
+   "source": "kenney-sci-fi-sounds/forceField_000.ogg"
+  },
+  "enemyDeath": {
+   "file": "sfx_enemyDeath.wav",
+   "gain": 0.6,
+   "source": "kenney-impact-sounds/impactSoft_heavy_000.ogg"
+  },
+  "error": {
+   "file": "sfx_error.wav",
+   "gain": 0.7,
+   "source": "kenney-interface-sounds/error_004.ogg"
+  },
+  "eventBad": {
+   "file": "sfx_eventBad.wav",
+   "gain": 0.6,
+   "source": "kenney-interface-sounds/glitch_001.ogg"
+  },
+  "eventGood": {
+   "file": "sfx_eventGood.wav",
+   "gain": 0.7,
+   "source": "kenney-interface-sounds/confirmation_002.ogg"
+  },
+  "explosion": {
+   "file": "sfx_explosion.wav",
+   "gain": 0.8,
+   "source": "kenney-sci-fi-sounds/explosionCrunch_000.ogg"
+  },
+  "hit": {
+   "file": "sfx_hit.wav",
+   "gain": 0.45,
+   "source": "kenney-impact-sounds/impactSoft_medium_000.ogg"
+  },
+  "missile": {
+   "file": "sfx_missile.wav",
+   "gain": 0.6,
+   "source": "kenney-sci-fi-sounds/thrusterFire_001.ogg"
+  },
+  "repair": {
+   "file": "sfx_repair.wav",
+   "gain": 0.7,
+   "source": "kenney-impact-sounds/impactMetal_medium_000.ogg"
+  },
+  "research": {
+   "file": "sfx_research.wav",
+   "gain": 0.7,
+   "source": "kenney-interface-sounds/maximize_006.ogg"
+  },
+  "robotDeath": {
+   "file": "sfx_robotDeath.wav",
+   "gain": 0.6,
+   "source": "kenney-impact-sounds/impactMetal_heavy_000.ogg"
+  },
+  "sell": {
+   "file": "sfx_sell.wav",
+   "gain": 0.8,
+   "source": "kenney-rpg-audio/handleCoins.ogg"
+  },
+  "shotArrow": {
+   "file": "sfx_shotArrow.wav",
+   "gain": 0.7,
+   "source": "kenney-interface-sounds/pluck_001.ogg"
+  },
+  "shotBeam": {
+   "file": "sfx_shotBeam.wav",
+   "gain": 0.8,
+   "source": "kenney-sci-fi-sounds/laserLarge_002.ogg"
+  },
+  "shotBullet": {
+   "file": "sfx_shotBullet.wav",
+   "gain": 0.45,
+   "source": "kenney-impact-sounds/impactTin_medium_000.ogg"
+  },
+  "shotCannon": {
+   "file": "sfx_shotCannon.wav",
+   "gain": 0.75,
+   "source": "kenney-sci-fi-sounds/lowFrequency_explosion_000.ogg"
+  },
+  "shotLaser": {
+   "file": "sfx_shotLaser.wav",
+   "gain": 0.5,
+   "source": "kenney-sci-fi-sounds/laserSmall_000.ogg"
+  },
+  "shotPlasma": {
+   "file": "sfx_shotPlasma.wav",
+   "gain": 0.6,
+   "source": "kenney-sci-fi-sounds/laserLarge_000.ogg"
+  },
+  "shotRail": {
+   "file": "sfx_shotRail.wav",
+   "gain": 0.6,
+   "source": "kenney-sci-fi-sounds/laserRetro_000.ogg"
+  },
+  "shotRocket": {
+   "file": "sfx_shotRocket.wav",
+   "gain": 0.6,
+   "source": "kenney-sci-fi-sounds/thrusterFire_000.ogg"
+  },
+  "shotStone": {
+   "file": "sfx_shotStone.wav",
+   "gain": 0.8,
+   "source": "kenney-impact-sounds/impactPlank_medium_000.ogg"
+  },
+  "upgrade": {
+   "file": "sfx_upgrade.wav",
+   "gain": 0.7,
+   "source": "kenney-interface-sounds/confirmation_001.ogg"
+  }
+ },
+ "name": "Kenney CC0 sound effects (synth fallback for the rest)",
+ "version": 1
+}

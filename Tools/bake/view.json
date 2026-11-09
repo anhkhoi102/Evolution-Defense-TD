@@ -1,0 +1,8 @@
+{
+  "comment": "Shared camera for every baked sprite and the map. The game reads the same numbers from the manifest layout (view.*).",
+  "elevationDegrees": 55,
+  "pointsPerUnit": 50,
+  "pixelScale": 2,
+  "sunAzimuthDegrees": 135,
+  "sunElevationDegrees": 52
+}

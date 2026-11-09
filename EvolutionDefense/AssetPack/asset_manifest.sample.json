@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "name": "Sample replacement pack",
+  "textureScale": 2,
+  "layout": {
+    "tower.pips.offsetY": -38
+  },
+  "sprites": {
+    "enemy.wolf": {
+      "facing": "flip",
+      "animations": {
+        "walk": {
+          "distancePerFrame": 9,
+          "frames": [
+            { "atlas": "SampleCreatures", "name": "sample_wolf_walk_0" },
+            { "atlas": "SampleCreatures", "name": "sample_wolf_walk_1" },
+            { "atlas": "SampleCreatures", "name": "sample_wolf_walk_2" },
+            { "atlas": "SampleCreatures", "name": "sample_wolf_walk_3" }
+          ]
+        },
+        "death": {
+          "fps": 10, "loop": false,
+          "frames": [
+            { "atlas": "SampleCreatures", "name": "sample_wolf_death_0" },
+            { "atlas": "SampleCreatures", "name": "sample_wolf_death_1" },
+            { "atlas": "SampleCreatures", "name": "sample_wolf_death_2" }
+          ]
+        }
+      },
+      "metrics": { "healthBarOffsetY": 26, "healthBarWidth": 30, "shieldDiameter": 56 }
+    },
+    "tower.splash.1.base": {
+      "facing": "fixed",
+      "animations": { "default": { "frames": [ "sample_tower_splash_1_base" ] } }
+    },
+    "tower.splash.1.head": {
+      "facing": "rotate",
+      "animations": { "idle": { "frames": [ { "image": "sample_tower_splash_1_head" } ] } },
+      "metrics": { "muzzleDistance": 28, "recoil": 6 }
+    },
+    "projectile.stone": {
+      "motion": "arc",
+      "animations": { "flight": { "frames": [ { "image": "sample_projectile_stone" } ] } },
+      "metrics": { "spinPerSecond": 0 }
+    },
+    "base.primitive": {
+      "facing": "fixed",
+      "size": { "width": 160, "height": 160 },
+      "animations": { "default": { "frames": [ { "image": "sample_base_primitive" } ] } }
+    }
+  }
+}

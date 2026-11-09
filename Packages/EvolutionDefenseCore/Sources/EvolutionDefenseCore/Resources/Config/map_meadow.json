@@ -1,0 +1,58 @@
+{
+  "id": "meadow",
+  "name": "Riverside Meadow",
+  "tileSize": 50,
+  "columns": 32,
+  "rows": 16,
+  "pathWidth": 1.25,
+  "path": [
+    { "x": -1.5, "y": 12 },
+    { "x": 7,  "y": 12 },
+    { "x": 7,  "y": 3 },
+    { "x": 14, "y": 3 },
+    { "x": 14, "y": 11 },
+    { "x": 22, "y": 11 },
+    { "x": 22, "y": 4 },
+    { "x": 29.4, "y": 4 }
+  ],
+  "spawn": { "x": 0.6, "y": 12 },
+  "base":  { "x": 30.3, "y": 4 },
+  "buildSlots": [
+    { "id": 1,  "x": 3.5,  "y": 14.2, "hint": "entrance" },
+    { "id": 2,  "x": 8.8,  "y": 13.6, "hint": "corner" },
+    { "id": 3,  "x": 4.8,  "y": 8.0,  "hint": "straight" },
+    { "id": 4,  "x": 4.8,  "y": 4.0,  "hint": "corner" },
+    { "id": 5,  "x": 10.5, "y": 5.2,  "hint": "choke" },
+    { "id": 6,  "x": 10.5, "y": 0.9,  "hint": "straight" },
+    { "id": 7,  "x": 12.4, "y": 12.7, "hint": "corner" },
+    { "id": 8,  "x": 16.0, "y": 1.9,  "hint": "corner" },
+    { "id": 9,  "x": 18.0, "y": 8.8,  "hint": "choke" },
+    { "id": 10, "x": 17.5, "y": 13.3, "hint": "straight" },
+    { "id": 11, "x": 24.3, "y": 8.0,  "hint": "narrow" },
+    { "id": 12, "x": 19.7, "y": 5.6,  "hint": "narrow" },
+    { "id": 13, "x": 23.7, "y": 12.7, "hint": "corner" },
+    { "id": 14, "x": 20.4, "y": 2.2,  "hint": "corner" },
+    { "id": 15, "x": 25.6, "y": 1.8,  "hint": "straight" },
+    { "id": 16, "x": 27.2, "y": 6.3,  "hint": "lastLine" }
+  ],
+  "decorations": [
+    { "kind": "boulder", "x": 20.8, "y": 9.6, "scale": 1.0 },
+    { "kind": "boulder", "x": 20.75, "y": 8.4, "scale": 0.9 },
+    { "kind": "boulder", "x": 20.8, "y": 7.2, "scale": 1.05 },
+    { "kind": "boulder", "x": 23.2, "y": 9.8, "scale": 1.0 },
+    { "kind": "boulder", "x": 23.25, "y": 6.5, "scale": 1.1 },
+    { "kind": "boulder", "x": 23.2, "y": 5.3, "scale": 0.9 },
+    { "kind": "rock", "x": 23.1, "y": 8.6, "scale": 1.0 },
+    { "kind": "rock", "x": 20.9, "y": 6.2, "scale": 0.9 },
+    { "kind": "boulder", "x": 0.5, "y": 13.4, "scale": 1.2 },
+    { "kind": "boulder", "x": 0.5, "y": 10.6, "scale": 1.1 },
+    { "kind": "pine", "x": 1.4, "y": 15.3, "scale": 1.1 },
+    { "kind": "pine", "x": 1.2, "y": 9.2, "scale": 1.0 }
+  ],
+  "scatter": {
+    "seed": 20261109,
+    "counts": { "tree": 26, "pine": 18, "rock": 22, "boulder": 6, "bush": 40, "flowers": 45 },
+    "pathClearance": 1.35,
+    "objectClearance": 1.3
+  }
+}

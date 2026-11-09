@@ -1,0 +1,17 @@
+[
+  { "id": "resourceBonus", "name": "Resource Bonus", "icon": "shippingbox.fill", "kind": "gold",
+    "value": 60, "perWave": 8, "weight": 3, "isPositive": true,
+    "summary": "A trade caravan reaches the base: +{gold} gold." },
+  { "id": "technologyBoost", "name": "Technology Boost", "icon": "lightbulb.max.fill", "kind": "researchDiscount",
+    "value": 2, "weight": 2, "isPositive": true,
+    "summary": "A breakthrough: your next technology costs {rp} RP less." },
+  { "id": "reinforcement", "name": "Reinforcement", "icon": "person.3.fill", "kind": "reinforcement",
+    "value": 0, "weight": 2, "isPositive": true,
+    "summary": "Allies arrive: a {tower} holds a free pad during the next wave." },
+  { "id": "enemyMutation", "name": "Enemy Mutation", "icon": "allergens", "kind": "mutation",
+    "value": 0.2, "speedBonus": 0.1, "goldBonus": 0.5, "weight": 2, "isPositive": false,
+    "summary": "Next wave: enemies have +20% HP and +10% speed, but pay 50% more gold." },
+  { "id": "mechanicalBreakdown", "name": "Mechanical Breakdown", "icon": "wrench.and.screwdriver.fill", "kind": "breakdown",
+    "value": 0.5, "weight": 2, "isPositive": false,
+    "summary": "{tower} jams: it attacks 50% slower during the next wave." }
+]

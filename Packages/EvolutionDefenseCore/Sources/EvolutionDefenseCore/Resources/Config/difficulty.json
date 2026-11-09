@@ -1,0 +1,13 @@
+[
+  { "id": "easy", "name": "Easy",
+    "summary": "Weaker enemies, more gold and a longer countdown. Good for learning the eras.",
+    "enemyHP": 0.75, "enemySpeed": 0.95, "goldMultiplier": 1.15, "startingGold": 280, "startingResearch": 3,
+    "preparationTime": 20 },
+  { "id": "normal", "name": "Normal",
+    "summary": "The intended challenge. A focused defence wins; sloppy play falls in the late eras.",
+    "enemyHP": 1.0, "enemySpeed": 1.0, "goldMultiplier": 1.0, "startingGold": 220, "startingResearch": 2 },
+  { "id": "hard", "name": "Hard",
+    "summary": "Tougher enemies and a short countdown. You will need the technology tree.",
+    "enemyHP": 1.08, "enemySpeed": 1.0, "goldMultiplier": 1.0, "startingGold": 210, "startingResearch": 2,
+    "preparationTime": 12 }
+]

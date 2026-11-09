@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Entitlements for Evolution Defense.
+  App Sandbox is on: the game is fully offline and only writes its profile and
+  match checkpoint to its own container
+  (~/Library/Containers/local.evolutiondefense.game/Data/Library/Application Support/EvolutionDefense).
+  No network, file-picker or device entitlements are requested.
+  Hardened Runtime is enabled through the ENABLE_HARDENED_RUNTIME build setting.
+-->
+<plist version="1.0">
+<dict>
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+</dict>
+</plist>

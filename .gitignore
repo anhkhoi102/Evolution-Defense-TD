@@ -1,0 +1,20 @@
+# Build output
+build/
+DerivedData/
+.build/
+.swiftpm/
+snapshots/
+
+# Xcode per-user state
+xcuserdata/
+*.xcuserstate
+
+.DS_Store
+
+# Third-party raw art/audio sources (downloaded by Tools/bake/fetch-sources.sh)
+Tools/bake/sources/
+Tools/bake/out/
+
+# Python caches (bake tools)
+__pycache__/
+*.pyc
