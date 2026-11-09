@@ -39,7 +39,7 @@ Click **EvolutionDefense.zip** to download it.
 **2. Unzip it**
 
 Open your **Downloads** folder. Double-click **EvolutionDefense.zip**. The
-**Evolution Defense** app appears next to it (it has a little floating island
+**EvolutionDefense** app appears next to it (it has a little floating island
 on its icon).
 
 *If you already see the app instead of the zip, Safari unzipped it for you.
@@ -47,12 +47,12 @@ Go straight to step 3.*
 
 **3. Move it to Applications**
 
-Drag **Evolution Defense** onto **Applications** in the left side of the Finder
+Drag **EvolutionDefense** onto **Applications** in the left side of the Finder
 window.
 
 **4. Open it the first time**
 
-Open **Applications** and double-click **Evolution Defense**.
+Open **Applications** and double-click **EvolutionDefense**.
 
 The Mac will show a message saying it can't check the app. That's normal for
 games that aren't from the App Store. Click **Done** (on some Macs the
@@ -118,7 +118,7 @@ also find it in **Launchpad**.
 
 ## 🗑️ How to uninstall
 
-Drag **Evolution Defense** from **Applications** to the **Trash**.
+Drag **EvolutionDefense** from **Applications** to the **Trash**.
 
 ---
 
