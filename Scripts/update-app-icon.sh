@@ -1,28 +1,15 @@
 #!/usr/bin/env bash
-# Regenerates the app icon PNGs in the asset catalog from Scripts/make-icon.swift.
-# Run after changing the icon drawing. (Replace with designed artwork in Phase 4.)
+# Regenerates the app icon in the asset catalog.
+#   1. Blender renders the floating-island artwork (Tools/bake/blender/render_icon.py),
+#      unless Tools/bake/out/icon/island.png already exists (pass --render to force).
+#   2. Tools/bake/compose_icon.py adds the macOS icon shape, sky and shadow and writes
+#      every size into EvolutionDefense/Assets.xcassets/AppIcon.appiconset.
+# Needs the bake sources (Tools/bake/fetch-sources.sh) and Blender for step 1.
 set -euo pipefail
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ICONSET_DIR="$(mktemp -d)/AppIcon.iconset"
-DEST="$PROJECT_ROOT/EvolutionDefense/Assets.xcassets/AppIcon.appiconset"
-swift "$PROJECT_ROOT/Scripts/make-icon.swift" "$ICONSET_DIR"
-mkdir -p "$DEST"
-cp "$ICONSET_DIR"/icon_*.png "$DEST/"
-cat > "$DEST/Contents.json" <<'JSON'
-{
-  "images" : [
-    { "filename" : "icon_16x16.png",      "idiom" : "mac", "scale" : "1x", "size" : "16x16" },
-    { "filename" : "icon_16x16@2x.png",   "idiom" : "mac", "scale" : "2x", "size" : "16x16" },
-    { "filename" : "icon_32x32.png",      "idiom" : "mac", "scale" : "1x", "size" : "32x32" },
-    { "filename" : "icon_32x32@2x.png",   "idiom" : "mac", "scale" : "2x", "size" : "32x32" },
-    { "filename" : "icon_128x128.png",    "idiom" : "mac", "scale" : "1x", "size" : "128x128" },
-    { "filename" : "icon_128x128@2x.png", "idiom" : "mac", "scale" : "2x", "size" : "128x128" },
-    { "filename" : "icon_256x256.png",    "idiom" : "mac", "scale" : "1x", "size" : "256x256" },
-    { "filename" : "icon_256x256@2x.png", "idiom" : "mac", "scale" : "2x", "size" : "256x256" },
-    { "filename" : "icon_512x512.png",    "idiom" : "mac", "scale" : "1x", "size" : "512x512" },
-    { "filename" : "icon_512x512@2x.png", "idiom" : "mac", "scale" : "2x", "size" : "512x512" }
-  ],
-  "info" : { "author" : "xcode", "version" : 1 }
-}
-JSON
-echo "Updated $DEST"
+BAKE="$PROJECT_ROOT/Tools/bake"
+BLENDER="${BLENDER:-/Applications/Blender.app/Contents/MacOS/Blender}"
+if [[ "${1:-}" == "--render" || ! -f "$BAKE/out/icon/island.png" ]]; then
+    "$BLENDER" -b --factory-startup -P "$BAKE/blender/render_icon.py" | grep -E "ICON_DONE|Error" || true
+fi
+python3 "$BAKE/compose_icon.py"

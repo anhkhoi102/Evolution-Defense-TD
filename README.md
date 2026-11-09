@@ -198,7 +198,7 @@ Packages/EvolutionDefenseCore/     Local Swift package: pure game logic, no Spri
 ├── Sources/EvolutionDefenseAudio/ Procedural sound effects + music (pure DSP → samples)
 ├── Sources/EvolutionDefenseAssets/ Asset manifest model, asset ids, validator
 └── Tests/EvolutionDefenseCoreTests/   110 Swift Testing tests (incl. balance, save, audio, assets, performance)
-Scripts/                           build / test / snapshot / icon helpers
+Scripts/                           build / test / snapshot / benchmark / app-icon scripts
 Tools/bake/                        Art pipeline: source download, Blender bake scripts, packager
 Tools/audio/                       Sound-effect conversion (Kenney OGG → WAV + audio_manifest.json)
 ThirdParty/Licenses/               Licence texts for every third-party asset (Docs/ASSET_LICENSES.md)

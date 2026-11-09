@@ -37,6 +37,10 @@ All downloads: **9 November 2026**.
 | Animated Mech Pack | Quaternius | CC0 1.0 | <https://opengameart.org/content/animated-mech-pack> | Assault robot, heavy mech, stealth robot, titan war machine |
 | Boar | Teh_Bucket | CC0 1.0 | <https://opengameart.org/content/boar> | Wild boar |
 
+The **app icon** is rendered the same way (`Tools/bake/blender/render_icon.py`):
+the level-5 tower and island props come from the Tower Defense and Nature kits, the
+wolf from Ultimate Animated Animals, and the clouds from the Particle Pack.
+
 All models were recoloured with a shared palette grade
 (`Tools/bake/palette.py`) so that the packs read as one consistent style.
 
