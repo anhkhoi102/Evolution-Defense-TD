@@ -95,6 +95,13 @@ public enum GameEvent {
     case enemiesSummoned(by: Enemy, ability: String, count: Int)
     /// A healer pulsed: `count` nearby enemies were mended.
     case enemiesHealed(by: Enemy, ability: String, count: Int, radius: Double)
+    /// Summons: units arrived, hit an enemy, used their special, fell, ran out of time, or the ability is ready again.
+    case summonDeployed(SummonAbilityDefinition, units: [SummonUnit], at: CGPoint)
+    case summonAttacked(SummonUnit, Enemy)
+    case summonSpecial(SummonUnit, name: String, radius: Double, hits: Int)
+    case summonDefeated(SummonUnit)
+    case summonExpired(SummonUnit)
+    case summonReady(SummonAbilityDefinition)
     case towersDisabled([Tower], by: Enemy, ability: String, duration: Double)
     case baseStruck(by: Enemy, ability: String, damage: Int)
     case researchEarned(amount: Int, reason: String)
@@ -206,6 +213,17 @@ public final class GameWorld {
     public internal(set) var researchDiscount = 0
     /// Difficulty-curve phase of the current wave (refreshed every step, before spawning).
     public internal(set) var activePhase = ProgressionPhase.neutral
+
+    // Summon abilities (GameWorld+Summons). Not saved in checkpoints: a resumed
+    // match starts with every ability ready.
+    /// Allied units currently on the field.
+    public internal(set) var summons: [SummonUnit] = []
+    /// Simulation time at which each ability is off cooldown (missing = ready).
+    var summonReadyAt: [String: Double] = [:]
+    /// Abilities whose "ready" event has been sent since their last use.
+    var summonReadyAnnounced: Set<String> = []
+    /// Summon abilities used this match.
+    public internal(set) var summonsCalled = 0
 
     /// Tests and tools default to no random events so results are reproducible.
     public init(config: GameConfiguration, options: MatchOptions = MatchOptions(randomEvents: false),
@@ -408,6 +426,7 @@ public final class GameWorld {
         moveEnemies(dt)
         if phase == .defeat { return }
         updateTowers(dt)
+        updateSummons(dt)
         updateProjectiles(dt)
         enemies.removeAll { !$0.isActive }
         checkWaveCompletion()
@@ -515,6 +534,7 @@ public final class GameWorld {
         events.append(.baseDamaged(amount: amount, remaining: baseHP))
         if baseHP <= 0 {
             phase = .defeat
+            dismissAllSummons()
             events.append(.matchEnded(.defeat))
         }
         return amount
@@ -554,6 +574,7 @@ public final class GameWorld {
         events.append(.waveCleared(summary))
         if waves.isLastWave {
             phase = .victory
+            dismissAllSummons()
             events.append(.matchEnded(.victory))
         } else {
             phase = .preparation

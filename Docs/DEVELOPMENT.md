@@ -17,7 +17,7 @@ macOS 14+.
 | 4 | Polish: audio, animations, random events, difficulty, achievements, saves, perf mode | ✅ |
 | — | Visual overhaul: 2.5D tabletop art baked from CC0 3D kits, particle effects, shaders, UI skin, recorded sound effects | ✅ |
 
-Version **1.1.0**. See *Art & audio* below, [ASSETS.md](ASSETS.md) § 7 and [BALANCE.md](BALANCE.md).
+Version **1.2.0**. See *Art & audio* below, [ASSETS.md](ASSETS.md) § 7 and [BALANCE.md](BALANCE.md).
 
 ### Polish (Phase 4)
 
@@ -145,6 +145,7 @@ swift test --package-path Packages/EvolutionDefenseCore   # fast logic-only test
 Scripts/snapshot.sh                # scripted match → PNGs in ./snapshots, then quits
 Scripts/benchmark.sh               # frame-rate benchmark under maximum load (use a Release build)
 Scripts/death-test.sh              # many big enemies dying at once: fails if any effect sprite is mis-sized
+Scripts/summon-test.sh             # both summon abilities in a boss wave: deploy, fight, expire, no leaks
 Scripts/asset-demo.sh [pack]       # same scene with the placeholder pack and an override pack
 Scripts/generate-placeholder-manifest.py   # rebuild asset_manifest.placeholder.json after adding entities
 EVO_AUDIO_CHECK=1 build/EvolutionDefense.app/Contents/MacOS/EvolutionDefense   # muted audio self-test
@@ -162,6 +163,7 @@ Scripts/update-app-icon.sh         # re-render the app icon (Blender + Tools/bak
 | `Delete` ×2 | Sell the selected tower |
 | `R` | Open / close base repair (between waves) |
 | `T` | Open / close the technology tree |
+| `Q` / `E` | Call Militia / Summon Hero (during a wave), then click on or beside the road ([SUMMONS.md](SUMMONS.md)) |
 | Pause → *Settings* | Audio, performance mode, screen shake, FPS counter |
 | Right-click / `Esc` | Cancel selection (`Esc` with nothing selected pauses) |
 | `N` / `Return` | Start the next wave |

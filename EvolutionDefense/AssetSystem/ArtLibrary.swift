@@ -261,6 +261,7 @@ final class ArtLibrary {
     // MARK: Entity helpers (all go through asset ids)
 
     func enemy(_ def: EnemyDefinition) -> SpriteAsset { sprite(AssetID.enemy(def.visual)) }
+    func summon(_ ability: SummonAbilityDefinition) -> SpriteAsset { sprite(AssetID.summon(ability.visual)) }
     func towerBase(_ def: TowerDefinition, level: Int) -> SpriteAsset { sprite(AssetID.towerBase(def.visualKey, level: level)) }
     func towerHead(_ def: TowerDefinition, level: Int) -> SpriteAsset { sprite(AssetID.towerHead(def.visualKey, level: level)) }
     /// Hot path (every shot): cached by visual key so no id string is built per call.
@@ -319,6 +320,20 @@ final class ArtLibrary {
         let s = enemy(def)
         let clip = s.clip("walk", "idle")
         let a = clip.art(direction: s.facing == .directional ? clip.direction(for: 0) : 0, frame: 0)
+        let img = renderImage(size: s.size, scale: 2) { Self.draw(a, in: $0, center: CGPoint(x: s.size.width / 2, y: s.size.height / 2), angle: 0) }
+            .trimmedToSquare()
+        imageCache[key] = img
+        return img
+    }
+
+    /// Ability-button portrait: the summoned unit facing the camera.
+    func summonIcon(_ ability: SummonAbilityDefinition) -> CGImage {
+        let key = "icon.summon.\(ability.visual)"
+        if let img = imageCache[key] { return img }
+        let s = summon(ability)
+        let clip = s.clip("idle", "walk")
+        // Directional art: the view facing down the screen (towards the player).
+        let a = clip.art(direction: s.facing == .directional ? clip.direction(for: -.pi / 2) : 0, frame: 0)
         let img = renderImage(size: s.size, scale: 2) { Self.draw(a, in: $0, center: CGPoint(x: s.size.width / 2, y: s.size.height / 2), angle: 0) }
             .trimmedToSquare()
         imageCache[key] = img

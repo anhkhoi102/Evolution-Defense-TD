@@ -80,13 +80,17 @@ public struct GameConfiguration: Sendable {
     public var difficulties: [DifficultyDefinition]
     public var events: [RandomEventDefinition]
     public var achievements: [AchievementDefinition]
+    /// Temporary reinforcement abilities (summons.json).
+    public var summons: SummonConfig
 
     public init(rules: RulesConfig, towers: [TowerArchetype: TowerDefinition],
                 enemies: [String: EnemyDefinition], map: MapDefinition, waves: [WaveDefinition],
                 techs: [TechDefinition] = [], difficulties: [DifficultyDefinition] = [],
-                events: [RandomEventDefinition] = [], achievements: [AchievementDefinition] = []) {
+                events: [RandomEventDefinition] = [], achievements: [AchievementDefinition] = [],
+                summons: SummonConfig = .none) {
         self.rules = rules; self.towers = towers; self.enemies = enemies; self.map = map; self.waves = waves
         self.techs = techs; self.difficulties = difficulties; self.events = events; self.achievements = achievements
+        self.summons = summons
     }
 
     /// Settings for a difficulty. Falls back to neutral multipliers if missing.
@@ -130,6 +134,9 @@ public struct GameConfiguration: Sendable {
         let difficulties = try read("difficulty.json", as: [DifficultyDefinition].self)
         let events = try read("events.json", as: [RandomEventDefinition].self)
         let achievements = try read("achievements.json", as: [AchievementDefinition].self)
+        // Optional: a configuration without summons.json simply has no summon abilities.
+        let summons = FileManager.default.fileExists(atPath: directory.appendingPathComponent("summons.json").path)
+            ? try read("summons.json", as: SummonConfig.self) : .none
 
         // Boss phases are stored highest threshold first so the simulation can walk them in order.
         let enemiesSorted = enemyList.map { e -> EnemyDefinition in
@@ -143,7 +150,8 @@ public struct GameConfiguration: Sendable {
             enemies: Dictionary(uniqueKeysWithValues: enemiesSorted.map { ($0.id, $0) }),
             map: map,
             waves: waves.sorted { $0.number < $1.number },
-            techs: techs, difficulties: difficulties, events: events, achievements: achievements)
+            techs: techs, difficulties: difficulties, events: events, achievements: achievements,
+            summons: summons)
         try config.validate()
         return config
     }
@@ -160,6 +168,15 @@ public struct GameConfiguration: Sendable {
         for w in waves {
             for g in w.groups where enemies[g.enemy] == nil {
                 throw ConfigurationError.invalid("wave \(w.number) references unknown enemy '\(g.enemy)'")
+            }
+        }
+        var summonIDs = Set<String>()
+        for s in summons.abilities {
+            guard summonIDs.insert(s.id).inserted else { throw ConfigurationError.invalid("duplicate summon '\(s.id)'") }
+            let u = s.unit
+            guard s.count > 0, s.cooldown > 0, s.duration > 0, s.cooldown >= s.duration,
+                  u.hp > 0, u.damage > 0, u.attacksPerSecond > 0, u.range > 0, u.moveSpeed > 0 else {
+                throw ConfigurationError.invalid("summon '\(s.id)' needs positive stats and a cooldown at least as long as its duration")
             }
         }
         for (i, w) in waves.enumerated() where w.number != i + 1 {

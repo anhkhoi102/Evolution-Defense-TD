@@ -159,6 +159,56 @@ final class EffectsRenderer {
         pendingBlasts.append((b, life))
     }
 
+    // MARK: Summons
+
+    private static let allyBlue = NSColor(srgbRed: 0.45, green: 0.78, blue: 1, alpha: 1)
+    private static let heroGold = NSColor(srgbRed: 1, green: 0.82, blue: 0.4, alpha: 1)
+
+    /// Units arriving: a burst of light where the squad / hero appears.
+    func summonArrive(at units: [CGPoint], centre: CGPoint, hero: Bool) {
+        let c = hero ? Self.heroGold : Self.allyBlue
+        let d = (hero ? 150 : 120) / fxWidth("ring")
+        spawn(fx("ring"), at: centre, layer: groundLayer, life: 0.6, from: d * 0.2, to: d, alpha: 1, blend: .add, tint: c, flat: true)
+        spawn(fx("explosion"), at: centre, layer: airLayer, life: 0.45, from: 0.3, to: hero ? 1.6 : 1.1, alpha: 0.7,
+              blend: .add, tint: c, lift: 16)
+        for p in units {
+            spawn(fx("puff"), at: p, layer: airLayer, life: 0.5, from: 0.4, to: 1.0, alpha: 0.6, rise: 10, tint: c)
+            spawn(fx("spark"), at: p, layer: airLayer, life: 0.6, from: 1.6, to: 0.4, alpha: 1, rise: 26, blend: .add,
+                  tint: c, lift: 18)
+        }
+        if hero && !lightweight { emit(0, at: centre, count: 18, spread: 60) }
+    }
+
+    /// A summoned unit's blow landing on an enemy.
+    func summonHit(at p: CGPoint, hero: Bool) {
+        spawn(fx("spark"), at: p, layer: airLayer, life: 0.14, from: hero ? 1.1 : 0.7, to: hero ? 1.8 : 1.2, alpha: 1,
+              blend: .add, tint: hero ? Self.heroGold : nil, lift: 14)
+    }
+
+    /// The hero's area special (Whirlwind Cleave): a golden shockwave on the ground.
+    func heroSpecial(at p: CGPoint, radius: CGFloat) {
+        let d = radius * 2 / fxWidth("ring")
+        spawn(fx("ring"), at: p, layer: groundLayer, life: 0.45, from: d * 0.3, to: d, alpha: 0.95, blend: .add,
+              tint: Self.heroGold, flat: true)
+        spawn(fx("puff"), at: p, layer: airLayer, life: 0.5, from: 0.8, to: 2.0, alpha: 0.55, rise: 8)
+        if !lightweight { emit(0, at: p, count: 14, spread: radius) }
+    }
+
+    /// Time's up: the unit fades upwards in a shimmer.
+    func summonVanish(_ a: Art, at p: CGPoint, size: CGSize, anchor: CGPoint, hero: Bool) {
+        let c = hero ? Self.heroGold : Self.allyBlue
+        if !lightweight, effects.count < maxEffects - 20 {
+            spawn(a, at: p, layer: airLayer, life: 0.5, from: 1, to: 1.08, alpha: 0.9, rise: 18, rotation: 0)
+            effects[effects.count - 1].node.anchorPoint = anchor
+            effects[effects.count - 1].node.setUnscaledSize(size)
+            effects[effects.count - 1].size = size
+            effects[effects.count - 1].node.color = c
+            effects[effects.count - 1].node.colorBlendFactor = 0.6
+        }
+        spawn(fx("spark"), at: p, layer: airLayer, life: 0.6, from: 1.4, to: 0.3, alpha: 1, rise: 30, blend: .add,
+              tint: c, lift: 16)
+    }
+
     /// A healer's chant: a green ring sweeping out to its healing radius.
     func healPulse(at p: CGPoint, radius: CGFloat, healed: Int) {
         let green = NSColor(srgbRed: 0.45, green: 1, blue: 0.5, alpha: 1)
@@ -200,9 +250,10 @@ final class EffectsRenderer {
     }
 
     /// Dying enemy: its last frame shrinks and fades instead of vanishing.
-    func corpse(_ a: Art, at p: CGPoint, rotation: CGFloat, size: CGSize) {
+    func corpse(_ a: Art, at p: CGPoint, rotation: CGFloat, size: CGSize, anchor: CGPoint = CGPoint(x: 0.5, y: 0.5)) {
         guard !lightweight, effects.count < maxEffects - 20 else { return }
         spawn(a, at: p, layer: groundLayer, life: 0.45, from: 1, to: 0.55, alpha: 0.85, rotation: rotation)
+        effects[effects.count - 1].node.anchorPoint = anchor
         effects[effects.count - 1].node.setUnscaledSize(size)
         effects[effects.count - 1].size = size
         effects[effects.count - 1].node.color = .black
@@ -213,13 +264,15 @@ final class EffectsRenderer {
     private let dissolveTime = 0.55
 
     /// Plays a one-shot sprite animation (e.g. an enemy's "death" clip from the manifest).
-    func play(_ clip: AnimationClip, direction: Int = 0, at p: CGPoint, rotation: CGFloat, flipped: Bool) {
+    func play(_ clip: AnimationClip, direction: Int = 0, at p: CGPoint, rotation: CGFloat, flipped: Bool,
+              anchor: CGPoint = CGPoint(x: 0.5, y: 0.5)) {
         guard !lightweight, !clip.frames.isEmpty, effects.count < maxEffects - 20 else { return }
         spawn(clip.art(direction: direction, frame: 0), at: p, layer: groundLayer, life: clip.duration + dissolveTime, from: 1, to: 1,
               alpha: 1, rotation: rotation, frames: clip)
         let e = effects.count - 1
         effects[e].direction = direction
         effects[e].dissolve = dissolveTime
+        effects[e].node.anchorPoint = anchor      // drawn exactly where the live sprite stood
         effects[e].node.shader = Shaders.dissolve
         Shaders.setDissolve(effects[e].node, 0)
         // Death frames sort with the units at their ground depth (the corpse
@@ -272,6 +325,7 @@ final class EffectsRenderer {
         n.apply(a)
         n.shader = nil
         n.zPosition = 0
+        n.anchorPoint = CGPoint(x: 0.5, y: 0.5)
         n.blendMode = blend
         n.color = tint ?? .white
         n.colorBlendFactor = tint == nil ? 0 : 1
@@ -296,6 +350,7 @@ final class EffectsRenderer {
         n.apply(a)
         n.shader = nil
         n.zPosition = 0
+        n.anchorPoint = CGPoint(x: 0.5, y: 0.5)
         n.blendMode = blend
         n.color = tint ?? .white
         n.colorBlendFactor = tint == nil ? 0 : 1

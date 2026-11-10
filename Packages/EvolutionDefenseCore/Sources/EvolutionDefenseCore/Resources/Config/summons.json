@@ -1,0 +1,23 @@
+{
+  "contactDamage": { "perBaseDamage": 6, "maxPerEnemy": 120 },
+  "maxDeployDistanceFromPath": 70,
+  "abilities": [
+    {
+      "id": "militia", "name": "Call Militia", "kind": "minion", "hotkey": "Q",
+      "summary": "Four spear-and-shield militia hold a stretch of road for a few seconds. Good against packs of weaker enemies.",
+      "unlockWave": 3, "cooldown": 40, "duration": 9, "count": 4, "formationRadius": 26,
+      "visual": "militia",
+      "unit": { "hp": 150, "damage": 22, "attacksPerSecond": 1.0, "range": 26, "aggroRange": 130, "leash": 150,
+                "moveSpeed": 95, "armorPenetration": 2, "damageType": "physical", "canTargetAir": false, "radius": 11 }
+    },
+    {
+      "id": "hero", "name": "Summon Hero", "kind": "hero", "archetype": "warrior", "hotkey": "E",
+      "summary": "The Knight Commander: lots of HP, heavy blows and a Whirlwind Cleave. Goes after bosses and elites first.",
+      "unlockWave": 5, "cooldown": 60, "duration": 16, "count": 1, "formationRadius": 0,
+      "visual": "knight",
+      "unit": { "hp": 1800, "damage": 150, "attacksPerSecond": 0.8, "range": 30, "aggroRange": 230, "leash": 280,
+                "moveSpeed": 115, "armorPenetration": 8, "damageType": "physical", "canTargetAir": false, "radius": 16 },
+      "special": { "name": "Whirlwind Cleave", "interval": 4.0, "damage": 220, "radius": 85 }
+    }
+  ]
+}

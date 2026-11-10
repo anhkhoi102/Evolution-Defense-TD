@@ -19,6 +19,8 @@ public struct BalancePlayer: Sendable {
     public var upgradeOnlyBetweenWaves = false
     /// Highest level the player will upgrade to (5 = all).
     public var maxLevel = 5
+    /// Uses the summon abilities (militia on crowds, hero on bosses / elites).
+    public var summons = false
 
     public struct Slot: Sendable {
         public var slot: Int
@@ -46,6 +48,30 @@ public struct BalancePlayer: Sendable {
 
     /// The good plan's pads, every tower of one type (tests single-type strategies).
     public static func monoPlan(_ t: TowerArchetype) -> [Slot] { goodPlan.map { Slot($0.slot, t) } }
+
+    /// Summon decisions, checked every half second during waves.
+    func useSummons(_ w: GameWorld) {
+        guard summons, w.phase == .waveInProgress else { return }
+        let live = w.enemies.filter { $0.isActive && !$0.isFlying }
+        guard !live.isEmpty else { return }
+        // Where the crowd is thickest: the enemy with the most ground neighbours within 120 points.
+        func crowd() -> (Enemy, Int)? {
+            live.map { e in (e, live.filter { $0.position.distanceSquared(to: e.position) < 120 * 120 }.count) }
+                .max { $0.1 < $1.1 }
+        }
+        // Deploy a little ahead of a moving enemy so the units meet it.
+        func ahead(_ e: Enemy, _ by: CGFloat) -> CGPoint { w.path.position(at: min(e.distance + by, w.path.totalLength - 60)) }
+        if w.summonStatus("hero")?.isReady == true {
+            if let big = live.filter({ $0.isBoss || $0.isElite }).max(by: { $0.distance < $1.distance }) {
+                w.summon("hero", at: ahead(big, 90))
+            } else if let (e, n) = crowd(), n >= 8 {
+                w.summon("hero", at: ahead(e, 70))
+            }
+        }
+        if w.summonStatus("militia")?.isReady == true, let (e, n) = crowd(), n >= 5 {
+            w.summon("militia", at: ahead(e, 60))
+        }
+    }
 
     func act(_ w: GameWorld, config: GameConfiguration) {
         let preparing = w.phase == .preparation
@@ -122,6 +148,7 @@ public struct BalancePlayer: Sendable {
         while !w.phase.isOver && w.time < 60 * 45 {
             let preparing = w.phase == .preparation
             if (preparing && !wasPreparing) || ticks % 180 == 0 { act(w, config: config) }
+            if ticks % 30 == 0 { useSummons(w) }
             wasPreparing = preparing
             ticks += 1
             w.step(dt)

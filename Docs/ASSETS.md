@@ -38,6 +38,7 @@ manifest.
 | Entity | Id | Required animations | Notes |
 |---|---|---|---|
 | Enemy | `enemy.<visual>` | `walk` (or `idle`) | optional `death` (one-shot) |
+| Summoned ally | `summon.<visual>` (`militia`, `knight`) | `idle`, `walk`, `attack` (one-shot), `death` | from `summons.json → visual`; baked by `blender/bake_summons.py` |
 | Tower base | `tower.<visual>.<level>.base` | `default` | one per level 1–5 (upgrade variants) |
 | Tower weapon | `tower.<visual>.<level>.head` | `idle` | optional `fire` (one-shot after each shot) |
 | Projectile | `projectile.<visual>` | `flight` (or `default`) | |

@@ -1220,6 +1220,138 @@
     "spinPerSecond": 15
    }
   },
+  "summon.knight": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "assaultRobot",
+       "radius": 17,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "assaultRobot",
+       "radius": 17,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "assaultRobot",
+       "radius": 17,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "assaultRobot",
+       "radius": 17,
+       "frame": 3
+      }
+     ],
+     "fps": 8
+    },
+    "idle": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "assaultRobot",
+       "radius": 17,
+       "frame": 0
+      }
+     ]
+    },
+    "attack": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "assaultRobot",
+       "radius": 17,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "assaultRobot",
+       "radius": 17,
+       "frame": 2
+      }
+     ],
+     "fps": 8,
+     "loop": false
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 26,
+    "healthBarWidth": 37.4
+   }
+  },
+  "summon.militia": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "scoutRobot",
+       "radius": 12,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "scoutRobot",
+       "radius": 12,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "scoutRobot",
+       "radius": 12,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "scoutRobot",
+       "radius": 12,
+       "frame": 3
+      }
+     ],
+     "fps": 8
+    },
+    "idle": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "scoutRobot",
+       "radius": 12,
+       "frame": 0
+      }
+     ]
+    },
+    "attack": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "scoutRobot",
+       "radius": 12,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "scoutRobot",
+       "radius": 12,
+       "frame": 2
+      }
+     ],
+     "fps": 8,
+     "loop": false
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 21,
+    "healthBarWidth": 26.4
+   }
+  },
   "tower.heavy.1.base": {
    "facing": "fixed",
    "animations": {

@@ -52,6 +52,21 @@ public struct PathGeometry: Sendable {
         return best
     }
 
+    /// The nearest point on the path to `p`, its distance along the path, and how far `p` is from it.
+    public func closestPoint(to p: CGPoint) -> (point: CGPoint, alongPath: CGFloat, offset: CGFloat) {
+        var best = (point: points[0], alongPath: CGFloat(0), offset: CGFloat.greatestFiniteMagnitude)
+        for i in 0..<segmentCount {
+            let a = points[i], b = points[i + 1]
+            let dx = b.x - a.x, dy = b.y - a.y
+            let len2 = dx * dx + dy * dy
+            let t = len2 > 0 ? max(0, min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2)) : 0
+            let q = CGPoint(x: a.x + dx * t, y: a.y + dy * t)
+            let d = ((p.x - q.x) * (p.x - q.x) + (p.y - q.y) * (p.y - q.y)).squareRoot()
+            if d < best.offset { best = (q, cumulative[i] + t * len2.squareRoot(), d) }
+        }
+        return best
+    }
+
     /// Number of direction changes sharper than `minAngleDegrees`.
     public func turnCount(minAngleDegrees: CGFloat = 30) -> Int {
         guard points.count >= 3 else { return 0 }

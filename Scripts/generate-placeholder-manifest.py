@@ -30,6 +30,21 @@ for e in json.load(open(os.path.join(CFG, "enemies.json"))):
                     "shieldDiameter": round(r * 2.6, 1)},
     }
 
+# Summoned allies: the placeholder art has no people, so they borrow the humanoid
+# robot drawings (a fallback only; the shipped pack has baked soldiers).
+SUMMON_STAND_IN = {"militia": ("scoutRobot", 12), "knight": ("assaultRobot", 17)}
+summons_path = os.path.join(CFG, "summons.json")
+if os.path.exists(summons_path):
+    for a in json.load(open(summons_path))["abilities"]:
+        key, r = SUMMON_STAND_IN.get(a["visual"], ("scoutRobot", 12))
+        walk = [proc("creature", key=key, radius=r, frame=i) for i in range(4)]
+        sprites[f"summon.{a['visual']}"] = {
+            "facing": "rotate",
+            "animations": {"walk": {"frames": walk, "fps": 8}, "idle": {"frames": walk[:1]},
+                           "attack": {"frames": walk[1:3], "fps": 8, "loop": False}},
+            "metrics": {"healthBarOffsetY": r + 9, "healthBarWidth": round(max(22, r * 2.2), 1)},
+        }
+
 # Towers: static base + rotating head per level; projectiles per level.
 LOBBED = {"stone", "boulder", "cannonball", "shell", "plasmaOrb"}
 ENERGY = {"laser", "railSlug", "orbitalBeam", "plasmaOrb"}

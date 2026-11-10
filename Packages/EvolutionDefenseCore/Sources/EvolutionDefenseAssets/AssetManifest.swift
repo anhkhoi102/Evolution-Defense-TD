@@ -195,6 +195,8 @@ public struct ProceduralSource: Codable, Sendable, Equatable {
 /// ask `AssetID` so the naming scheme lives in one place.
 public enum AssetID {
     public static func enemy(_ visual: String) -> String { "enemy.\(visual)" }
+    /// Summoned ally (militia, hero): clips idle, walk, attack, death.
+    public static func summon(_ visual: String) -> String { "summon.\(visual)" }
     public static func towerBase(_ visual: String, level: Int) -> String { "tower.\(visual).\(level).base" }
     public static func towerHead(_ visual: String, level: Int) -> String { "tower.\(visual).\(level).head" }
     public static func projectile(_ visual: String) -> String { "projectile.\(visual)" }

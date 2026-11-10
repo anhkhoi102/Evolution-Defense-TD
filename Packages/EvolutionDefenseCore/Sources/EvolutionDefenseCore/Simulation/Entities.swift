@@ -184,3 +184,53 @@ public final class Projectile {
 
     init(poolIndex: Int) { self.poolIndex = poolIndex }
 }
+
+/// A temporary allied unit from a summon ability (minion or hero). It walks to
+/// enemies near its post, hits them through the normal damage model, and takes
+/// contact damage from enemies touching it. It never blocks enemy movement.
+public final class SummonUnit {
+    public enum State: Sendable { case idle, moving, attacking }
+
+    public let id: Int
+    public let ability: SummonAbilityDefinition
+    public let maxHP: Double
+    public internal(set) var hp: Double
+    public internal(set) var position: CGPoint
+    /// Where the unit was placed; it returns here when nothing is in reach.
+    public let post: CGPoint
+    public internal(set) var heading: CGFloat
+    public internal(set) var state: State = .idle
+    public let spawnTime: Double
+    public let expiresAt: Double
+    public internal(set) var isAlive = true
+    /// Current target (nil when idle or walking home).
+    public internal(set) weak var target: Enemy?
+    /// Time of the last attack (drives the attack animation).
+    public internal(set) var lastAttackTime: Double = -100
+    public internal(set) var lastHitTakenTime: Double = -100
+    public internal(set) var damageDealt: Double = 0
+    public internal(set) var kills = 0
+
+    var attackCooldown: Double = 0
+    var specialTimer: Double
+    var retargetTimer: Double = 0
+
+    public var stats: SummonUnitStats { ability.unit }
+    public var isHero: Bool { ability.kind == .hero }
+    public var hpFraction: Double { max(0, hp / maxHP) }
+
+    init(id: Int, ability: SummonAbilityDefinition, at position: CGPoint, post: CGPoint, time: Double) {
+        self.id = id
+        self.ability = ability
+        self.maxHP = ability.unit.hp
+        self.hp = ability.unit.hp
+        self.position = position
+        self.post = post
+        self.heading = -.pi / 2
+        self.spawnTime = time
+        self.expiresAt = time + ability.duration
+        self.specialTimer = (ability.special?.interval ?? 0) * 0.5
+    }
+
+    public func remaining(at time: Double) -> Double { max(0, expiresAt - time) }
+}

@@ -101,11 +101,14 @@ func runSummary(_ args: [String]) {
     let seeds = args.compactMap { UInt64($0) }
     let seedList = seeds.isEmpty ? [3, 7, 11, 23, 42] as [UInt64] : seeds
     let events = args.contains("events")
+    let withSummons = args.contains("summons")
     let only = args.first { $0.hasPrefix("only=") }.map { String($0.dropFirst(5)) }
     if events { print("(random events ON)") }
+    if withSummons { print("(players use summon abilities)") }
     print("Strategy                             " + Difficulty.allCases.map { $0.rawValue.padding(toLength: 24, withPad: " ", startingAt: 0) }.joined())
     print("                                     " + Difficulty.allCases.map { _ in "wins  furthest  HP left   " }.joined())
-    for p in BalancePlayer.profiles where only.map({ p.name.hasPrefix($0) }) ?? true {
+    for var p in BalancePlayer.profiles where only.map({ p.name.hasPrefix($0) }) ?? true {
+        p.summons = withSummons
         var line = p.name.padding(toLength: 37, withPad: " ", startingAt: 0)
         for d in Difficulty.allCases {
             let rs = seedList.map { p.play(config: config, seed: $0, options: MatchOptions(difficulty: d, randomEvents: events)) }

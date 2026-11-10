@@ -239,10 +239,12 @@ final class EnemyRenderer {
         let rotation = sprite.facing == .rotate ? e.heading : 0
         if let death = sprite.animations["death"] {
             let dir = sprite.facing == .directional ? death.direction(for: e.heading) : 0
-            effects.play(death, direction: dir, at: e.position, rotation: rotation, flipped: v.body.xScale < 0)
+            effects.play(death, direction: dir, at: e.position, rotation: rotation, flipped: v.body.xScale < 0,
+                         anchor: sprite.anchor)
         } else {
             let dir = sprite.facing == .directional ? walk.direction(for: e.heading) : 0
-            effects.corpse(walk.art(direction: dir, frame: v.currentFrame % 1000), at: e.position, rotation: rotation, size: sprite.size)
+            effects.corpse(walk.art(direction: dir, frame: v.currentFrame % 1000), at: e.position, rotation: rotation,
+                           size: sprite.size, anchor: sprite.anchor)
         }
     }
 }

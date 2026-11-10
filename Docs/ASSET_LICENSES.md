@@ -29,7 +29,7 @@ All downloads: **9 November 2026**.
 | Nature Kit | Kenney | CC0 1.0 | <https://kenney.nl/assets/nature-kit> | Map background props, trees, rocks, spawn cave, primitive base (tents, fence) |
 | Space Kit | Kenney | CC0 1.0 | <https://kenney.nl/assets/space-kit> | Futuristic base, level 5 tower weapons |
 | Blaster Kit | Kenney | CC0 1.0 | <https://kenney.nl/assets/blaster-kit> | Sniper level 4 weapon |
-| Mini Characters | Kenney | CC0 1.0 | <https://kenney.nl/assets/mini-characters> | Tower crews, arrows, spears |
+| Mini Characters | Kenney | CC0 1.0 | <https://kenney.nl/assets/mini-characters> | Tower crews, arrows, spears; the summoned Militia (soldier, spear, round shield) and Hero (knight, sword, rectangular shield) with their animations |
 | Ultimate Animated Animals (July 2021) | Quaternius | CC0 1.0 (stated on the pack page) | <https://quaternius.com/packs/ultimateanimatedanimals.html> | Wolf, bear (recoloured bull without horns), alpha beast, giant wolf, armoured beast, mutant beast |
 | Animated Monster Pack | Quaternius | CC0 1.0 | <https://opengameart.org/content/lowpoly-animated-monsters> | Flying monster (bat), ancient dragon, swarm creature (slime) |
 | Textured Cute Monster Pack | Quaternius | CC0 1.0 | <https://opengameart.org/content/textured-cute-monster-pack> | Troll (yeti), armoured monster (crab), giant mutant (cyclops), mutant titan (green demon) |

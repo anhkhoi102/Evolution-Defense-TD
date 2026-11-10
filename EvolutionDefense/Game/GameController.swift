@@ -71,6 +71,38 @@ struct BossSnapshot: Equatable {
 }
 
 /// One enemy type in the next wave (wave intel).
+/// Everything an ability button shows. Times are rounded to 0.1 s so the
+/// SwiftUI view only updates when the display would change.
+struct AbilitySnapshot: Identifiable, Equatable {
+    var id: String
+    var name: String
+    var kind: SummonKind
+    var hotkey: String?
+    var unlockWave: Int
+    var isUnlocked: Bool
+    var isReady: Bool
+    var cooldown: Double
+    var cooldownFraction: Double
+    var activeRemaining: Double
+    var aliveUnits: Int
+    var ability: SummonAbilityDefinition
+
+    init(_ s: SummonAbilityStatus) {
+        ability = s.ability
+        id = s.ability.id; name = s.ability.name; kind = s.ability.kind; hotkey = s.ability.hotkey
+        unlockWave = s.ability.unlockWave; isUnlocked = s.isUnlocked; isReady = s.isReady
+        cooldown = (s.cooldownRemaining * 10).rounded(.up) / 10
+        cooldownFraction = (s.cooldownFraction * 100).rounded() / 100
+        activeRemaining = (s.activeRemaining * 10).rounded(.up) / 10
+        aliveUnits = s.aliveUnits
+    }
+
+    static func == (a: AbilitySnapshot, b: AbilitySnapshot) -> Bool {
+        a.id == b.id && a.isUnlocked == b.isUnlocked && a.isReady == b.isReady && a.cooldown == b.cooldown
+            && a.activeRemaining == b.activeRemaining && a.aliveUnits == b.aliveUnits
+    }
+}
+
 struct EnemyIntel: Identifiable, Equatable {
     var id: String
     var name: String
@@ -204,12 +236,18 @@ final class GameController {
 
     // Interaction state
     var buildSelection: TowerArchetype?
+    /// Summon ability waiting for the player to click a spot on the road (deployment mode).
+    private(set) var summonSelection: String?
+    /// Ability buttons (refreshed every frame, written only when they change).
+    private(set) var abilities: [AbilitySnapshot] = []
     private(set) var selectedTower: TowerSnapshot?
     /// Tower id whose Sell button was pressed once (press again to confirm).
     private(set) var sellArmedFor: Int?
     private(set) var isRepairPanelOpen = false
     private(set) var isTechPanelOpen = false
     @ObservationIgnored private var seenEnemies: Set<String> = []
+    /// Abilities whose unlock has been announced this match.
+    @ObservationIgnored private var announcedAbilities: Set<String> = []
     var isPaused = false
     private(set) var speed: Double = 1
     private(set) var toast: Toast?
@@ -305,6 +343,9 @@ final class GameController {
         set(\.waveNumber, world.waveNumber)
         set(\.era, world.currentEra)
         set(\.phase, world.phase)
+        set(\.abilities, world.summonAbilities.compactMap { world.summonStatus($0.id).map(AbilitySnapshot.init) })
+        // Leave deployment mode when the ability can no longer be used (wave ended, match over).
+        if let id = summonSelection, abilities.first(where: { $0.id == id })?.isReady != true { summonSelection = nil }
         set(\.enemiesRemaining, world.enemiesRemainingInWave)
         set(\.stats, world.stats)
         set(\.countdownSeconds, Int(world.preparationRemaining.rounded(.up)))
@@ -347,6 +388,7 @@ final class GameController {
         selectedTower = nil
         sellArmedFor = nil
         buildSelection = (buildSelection == a) ? nil : a
+        summonSelection = nil
         if let a = buildSelection, world.gold < cost(of: a) {
             showToast("Not enough gold for \(config.tower(a).displayName) (\(cost(of: a)))", .warning)
         }
@@ -354,6 +396,7 @@ final class GameController {
 
     func cancelInteraction() {
         buildSelection = nil
+        summonSelection = nil
         selectedTower = nil
         sellArmedFor = nil
         isRepairPanelOpen = false
@@ -387,6 +430,45 @@ final class GameController {
             showToast("That pad is already occupied", .warning)
         case .invalidSlot, .matchOver:
             break
+        }
+        refreshHUD()
+    }
+
+    // MARK: Summons
+
+    /// Ability button / hotkey: enter deployment mode, or say why not.
+    func selectSummon(_ id: String) {
+        guard !isOver, let st = world.summonStatus(id) else { return }
+        if summonSelection == id { summonSelection = nil; return }
+        if !st.isUnlocked {
+            showToast("\(st.ability.name) unlocks at wave \(st.ability.unlockWave)", .info)
+        } else if st.cooldownRemaining > 0 {
+            showToast("\(st.ability.name) is ready in \(Int(st.cooldownRemaining.rounded(.up))) s", .warning)
+            audio.play(.error)
+        } else if phase != .waveInProgress {
+            showToast("Call \(st.ability.kind == .hero ? "the hero" : "the militia") during a wave", .info)
+        } else {
+            buildSelection = nil
+            selectedTower = nil
+            isRepairPanelOpen = false
+            isTechPanelOpen = false
+            summonSelection = id
+            showToast("Click on or beside the road to deploy. Right-click or Esc to cancel", .info)
+        }
+        refreshHUD()
+    }
+
+    /// Deployment click on the map (world coordinates).
+    func confirmSummon(at p: CGPoint) {
+        guard let id = summonSelection else { return }
+        switch world.summon(id, at: p) {
+        case .success:
+            summonSelection = nil
+        case .invalidLocation:
+            showToast("Deploy on or beside the road", .warning)
+            audio.play(.error)
+        case .onCooldown, .locked, .notDuringWave, .matchOver, .unknownAbility:
+            summonSelection = nil
         }
         refreshHUD()
     }
@@ -522,7 +604,9 @@ final class GameController {
     func handleKey(keyCode: UInt16, characters: String) -> Bool {
         switch keyCode {
         case 53: // Escape
-            if buildSelection != nil || selectedTower != nil || isRepairPanelOpen || isTechPanelOpen { cancelInteraction() } else { togglePause() }
+            if buildSelection != nil || summonSelection != nil || selectedTower != nil || isRepairPanelOpen || isTechPanelOpen {
+                cancelInteraction()
+            } else { togglePause() }
             return true
         case 49: // Space
             togglePause(); return true
@@ -542,6 +626,8 @@ final class GameController {
         case "t": toggleTechPanel()
         case "n", "\r": startNextWave()
         case "f": toggleSpeed()
+        case let k where world.summonAbilities.contains { $0.hotkey?.lowercased() == k }:
+            if let a = world.summonAbilities.first(where: { $0.hotkey?.lowercased() == k }) { selectSummon(a.id) }
         case "d": showsDebugStats.toggle()
         default: return false
         }
@@ -578,6 +664,14 @@ final class GameController {
         case .baseStruck(_, let ability, let dmg):
             baseHitCount += 1
             if dmg > 0 { showToast("\(ability) hit the base (−\(dmg) HP)", .warning) }
+        case .summonReady(let a):
+            let key = a.hotkey.map { " (\($0))" } ?? ""
+            if announcedAbilities.insert(a.id).inserted {
+                showToast("New ability: \(a.name)\(key). Use it during a wave", .success)
+            } else {
+                showToast("\(a.name) is ready\(key)", .info)
+            }
+            audio.play(.research, volume: 0.6)
         case .waveCleared(let summary):
             lastSummary = summary
             showSummary = summary.number < totalWaves

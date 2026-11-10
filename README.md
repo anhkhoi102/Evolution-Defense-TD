@@ -103,6 +103,8 @@ also find it in **Launchpad**.
 | **F** | Play faster (2×) |
 | **U** | Upgrade the selected tower |
 | **T** | Open the technology tree |
+| **Q** | Call the Militia (from wave 3) |
+| **E** | Summon the Hero (from wave 5) |
 | **R** | Repair your base (between waves) |
 | **Esc** | Cancel / pause |
 
@@ -114,6 +116,7 @@ also find it in **Launchpad**.
 - ✨ Monsters with a **gold ring** are **elites**: much tougher. Use Heavy towers on them.
 - 💚 **Trolls heal** the monsters around them (you'll see a green circle). Stop them first!
 - 🧭 The bottom panel tells you what kind of wave is coming (air, armored, swarm…). Get ready for it!
+- 🛡️ **Call for help!** During a wave, press **Q** for the Militia or **E** for the Hero, then click on the road. They fight for a few seconds, then need time to recharge. The Hero is great against bosses!
 - 😌 Too hard? Choose **Easy** when you start a new game.
 - 💾 The game saves by itself between waves. Click **Continue** to keep playing later.
 

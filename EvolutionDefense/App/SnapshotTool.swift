@@ -15,7 +15,8 @@ enum SnapshotTool {
     /// A tool will screenshot the window: map backgrounds go transparent so the
     /// SpriteKit image can be composited under the SwiftUI layer.
     static let isDeathTest = ProcessInfo.processInfo.environment["EVO_DEATH_TEST"] != nil
-    static let capturesWindow = isActive || isAssetDemo || isDeathTest
+    static let isSummonTest = ProcessInfo.processInfo.environment["EVO_SUMMON_TEST"] != nil
+    static let capturesWindow = isActive || isAssetDemo || isDeathTest || isSummonTest
 
     /// Output folder. The app is sandboxed, so images go to the container's
     /// temporary folder and Scripts/snapshot.sh copies them out.
@@ -287,6 +288,9 @@ enum SnapshotTool {
                 let mix = ["stealthRobot", "assaultRobot", "scoutRobot", "heavyMech", "swarmCreature", "mutantBeast"]
                 for i in 0..<300 { w.debugSpawn(mix[i % mix.count], atDistance: CGFloat(i) * 7) }
                 w.debugSpawn("titanWarMachine", atDistance: 400)
+                // Both summon abilities on the field during the measurement.
+                _ = w.summon("militia", at: w.path.position(at: 900))
+                _ = w.summon("hero", at: w.path.position(at: 1500))
                 await pause(1.0)
                 c.scene.resetFrameTimes()
                 var peakEnemies = 0
@@ -379,6 +383,75 @@ enum SnapshotTool {
             }
             for _ in 0..<15 { await pause(0.1); worst = max(worst, c.scene.debugEffectSizeMismatches); checks += 1 }
             print("DEATHTEST \(worst == 0 ? "PASS" : "FAIL") frames=\(n) checks=\(checks) worstMismatchedSprites=\(worst)")
+            fflush(stdout)
+            NSApp.terminate(nil)
+        }
+    }
+
+    // MARK: Summon check (EVO_SUMMON_TEST=1)
+
+    /// Both summon abilities on the Dragon wave: preview (valid / invalid),
+    /// arrival, fighting, the hero's special, then expiry. Fails if summon
+    /// sprites outlive their units or any effect sprite is mis-sized.
+    static func runSummonTestIfRequested(router: AppRouter) {
+        guard isSummonTest else { return }
+        Task { @MainActor in
+            let out = outputDirectory
+            try? FileManager.default.removeItem(at: out)
+            try? FileManager.default.createDirectory(at: out, withIntermediateDirectories: true)
+            await pause(1.0)
+            if let w = NSApp.windows.first { w.setContentSize(NSSize(width: 1440, height: 860)); w.center() }
+            router.newGame(MatchOptions(difficulty: .normal, randomEvents: false))
+            await pause(1.0)
+            guard let c = router.game else { NSApp.terminate(nil); return }
+            let w = c.world
+            var failures: [String] = []
+            w.debugSetGold(100_000)
+            w.debugSkipToWave(10)
+            for (i, s) in w.config.map.buildSlots.prefix(6).enumerated() { w.build([.splash, .sniper, .heavy][i % 3], atSlot: s.id) }
+            for t in w.towers { for _ in 0..<2 { _ = w.upgrade(t) } }
+            c.startNextWave()
+            c.scene.fastForward(seconds: 14)
+            capture(out.appendingPathComponent("summon-00-buttons-ready.png"))
+            // Preview: valid spot on the road, then an invalid one out in the grass.
+            let lead = w.enemies.filter(\.isActive).max { $0.distance < $1.distance }
+            let spot = w.path.position(at: min((lead?.distance ?? 400) + 160, w.path.totalLength - 120))
+            c.selectSummon("hero")
+            c.scene.debugHover(world: spot)
+            await pause(0.3)
+            capture(out.appendingPathComponent("summon-01-preview-valid.png"))
+            // A spot near the first one but far from every stretch of the winding road.
+            let grass = [CGPoint(x: 0, y: 160), CGPoint(x: 0, y: -160), CGPoint(x: 160, y: 0), CGPoint(x: -160, y: 0),
+                         CGPoint(x: 120, y: 120), CGPoint(x: -120, y: -120), CGPoint(x: 120, y: -120), CGPoint(x: -120, y: 120)]
+                .map { CGPoint(x: spot.x + $0.x, y: spot.y + $0.y) }
+                .first { w.summonDeployPoint(near: $0) == nil } ?? CGPoint(x: -100, y: -100)
+            c.scene.debugHover(world: grass)
+            await pause(0.3)
+            capture(out.appendingPathComponent("summon-02-preview-invalid.png"))
+            c.confirmSummon(at: grass)
+            if !w.summons.isEmpty { failures.append("deployed on an invalid spot") }
+            c.confirmSummon(at: spot)
+            if w.summons.count != 1 { failures.append("hero not deployed") }
+            c.selectSummon("militia")
+            let spot2 = w.path.position(at: min((lead?.distance ?? 400) + 40, w.path.totalLength - 120))
+            c.confirmSummon(at: spot2)
+            let units = w.summons.count
+            if units != 1 + (w.config.summons.ability("militia")?.count ?? 0) { failures.append("militia not deployed (\(units) units)") }
+            await pause(0.15)
+            if c.scene.debugSummonNodes != units { failures.append("drawn \(c.scene.debugSummonNodes) of \(units) units") }
+            for n in 0..<10 {
+                await pause(0.35)
+                capture(out.appendingPathComponent(String(format: "summon-%02d-fight.png", 3 + n)))
+                if c.scene.debugEffectSizeMismatches > 0 { failures.append("mis-sized effect sprites") }
+            }
+            // Past both durations: everything must be gone, sprites included.
+            c.scene.fastForward(seconds: 20)
+            await pause(0.3)
+            capture(out.appendingPathComponent("summon-13-after-expiry.png"))
+            if !w.summons.isEmpty { failures.append("\(w.summons.count) units outlived their duration") }
+            if c.scene.debugSummonNodes != 0 { failures.append("\(c.scene.debugSummonNodes) summon sprites leaked") }
+            let st = c.abilities
+            print("SUMMONTEST \(failures.isEmpty ? "PASS" : "FAIL: " + failures.joined(separator: "; ")) abilities=\(st.map { "\($0.id):cd\($0.cooldown)" })")
             fflush(stdout)
             NSApp.terminate(nil)
         }

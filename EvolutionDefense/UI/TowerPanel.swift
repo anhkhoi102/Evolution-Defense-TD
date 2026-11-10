@@ -14,6 +14,9 @@ struct BottomPanel: View {
             }
             InfoPanel(controller: controller)
                 .frame(maxWidth: .infinity)
+            ForEach(controller.abilities) { ab in
+                AbilityButton(ability: ab, selected: controller.summonSelection == ab.id) { controller.selectSummon(ab.id) }
+            }
             TechButton(controller: controller)
             NextWaveButton(controller: controller)
         }
@@ -134,8 +137,10 @@ private struct StatCell: View {
             Text(label.uppercased()).font(.system(size: 9, weight: .bold, design: .rounded)).foregroundStyle(Theme.textDim)
             HStack(alignment: .firstTextBaseline, spacing: 3) {
                 Text(value).font(Theme.display(16)).monospacedDigit().foregroundStyle(Theme.text)
+                    .fixedSize()          // never "0.6…": the number is the point
                 if let next, next != value {
                     Text("→ \(next)").font(.system(size: 11, weight: .bold, design: .rounded)).monospacedDigit().foregroundStyle(Theme.good)
+                        .lineLimit(1).minimumScaleFactor(0.8)
                 }
             }
         }
@@ -525,6 +530,97 @@ private struct WaveIntelInfo: View {
                 }
             }
         }
+    }
+}
+
+/// Summon ability (Call Militia / Summon Hero): portrait, radial cooldown,
+/// time left while the units are out, unlock wave while locked, hotkey.
+private struct AbilityButton: View {
+    let ability: AbilitySnapshot
+    let selected: Bool
+    let action: () -> Void
+    @State private var pulse = false
+
+    private var accent: Color { ability.kind == .hero ? Theme.gold : Color(red: 0.45, green: 0.78, blue: 1) }
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 3) {
+                ZStack {
+                    Image(nsImage: NSImage(cgImage: ArtLibrary.shared.summonIcon(ability.ability), size: .zero))
+                        .resizable().interpolation(.high).aspectRatio(contentMode: .fit)
+                        .frame(width: 44, height: 44)
+                        .saturation(ability.isUnlocked ? 1 : 0)
+                        .opacity(ability.isUnlocked ? 1 : 0.45)
+                    if ability.isUnlocked && ability.cooldown > 0 {
+                        // Radial cooldown: the dark wedge shrinks as the ability recharges.
+                        CooldownWedge(fraction: ability.cooldownFraction)
+                            .fill(Color.black.opacity(0.6))
+                            .frame(width: 46, height: 46)
+                        Text("\(Int(ability.cooldown.rounded(.up)))")
+                            .font(Theme.display(17)).foregroundStyle(.white)
+                            .shadow(color: .black, radius: 2)
+                    }
+                    if !ability.isUnlocked {
+                        Image(systemName: "lock.fill").font(.system(size: 15, weight: .bold)).foregroundStyle(Theme.text)
+                    }
+                }
+                .frame(width: 48, height: 46)
+                Text(ability.kind == .hero ? "Hero" : "Militia")
+                    .font(.system(size: 12, weight: .bold, design: .rounded)).foregroundStyle(Theme.text)
+                Group {
+                    if !ability.isUnlocked {
+                        Text("Wave \(ability.unlockWave)").foregroundStyle(Theme.textDim)
+                    } else if ability.aliveUnits > 0 {
+                        Text("\(Int(ability.activeRemaining.rounded(.up)))s left").foregroundStyle(accent)
+                    } else if ability.cooldown > 0 {
+                        Text("Recharging").foregroundStyle(Theme.textDim)
+                    } else if ability.isReady {
+                        Text("Ready").foregroundStyle(Theme.good)
+                    } else {
+                        Text("In waves").foregroundStyle(Theme.textDim)
+                    }
+                }
+                .font(.system(size: 10.5, weight: .heavy, design: .rounded)).monospacedDigit()
+                KeyCap(key: ability.hotkey ?? "")
+            }
+            .frame(width: 66, height: 108)
+            .background(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(selected ? accent.opacity(0.28) : ability.aliveUnits > 0 ? accent.opacity(0.14) : Theme.panelHigh))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(borderColor, lineWidth: selected || ability.isReady ? 2 : 1))
+            .shadow(color: ability.isReady ? Theme.good.opacity(pulse ? 0.55 : 0.15) : .clear, radius: 8)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help("\(ability.name) (\(ability.hotkey ?? "")): \(ability.ability.summary)")
+        .onChange(of: ability.isReady) { _, ready in
+            // A short glow when the ability becomes available again.
+            pulse = false
+            if ready { withAnimation(.easeInOut(duration: 0.6).repeatCount(3, autoreverses: true)) { pulse = true } }
+        }
+    }
+
+    private var borderColor: Color {
+        if selected { return accent }
+        if ability.isReady { return Theme.good.opacity(0.85) }
+        if ability.aliveUnits > 0 { return accent.opacity(0.7) }
+        return Theme.stroke
+    }
+}
+
+/// Pie wedge covering the part of the cooldown still to go (starts at 12 o'clock).
+private struct CooldownWedge: Shape {
+    var fraction: Double
+    var animatableData: Double { get { fraction } set { fraction = newValue } }
+    func path(in rect: CGRect) -> Path {
+        var p = Path()
+        let c = CGPoint(x: rect.midX, y: rect.midY)
+        p.move(to: c)
+        p.addArc(center: c, radius: min(rect.width, rect.height) / 2, startAngle: .degrees(-90),
+                 endAngle: .degrees(-90 + 360 * fraction), clockwise: false)
+        p.closeSubpath()
+        return p
     }
 }
 

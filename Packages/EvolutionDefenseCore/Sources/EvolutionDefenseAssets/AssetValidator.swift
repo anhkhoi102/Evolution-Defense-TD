@@ -17,6 +17,7 @@ public enum AssetValidator {
     public static func requiredIDs(for config: GameConfiguration) -> [String] {
         var ids: [String] = []
         for e in config.enemies.values.sorted(by: { $0.id < $1.id }) { ids.append(AssetID.enemy(e.visual)) }
+        for s in config.summons.abilities { ids.append(AssetID.summon(s.visual)) }
         for a in TowerArchetype.allCases {
             let t = config.tower(a)
             for l in t.levels {

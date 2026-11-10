@@ -14,6 +14,7 @@ final class GameScene: SKScene {
 
     private let mapRenderer: MapRenderer
     private let enemyRenderer: EnemyRenderer
+    private let summonRenderer: SummonRenderer
     private let towerRenderer: TowerRenderer
     private let projectileRenderer: ProjectileRenderer
     private let effects: EffectsRenderer
@@ -22,6 +23,12 @@ final class GameScene: SKScene {
     private let aoeIndicator = SKShapeNode()
     private let ghost = SKSpriteNode()
     private let ghostHead = SKSpriteNode()
+    /// Summon deployment preview: footprint ellipse and ghost units in formation.
+    private let deployIndicator = SKShapeNode()
+    private var deployGhosts: [SKSpriteNode] = []
+    private var deployIndicatorRadius: CGFloat = -1
+    /// Mouse position in world coordinates (nil when outside the playfield).
+    private var hoverWorld: CGPoint?
     private var rangeRadius: CGFloat = -1
     private var aoeRadius: CGFloat = -1
 
@@ -47,6 +54,7 @@ final class GameScene: SKScene {
         loadedEra = world.currentEra
         mapRenderer = MapRenderer(map: world.config.map, art: art)
         enemyRenderer = EnemyRenderer(art: art)
+        summonRenderer = SummonRenderer(art: art)
         towerRenderer = TowerRenderer(art: art)
         projectileRenderer = ProjectileRenderer(art: art)
         effects = EffectsRenderer(art: art)
@@ -67,9 +75,11 @@ final class GameScene: SKScene {
         worldRoot.addChild(effects.groundLayer)
         worldRoot.addChild(projectileRenderer.shadowLayer)
         worldRoot.addChild(enemyRenderer.layer)
+        worldRoot.addChild(summonRenderer.layer)
         worldRoot.addChild(towerRenderer.layer)
         worldRoot.addChild(projectileRenderer.layer)
         worldRoot.addChild(enemyRenderer.barLayer)
+        worldRoot.addChild(summonRenderer.barLayer)
         worldRoot.addChild(effects.airLayer)
         worldRoot.addChild(effects.textLayer)
 
@@ -93,6 +103,20 @@ final class GameScene: SKScene {
         ghostHead.zRotation = .pi / 4
         ghost.addChild(ghostHead)
         worldRoot.addChild(ghost)
+
+        deployIndicator.zPosition = Layer.overlay
+        deployIndicator.isHidden = true
+        deployIndicator.isAntialiased = true
+        deployIndicator.lineWidth = 2.5
+        worldRoot.addChild(deployIndicator)
+        for _ in 0..<6 {
+            let g = SKSpriteNode()
+            g.alpha = 0.6
+            g.zPosition = Layer.overlay + 1
+            g.isHidden = true
+            deployGhosts.append(g)
+            worldRoot.addChild(g)
+        }
     }
 
     /// Performance mode: fewer effects, no floating texts or muzzle flashes,
@@ -103,6 +127,7 @@ final class GameScene: SKScene {
         effects.lightweight = performanceMode
         projectileRenderer.drawsShadows = !performanceMode
         enemyRenderer.lightweight = performanceMode
+        summonRenderer.lightweight = performanceMode
     }
 
     private func addShake(_ strength: CGFloat, _ duration: Double) {
@@ -156,6 +181,7 @@ final class GameScene: SKScene {
 
         let visualDt = running ? dt * c.speed : 0
         enemyRenderer.sync(world: world)
+        summonRenderer.sync(world: world)
         towerRenderer.sync(world: world, dt: visualDt)
         projectileRenderer.sync(world: world)
         effects.update(dt: visualDt)
@@ -171,6 +197,7 @@ final class GameScene: SKScene {
         world.drainEvents { handle($0) }
         if mapRenderer.era != world.currentEra { mapRenderer.setEra(world.currentEra, animated: false) }
         enemyRenderer.sync(world: world)
+        summonRenderer.sync(world: world)
         towerRenderer.sync(world: world, dt: 1)
         projectileRenderer.sync(world: world)
         effects.update(dt: 0.05)
@@ -260,6 +287,28 @@ final class GameScene: SKScene {
             effects.missile(from: enemy.position, to: basePosition)
             mapRenderer.baseHit()
             audio.play(.missile)
+        case .summonDeployed(let ability, let units, let at):
+            effects.summonArrive(at: units.map(\.position), centre: at, hero: ability.kind == .hero)
+            audio.play(ability.kind == .hero ? .eventGood : .build)
+            if ability.kind == .hero { addShake(3, 0.2) }
+        case .summonAttacked(let u, let target):
+            effects.summonHit(at: target.position, hero: u.isHero)
+            audio.play(.hit, volume: u.isHero ? 0.6 : 0.35)
+        case .summonSpecial(let u, _, let radius, _):
+            effects.heroSpecial(at: u.position, radius: CGFloat(radius))
+            audio.play(.explosion, volume: 0.45)
+            addShake(2.5, 0.15)
+        case .summonDefeated(let u):
+            let sprite = art.summon(u.ability)
+            if let death = sprite.animations["death"] {
+                effects.play(death, direction: death.direction(for: u.heading), at: u.position, rotation: 0,
+                             flipped: false, anchor: sprite.anchor)
+            }
+            audio.play(.enemyDeath, volume: 0.6)
+        case .summonExpired(let u):
+            if let a = summonRenderer.currentArt(of: u) {
+                effects.summonVanish(a.art, at: u.position, size: a.size, anchor: a.anchor, hero: u.isHero)
+            }
         case .enemiesHealed(let healer, _, let count, let radius):
             effects.healPulse(at: healer.position, radius: CGFloat(radius), healed: count)
         case .baseShieldAbsorbed:
@@ -293,8 +342,53 @@ final class GameScene: SKScene {
 
     // MARK: Overlays (range / AoE / build ghost)
 
+    /// Summon deployment preview under the mouse: the units' engagement area and
+    /// ghost units in formation, blue/gold where allowed and red where not.
+    private func updateDeployPreview(_ c: GameController) {
+        guard let id = c.summonSelection, let a = world.config.summons.ability(id), let p = hoverWorld else {
+            deployIndicator.isHidden = true
+            for g in deployGhosts { g.isHidden = true }
+            return
+        }
+        let valid = world.summonDeployPoint(near: p) != nil
+        let r = CGFloat(a.unit.aggroRange)
+        if r != deployIndicatorRadius {
+            deployIndicatorRadius = r
+            let ry = r * proj.groundScaleY
+            deployIndicator.path = CGPath(ellipseIn: CGRect(x: -r, y: -ry, width: 2 * r, height: 2 * ry), transform: nil)
+        }
+        let ok = a.kind == .hero ? NSColor(srgbRed: 1, green: 0.82, blue: 0.4, alpha: 1)
+                                 : NSColor(srgbRed: 0.45, green: 0.78, blue: 1, alpha: 1)
+        let bad = NSColor(srgbRed: 1, green: 0.3, blue: 0.3, alpha: 1)
+        let color = valid ? ok : bad
+        deployIndicator.strokeColor = color.withAlphaComponent(0.85)
+        deployIndicator.fillColor = color.withAlphaComponent(0.1)
+        deployIndicator.position = proj.ground(p)
+        deployIndicator.isHidden = false
+        // Ghost units where they will stand, facing the player.
+        let sprite = art.summon(a)
+        let idle = sprite.clip("idle", "walk")
+        let frame = idle.art(direction: sprite.facing == .directional ? idle.direction(for: -.pi / 2) : 0, frame: 0)
+        for (k, g) in deployGhosts.enumerated() {
+            guard k < a.count else { g.isHidden = true; continue }
+            var pos = p
+            if a.count > 1 {
+                let ang = CGFloat(k) / CGFloat(a.count) * 2 * .pi + .pi / 4
+                pos = CGPoint(x: p.x + cos(ang) * CGFloat(a.formationRadius), y: p.y + sin(ang) * CGFloat(a.formationRadius))
+            }
+            g.apply(frame)
+            g.anchorPoint = sprite.anchor
+            g.position = proj.ground(pos)
+            g.zPosition = Layer.overlay + 1 + proj.depth(pos) * 0.01
+            g.color = bad
+            g.colorBlendFactor = valid ? 0 : 0.6
+            g.isHidden = false
+        }
+    }
+
     private func updateOverlay() {
         guard let c = controller else { return }
+        updateDeployPreview(c)
         var showRange = false
         var showAoe = false
         ghost.isHidden = true
@@ -370,14 +464,22 @@ final class GameScene: SKScene {
     }
 
     func handleMouseMoved(_ event: NSEvent) {
-        hoverSlot = slot(at: proj.world(fromScreen: event.location(in: worldRoot)))
+        let p = proj.world(fromScreen: event.location(in: worldRoot))
+        hoverWorld = p
+        hoverSlot = slot(at: p)
     }
 
-    func handleMouseExited() { hoverSlot = nil }
+    func handleMouseExited() { hoverSlot = nil; hoverWorld = nil }
 
     func handleMouseDown(_ event: NSEvent) {
         guard let c = controller, !c.isPaused, !world.phase.isOver else { return }
         let p = proj.world(fromScreen: event.location(in: worldRoot))
+        if c.summonSelection != nil {
+            // Deployment mode: the click places the summon (or explains why it can't go there).
+            hoverWorld = p
+            c.confirmSummon(at: p)
+            return
+        }
         hoverSlot = slot(at: p)
         if let s = hoverSlot { c.clickSlot(s) } else { c.clickEmpty() }
     }
@@ -391,9 +493,13 @@ final class GameScene: SKScene {
     func resetFrameTimes() { frameTimes.removeAll(keepingCapacity: true) }
 
     var debugCounts: (enemies: Int, effects: Int) { (enemyRenderer.visibleCount, effects.activeCount) }
+    /// Summoned units currently drawn (leak checks).
+    var debugSummonNodes: Int { summonRenderer.visibleCount }
     /// Effect sprites drawn at the wrong size (should always be 0).
     var debugEffectSizeMismatches: Int { effects.sizeMismatches }
 
     /// Test hook used by the snapshot tool to emulate hovering a slot.
     func debugHover(slot: Int?) { hoverSlot = slot }
+    /// Test hook: emulate the mouse at a world point (deployment preview).
+    func debugHover(world p: CGPoint?) { hoverWorld = p }
 }

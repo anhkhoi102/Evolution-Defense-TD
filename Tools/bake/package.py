@@ -251,6 +251,35 @@ if os.path.exists(os.path.join(en_dir, "enemies.json")):
             "healthBarOffsetY": e["healthBarOffsetY"], "healthBarWidth": 70 if boss else round(max(24, r * 1.9), 1),
             "shieldDiameter": round(r * 2.8, 1), "shieldOffsetY": round(e["healthBarOffsetY"] * 0.45, 1)})
 
+# ------------------------------------------------------------ summoned allies (Docs/SUMMONS.md)
+su_dir = os.path.join(OUT, "summons")
+if os.path.exists(os.path.join(su_dir, "summons.json")):
+    spec = json.load(open(os.path.join(su_dir, "summons.json")))
+    atlas_dir = new_atlas("Summons")
+    # clip → (fps, loops). Walk is time-based: summons move at their own pace.
+    CLIP_TIMING = {"idle": (6, True), "walk": (10, True), "attack": (14, False), "death": (12, False)}
+    for visual, e in sorted(spec.items()):
+        files, names = [], []
+        for clip, n in e["frames"].items():
+            for d in range(e["directions"]):
+                for f in range(n):
+                    files.append(os.path.join(su_dir, f"{visual}_{clip}_d{d}_f{f}.png"))
+                    names.append(f"summon_{visual}_{clip}_d{d}_f{f}")
+        ims, size, anchor = union_trim(files, e["size"], e["anchor"])
+        k = ENEMY_PX / PX
+        for n, im in zip(names, ims):
+            if k != 1:
+                im = im.resize((max(1, round(im.width * k)), max(1, round(im.height * k))), Image.LANCZOS)
+            write_imageset(atlas_dir, n, im)
+        anims = {}
+        for clip, n in e["frames"].items():
+            fps, loops = CLIP_TIMING.get(clip, (10, True))
+            anims[clip] = {"frames": [frame("Summons", f"summon_{visual}_{clip}_d{d}_f{f}")
+                                      for d in range(e["directions"]) for f in range(n)],
+                           "directions": e["directions"], "fps": fps, "loop": loops}
+        sprites[f"summon.{visual}"] = sprite_entry(size, anchor, "directional", anims, {
+            "healthBarOffsetY": e["healthBarOffsetY"], "healthBarWidth": 34 if visual == "knight" else 22})
+
 # ------------------------------------------------------------ combat: projectiles + effects
 PART = os.path.join(ROOT, "sources", "kenney-particle-pack", "PNG (Transparent)")
 pr_dir = os.path.join(OUT, "projectiles")
