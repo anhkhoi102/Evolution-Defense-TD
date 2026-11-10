@@ -1,6 +1,8 @@
-"""Summoned allies (Docs/SUMMONS.md): the militia minion and the Knight hero,
-from the animated Kenney Mini Characters, with weapons and shields parented
-to the arm bones so they follow the animations.
+"""Summoned allies (Docs/SUMMONS.md, Docs/HEROES.md): the militia and the three
+heroes, rendered from the KayKit Adventurers character pack (Kay Lousberg, CC0).
+The characters ship with their own weapons, shields, capes, hats and animations;
+this script only chooses which of them each unit shows. The one thing built here
+is the Iron King's crown (the pack has none).
 
   out/summons/<visual>_<clip>_d<d>_f<f>.png   8 directions × clips (idle, walk, attack, death)
   out/summons/summons.json                    size, anchor, frame counts, health-bar offset
@@ -19,33 +21,30 @@ ONLY = next((a.split("=", 1)[1] for a in argv if a.startswith("only=")), None)
 TEST = "test" in argv
 OUT = os.path.join(ROOT, "out", "summons_test" if TEST else "summons")
 os.makedirs(OUT, exist_ok=True)
-MINI = os.path.join(ROOT, "sources", "kenney-mini-characters", "Models", "GLB format")
+KAYKIT = os.path.join(ROOT, "sources", "kaykit-adventures", "addons", "kaykit_character_pack_adventures",
+                      "Characters", "gltf")
 DIRS = 8
-FACE = math.pi / 2          # Kenney characters face −y; this turns them to +x (direction 0)
+FACE = math.pi / 2          # KayKit characters face −y; this turns them to +x (direction 0)
 
-
-def M(n): return os.path.join(MINI, n + ".glb")
-
-
-# visual: character, right-hand weapon, left-hand shield, height (units), tint, glow
+# visual: character file, which of its gear meshes to show (everything else bone-parented is hidden),
+# height (units), canvas (points), animation per clip, optional outfit tint and crown colour.
 SUMMONS = {
-    "militia": dict(character="character-soldier", weapon="weapon-spear", shield="shield-round", height=0.82,
-                    weapon_scale=1.45, shield_scale=0.75, grip=0.2, canvas=84),
-    "knight": dict(character="character-knight", weapon="weapon-sword", shield="shield-rectangle", height=1.2,
-                   weapon_scale=1.35, shield_scale=0.9, grip=0.08, canvas=112, gold=True),
+    "militia": dict(character="Barbarian", gear=["1H_Axe", "Barbarian_Round_Shield", "Barbarian_Hat"], height=0.86, canvas=108,
+                    clips=dict(idle="Idle", walk="Running_A", attack="1H_Melee_Attack_Chop", death="Death_A")),
+    "knight": dict(character="Knight", gear=["1H_Sword", "Rectangle_Shield", "Knight_Helmet", "Knight_Cape"], height=1.22, canvas=152,
+                   clips=dict(idle="Idle", walk="Running_A", attack="1H_Melee_Attack_Slice_Diagonal", death="Death_A")),
+    # Iron King: the same armour in dark iron, a two-handed greatsword and a gold crown. The biggest unit.
+    "king": dict(character="Knight", gear=["2H_Sword", "Knight_Helmet", "Knight_Cape"], height=1.5, canvas=172,
+                 tint=(0.5, 0.56, 0.74), metal=0.55, crown=(1.0, 0.72, 0.15),
+                 clips=dict(idle="2H_Melee_Idle", walk="Walking_A", attack="2H_Melee_Attack_Chop", death="Death_B")),
+    # Star Queen: the pack's mage with her staff. She casts instead of swinging.
+    "queen": dict(character="Mage", gear=["2H_Staff", "Mage_Hat", "Mage_Cape"], height=1.2, canvas=136,
+                  clips=dict(idle="Idle", walk="Walking_A", attack="Spellcast_Shoot", death="Death_A")),
 }
-# clip: action name in the Kenney rig, frames, loops
-CLIPS = [("idle", "idle", 6, True), ("walk", "walk", 8, True), ("attack", "attack-melee-right", 6, False),
-         ("death", "die", 6, False)]
+# clip: frames, loops
+CLIPS = [("idle", 6, True), ("walk", 8, True), ("attack", 6, False), ("death", 6, False)]
 SPEC_PATH = os.path.join(OUT, "summons.json")
 SPEC = json.load(open(SPEC_PATH)) if os.path.exists(SPEC_PATH) else {}
-
-
-def find_action(name):
-    for a in bpy.data.actions:
-        if a.name.split("|")[-1] == name or a.name == name:
-            return a
-    return None
 
 
 def set_action(arm, act, frame):
@@ -60,45 +59,8 @@ def set_action(arm, act, frame):
     bpy.context.view_layer.update()
 
 
-def hand_position(objs, arm, bone):
-    """World position of a hand at rest: the lowest vertices skinned to the arm bone."""
-    pts = []
-    for o in objs:
-        if o.type != "MESH" or bone not in o.vertex_groups:
-            continue
-        gi = o.vertex_groups[bone].index
-        for v in o.data.vertices:
-            if any(g.group == gi and g.weight > 0.5 for g in v.groups):
-                pts.append(o.matrix_world @ v.co)
-    pts.sort(key=lambda p: p.z)
-    low = pts[:max(1, len(pts) // 5)]
-    return sum(low, Vector()) / len(low)
-
-
-def attach(objs, arm, bone, model, scale, grip, tilt, outward, forward=0.02):
-    """Places a prop at the hand (world space, rest pose) and binds it to the arm
-    bone, so it follows the arm through every animation.
-    grip: how far below the hand the prop's base sits; tilt: lean forward (rad);
-    outward: sideways push away from the body (shields)."""
-    hand = hand_position(objs, arm, bone)
-    pivot, pobjs = rig.import_model(M(model))
-    side = 1 if hand.x > 0 else -1
-    world = (Matrix.Translation(hand + Vector((side * outward, -forward, -grip)))
-             @ Matrix.Rotation(-tilt, 4, "X")
-             @ Matrix.Diagonal((scale, scale, scale, 1)))
-    pb = arm.pose.bones[bone]
-    parent = arm.matrix_world @ pb.matrix @ Matrix.Translation((0, pb.bone.length, 0))
-    pivot.parent = arm
-    pivot.parent_type = "BONE"
-    pivot.parent_bone = bone
-    pivot.matrix_parent_inverse = parent.inverted()
-    pivot.matrix_basis = world
-    return pobjs
-
-
-def gold_trim(objs):
-    """The hero's armour is tinted towards polished gold (texture detail kept),
-    with a touch of emission so it reads at small sizes."""
+def tint_outfit(objs, color, metal):
+    """Shifts a character's colours (texture detail kept): dark iron for the King."""
     seen = set()
     for o in objs:
         if o.type != "MESH":
@@ -113,50 +75,86 @@ def gold_trim(objs):
             if not b:
                 continue
             sock = b.inputs["Base Color"]
-            # Multiply: near-white armour becomes gold, dark details stay dark.
             mix = nt.nodes.new("ShaderNodeMix"); mix.data_type = "RGBA"; mix.blend_type = "MULTIPLY"
             mix.inputs["Factor"].default_value = 1.0
-            mix.inputs["B"].default_value = (1.0, 0.6, 0.16, 1)      # gold (linear)
+            mix.inputs["B"].default_value = (*color, 1)
             if sock.is_linked:
                 nt.links.new(sock.links[0].from_socket, mix.inputs["A"])
             else:
                 mix.inputs["A"].default_value = sock.default_value
             nt.links.new(mix.outputs["Result"], sock)
-            b.inputs["Metallic"].default_value = 0.45
+            b.inputs["Metallic"].default_value = metal
             b.inputs["Roughness"].default_value = 0.45
-            b.inputs["Emission Color"].default_value = (1.0, 0.62, 0.18, 1)
-            b.inputs["Emission Strength"].default_value = 0.06
+
+
+def add_crown(arm, helmet, color):
+    """The King's crown: a ring with five points on top of the helmet, following the head bone."""
+    b = rig.bounds([helmet])
+    cx, cy, top = (b[0].x + b[1].x) / 2, (b[0].y + b[1].y) / 2, b[1].z
+    r = (b[1].x - b[0].x) * 0.3
+    m = bpy.data.materials.new("crown")
+    m.use_nodes = True
+    p = next(n for n in m.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
+    p.inputs["Base Color"].default_value = (*color, 1)
+    p.inputs["Metallic"].default_value = 0.8
+    p.inputs["Roughness"].default_value = 0.35
+    p.inputs["Emission Color"].default_value = (*color, 1)
+    p.inputs["Emission Strength"].default_value = 0.08
+    parts = []
+    bpy.ops.mesh.primitive_cylinder_add(vertices=16, radius=r, depth=r * 0.35, location=(0, 0, r * 0.17))
+    parts.append(bpy.context.active_object)
+    for k in range(5):
+        a = k / 5 * math.tau - math.pi / 2
+        bpy.ops.mesh.primitive_cone_add(vertices=4, radius1=r * 0.24, depth=r * 0.6,
+                                        location=(math.cos(a) * r * 0.86, math.sin(a) * r * 0.86, r * 0.6))
+        parts.append(bpy.context.active_object)
+    pivot = bpy.data.objects.new("crown", None)
+    bpy.context.scene.collection.objects.link(pivot)
+    for o in parts:
+        o.data.materials.append(m)
+        o.parent = pivot
+    pb = arm.pose.bones["head"]
+    parent = arm.matrix_world @ pb.matrix @ Matrix.Translation((0, pb.bone.length, 0))
+    pivot.parent = arm
+    pivot.parent_type = "BONE"
+    pivot.parent_bone = "head"
+    pivot.matrix_parent_inverse = parent.inverted()
+    pivot.matrix_basis = Matrix.Translation((cx, cy, top - r * 0.25))
+    return parts + [pivot]
 
 
 def bake(visual, spec):
     s = rig.reset()
     s.cycles.samples = 20
     rig.shadow_catcher(20)
-    root, objs = rig.import_model(M(spec["character"]))
+    root, objs = rig.import_model(os.path.join(KAYKIT, spec["character"] + ".glb"))
     arm = next(o for o in objs if o.type == "ARMATURE")
     bpy.context.view_layer.update()
-    if spec.get("gold"):
-        gold_trim(objs)          # the knight only; weapon and shield stay steel and wood
-    # Props are placed in the rest pose, then the animations move the arms.
-    # Weapon upright in the right hand, leaning forward; shield on the left hand, facing front.
-    objs += attach(objs, arm, "arm-right", spec["weapon"], spec["weapon_scale"],
-                   grip=spec.get("grip", 0.12), tilt=math.radians(20), outward=0.02, forward=0.06)
-    # Shields sit in front of the (blocky) forearm, not inside it.
-    objs += attach(objs, arm, "arm-left", spec["shield"], spec["shield_scale"],
-                   grip=spec.get("shield_drop", 0.1), tilt=0.0, outward=0.03, forward=0.15)
-    bpy.context.view_layer.update()
-    b = rig.bounds([o for o in objs if o.type == "MESH" and o.parent and o.parent.type == "ARMATURE"] or objs)
+    # The pack attaches every weapon and accessory to the hands, head and chest at once: keep only this unit's gear.
+    for o in objs:
+        if o.type == "MESH" and o.parent_type == "BONE" and o.name not in spec["gear"]:
+            o.hide_render = True
+            o.hide_viewport = True
+    missing = [g for g in spec["gear"] if g not in {o.name for o in objs}]
+    if missing:
+        raise RuntimeError(f"{visual}: gear {missing} not in {spec['character']}")
+    if spec.get("tint"):
+        tint_outfit(objs, spec["tint"], spec.get("metal", 0.4))
+    if spec.get("crown"):
+        objs += add_crown(arm, next(o for o in objs if o.name.endswith("_Helmet")), spec["crown"])
+    body = [o for o in objs if o.type == "MESH" and o.parent_type != "BONE"]
+    b = rig.bounds(body)
     k = spec["height"] / max((b[1] - b[0]).z, 1e-3)
     root.scale = (k, k, k)
     bpy.context.view_layer.update()
     W = H = spec["canvas"]
-    anchor = (0.5, 0.24)
+    anchor = (0.5, 0.3)
     rig.frame_camera(W, H, anchor=anchor, target=(0, 0, 0))
     counts = {}
-    for name, action, n, loop in CLIPS:
-        act = find_action(action)
+    for name, n, loop in CLIPS:
+        act = bpy.data.actions.get(spec["clips"][name])
         if act is None:
-            raise RuntimeError(f"{visual}: action {action} missing")
+            raise RuntimeError(f"{visual}: action {spec['clips'][name]} missing")
         f0, f1 = act.frame_range
         frames = [f0 + (f1 - f0) * (i / n if loop else i / (n - 1)) for i in range(n)]
         dirs = [0, 6] if TEST else range(DIRS)
@@ -170,7 +168,7 @@ def bake(visual, spec):
         counts[name] = n
     if not TEST:
         SPEC[visual] = {"size": [W, H], "anchor": list(anchor), "frames": counts, "directions": DIRS,
-                        "healthBarOffsetY": round(spec["height"] * rig.PPU * rig.HEIGHT_SY + 8, 1)}
+                        "healthBarOffsetY": round(spec["height"] * rig.PPU * rig.HEIGHT_SY + 10, 1)}
         json.dump(SPEC, open(SPEC_PATH, "w"), indent=1)
     print("SUMMON", visual, "scale", round(k, 3), flush=True)
 

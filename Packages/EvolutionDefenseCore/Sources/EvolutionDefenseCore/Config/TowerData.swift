@@ -82,11 +82,24 @@ public struct HitEffects: Codable, Sendable, Equatable {
     public var critChance: Double
     /// Damage multiplier on a critical hit.
     public var critMultiplier: Double
+    /// Armour Shred: armour removed from the target per hit, stacking up to `shredCap`
+    /// (bosses: half the cap) for `shredDuration` seconds after the last hit.
+    public var shred: Double
+    public var shredCap: Double
+    public var shredDuration: Double
+    /// Expose: the target takes this much more damage from every source (0.2 = +20 %)
+    /// for `exposeDuration` seconds (bosses: half as long). Never stacks.
+    public var expose: Double
+    public var exposeDuration: Double
 
     public init(slow: Double = 0, slowDuration: Double = 0, burn: Double = 0, burnDuration: Double = 0,
-                stun: Double = 0, critChance: Double = 0, critMultiplier: Double = 1) {
+                stun: Double = 0, critChance: Double = 0, critMultiplier: Double = 1,
+                shred: Double = 0, shredCap: Double = 0, shredDuration: Double = 0,
+                expose: Double = 0, exposeDuration: Double = 0) {
         self.slow = slow; self.slowDuration = slowDuration; self.burn = burn; self.burnDuration = burnDuration
         self.stun = stun; self.critChance = critChance; self.critMultiplier = critMultiplier
+        self.shred = shred; self.shredCap = shredCap; self.shredDuration = shredDuration
+        self.expose = expose; self.exposeDuration = exposeDuration
     }
 
     public init(from decoder: Decoder) throws {
@@ -98,9 +111,14 @@ public struct HitEffects: Codable, Sendable, Equatable {
         stun = try c.decodeIfPresent(Double.self, forKey: .stun) ?? 0
         critChance = try c.decodeIfPresent(Double.self, forKey: .critChance) ?? 0
         critMultiplier = try c.decodeIfPresent(Double.self, forKey: .critMultiplier) ?? 1
+        shred = try c.decodeIfPresent(Double.self, forKey: .shred) ?? 0
+        shredCap = try c.decodeIfPresent(Double.self, forKey: .shredCap) ?? 0
+        shredDuration = try c.decodeIfPresent(Double.self, forKey: .shredDuration) ?? 0
+        expose = try c.decodeIfPresent(Double.self, forKey: .expose) ?? 0
+        exposeDuration = try c.decodeIfPresent(Double.self, forKey: .exposeDuration) ?? 0
     }
 
-    public var isEmpty: Bool { slow == 0 && burn == 0 && stun == 0 && critChance == 0 }
+    public var isEmpty: Bool { slow == 0 && burn == 0 && stun == 0 && critChance == 0 && shred == 0 && expose == 0 }
 
     /// Strongest of each effect (effects from levels and tech don't stack additively).
     public func combined(with o: HitEffects) -> HitEffects {
@@ -112,6 +130,11 @@ public struct HitEffects: Codable, Sendable, Equatable {
         r.stun = max(r.stun, o.stun)
         r.critChance = min(1, r.critChance + o.critChance)
         r.critMultiplier = max(r.critMultiplier, o.critMultiplier)
+        r.shred = max(r.shred, o.shred)
+        r.shredCap = max(r.shredCap, o.shredCap)
+        r.shredDuration = max(r.shredDuration, o.shredDuration)
+        r.expose = max(r.expose, o.expose)
+        r.exposeDuration = max(r.exposeDuration, o.exposeDuration)
         return r
     }
 
@@ -122,6 +145,8 @@ public struct HitEffects: Codable, Sendable, Equatable {
         if burn > 0 { l.append("Burns") }
         if stun > 0 { l.append("Stuns \(String(format: "%.1f", stun))s") }
         if critChance > 0 { l.append("\(Int((critChance * 100).rounded()))% crit ×\(String(format: "%.1f", critMultiplier))") }
+        if shred > 0 { l.append("Shreds armour (up to −\(Int(shredCap)))") }
+        if expose > 0 { l.append("Exposes +\(Int((expose * 100).rounded()))% damage") }
         return l
     }
 }

@@ -11,6 +11,6 @@ APP_BIN="$PROJECT_ROOT/build/EvolutionDefense.app/Contents/MacOS/EvolutionDefens
 CONTAINER_TMP="$HOME/Library/Containers/local.evolutiondefense.game/Data/tmp/snapshots"
 RESULT="$(EVO_SUMMON_TEST=1 EVO_MUTE=1 "$APP_BIN" 2>&1 | grep SUMMONTEST || true)"
 mkdir -p "$PROJECT_ROOT/snapshots/summon"
-cp "$CONTAINER_TMP"/summon-*.png "$PROJECT_ROOT/snapshots/summon/" 2>/dev/null || true
+cp "$CONTAINER_TMP"/summon-*.png "$CONTAINER_TMP"/hero-*.png "$PROJECT_ROOT/snapshots/summon/" 2>/dev/null || true
 echo "${RESULT:-SUMMONTEST no result}"
 [[ "$RESULT" == *PASS* ]]

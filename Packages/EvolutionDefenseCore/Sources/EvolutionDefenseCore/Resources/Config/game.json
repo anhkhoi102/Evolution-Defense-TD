@@ -76,6 +76,26 @@
       "enemyCount": 1.5,
       "killReward": 0.6,
       "clearReward": 0.5
+    },
+    {
+      "name": "Very Hard",
+      "fromWave": 21,
+      "enemyHP": 1.9,
+      "enemySpeed": 1.06,
+      "spawnInterval": 0.75,
+      "enemyCount": 1.5,
+      "killReward": 0.5,
+      "clearReward": 0.45
+    },
+    {
+      "name": "Expert",
+      "fromWave": 26,
+      "enemyHP": 2.2,
+      "enemySpeed": 1.1,
+      "spawnInterval": 0.7,
+      "enemyCount": 1.7,
+      "killReward": 0.45,
+      "clearReward": 0.4
     }
   ],
   "elite": {
@@ -83,5 +103,9 @@
     "armorBonus": 3,
     "speed": 1.08,
     "reward": 2.5
+  },
+  "stars": {
+    "threeStarMaxDamageFraction": 0.1,
+    "twoStarMaxDamageFraction": 0.4
   }
 }

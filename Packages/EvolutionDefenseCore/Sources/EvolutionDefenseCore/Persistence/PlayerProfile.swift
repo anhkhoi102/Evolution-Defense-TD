@@ -15,6 +15,8 @@ public struct GameSettings: Codable, Sendable, Equatable {
     public var randomEvents = true
     /// Battlefield chosen in the menu (map id).
     public var battlefield = MatchOptions.defaultBattlefield
+    /// Hero chosen in the menu (summon ability id); nil = the default hero.
+    public var hero: String?
 
     public init() {}
 
@@ -32,6 +34,7 @@ public struct GameSettings: Codable, Sendable, Equatable {
         difficulty = (try? c.decodeIfPresent(Difficulty.self, forKey: .difficulty)) ?? nil ?? d.difficulty
         randomEvents = try c.decodeIfPresent(Bool.self, forKey: .randomEvents) ?? d.randomEvents
         battlefield = try c.decodeIfPresent(String.self, forKey: .battlefield) ?? d.battlefield
+        hero = try c.decodeIfPresent(String.self, forKey: .hero)
     }
 }
 
@@ -62,8 +65,52 @@ public struct PlayerProfile: Codable, Sendable, Equatable {
     public var techsEverResearched: [String] = []
     public var totalKills = 0
     public var totalBossesDefeated = 0
+    /// Highest stage ever cleared, per battlefield (map id → stage number).
+    public var stagesCleared: [String: Int] = [:]
+    /// Best star rating of a won match, per battlefield (map id → 1…3).
+    /// Only ever raised: winning again with a worse result keeps the better one.
+    public var matchStars: [String: Int] = [:]
 
     public init() {}
+
+    /// Highest stage cleared on a battlefield (0 = none).
+    public func stagesCleared(battlefield: String) -> Int { stagesCleared[battlefield] ?? 0 }
+
+    /// Best rating on a battlefield (0 = never won) / stars on all battlefields.
+    public func bestStars(battlefield: String) -> Int { matchStars[battlefield] ?? 0 }
+    public var totalStars: Int { matchStars.values.reduce(0, +) }
+
+    /// Highest stage ever cleared on any battlefield (drives unlocks).
+    public var highestStageCleared: Int {
+        // Progress made before per-battlefield progress existed (the records' highest stage) counts too.
+        max(stagesCleared.values.max() ?? 0, records.values.map(\.highestWave).max() ?? 0)
+    }
+
+    /// A hero is unlocked once its stage has been cleared on any battlefield.
+    public func isUnlocked(_ hero: SummonAbilityDefinition) -> Bool { highestStageCleared >= hero.requiredStage }
+
+    /// The hero to take into a match: the chosen one if it is unlocked, otherwise the default.
+    public func activeHero(in summons: SummonConfig) -> SummonAbilityDefinition? {
+        if let h = summons.heroes.first(where: { $0.id == settings.hero }), isUnlocked(h) { return h }
+        return summons.defaultHero
+    }
+
+    /// Notes that stages 1…`stage` were cleared on a battlefield. Returns true if that is new progress.
+    @discardableResult
+    public mutating func recordStagesCleared(_ stage: Int, battlefield: String) -> Bool {
+        guard stage > stagesCleared(battlefield: battlefield) else { return false }
+        stagesCleared[battlefield] = stage
+        return true
+    }
+
+    /// Keeps a won match's rating if it beats the best one. Returns true if it did.
+    @discardableResult
+    public mutating func recordMatchStars(_ stars: Int, battlefield: String) -> Bool {
+        let s = min(stars, StarRatingConfig.maxStars)
+        guard s > bestStars(battlefield: battlefield) else { return false }
+        matchStars[battlefield] = s
+        return true
+    }
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -74,6 +121,12 @@ public struct PlayerProfile: Codable, Sendable, Equatable {
         techsEverResearched = (try? c.decodeIfPresent([String].self, forKey: .techsEverResearched)) ?? nil ?? []
         totalKills = try c.decodeIfPresent(Int.self, forKey: .totalKills) ?? 0
         totalBossesDefeated = try c.decodeIfPresent(Int.self, forKey: .totalBossesDefeated) ?? 0
+        stagesCleared = (try? c.decodeIfPresent([String: Int].self, forKey: .stagesCleared)) ?? nil ?? [:]
+        matchStars = (try? c.decodeIfPresent([String: Int].self, forKey: .matchStars)) ?? nil ?? [:]
+        // Development builds rated every stage ("stageStars"): keep the progress, drop those ratings.
+        if let old = try? decoder.container(keyedBy: LegacyKey.self).decodeIfPresent([String: [Int]].self, forKey: LegacyKey(stringValue: "stageStars")) {
+            for (map, stars) in old { recordStagesCleared((stars.lastIndex { $0 > 0 } ?? -1) + 1, battlefield: map) }
+        }
     }
 
     public func record(_ d: Difficulty) -> DifficultyRecord { records[d.rawValue] ?? DifficultyRecord() }
@@ -93,6 +146,7 @@ public struct PlayerProfile: Codable, Sendable, Equatable {
         r.highestWave = max(r.highestWave, w.stats.wavesCleared)
         records[w.options.difficulty.rawValue] = r
         for t in w.researchedTechs where !techsEverResearched.contains(t) { techsEverResearched.append(t) }
+        recordStagesCleared(max(w.stats.wavesCleared, w.waves.lastSummary?.number ?? 0), battlefield: w.config.map.id)
     }
 
     /// Final result of a finished match.
@@ -101,6 +155,7 @@ public struct PlayerProfile: Codable, Sendable, Equatable {
         var r = record(w.options.difficulty)
         r.matches += 1
         if w.phase == .victory {
+            recordMatchStars(w.matchStars, battlefield: w.config.map.id)
             r.victories += 1
             r.bestTime = min(r.bestTime ?? .infinity, w.time)
             r.bestBaseHP = max(r.bestBaseHP ?? 0, w.baseHP)
@@ -109,6 +164,13 @@ public struct PlayerProfile: Codable, Sendable, Equatable {
         totalKills += w.stats.enemiesKilled
         totalBossesDefeated += w.stats.bossesDefeated
     }
+}
+
+private struct LegacyKey: CodingKey {
+    var stringValue: String
+    var intValue: Int? { nil }
+    init(stringValue: String) { self.stringValue = stringValue }
+    init?(intValue: Int) { nil }
 }
 
 /// Reads and writes the profile and the match checkpoint as JSON files in one

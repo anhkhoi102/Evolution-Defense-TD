@@ -11,6 +11,8 @@ for dirpath, _, files in os.walk(SRC):
     for f in files:
         if not f.lower().endswith(".png") or "Textures" not in dirpath:
             continue
+        if os.sep + "kaykit-" in dirpath:      # KayKit characters keep their own palette (heroes, skeletons)
+            continue
         rel = os.path.relpath(os.path.join(dirpath, f), SRC)
         dst = os.path.join(OUT, rel)
         os.makedirs(os.path.dirname(dst), exist_ok=True)

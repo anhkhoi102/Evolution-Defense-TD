@@ -14,11 +14,11 @@ import SpriteKit
 @MainActor
 final class EnemyVisual {
     let body = SKSpriteNode()
-    let barBack = SKSpriteNode(color: NSColor(white: 0, alpha: 0.65), size: CGSize(width: 30, height: 5))
+    let barBack = SKSpriteNode(color: PlatformColor(white: 0, alpha: 0.65), size: CGSize(width: 30, height: 5))
     let barFill = SKSpriteNode(color: .green, size: CGSize(width: 28, height: 3))
     /// Energy shield: bubble around the body plus a cyan bar above the HP bar.
     let shield = SKSpriteNode()
-    let shieldBar = SKSpriteNode(color: NSColor(srgbRed: 0.45, green: 0.88, blue: 1, alpha: 1), size: CGSize(width: 28, height: 2))
+    let shieldBar = SKSpriteNode(color: PlatformColor(srgbRed: 0.45, green: 0.88, blue: 1, alpha: 1), size: CGSize(width: 28, height: 2))
     var sprite: SpriteAsset?
     var walk: AnimationClip?
     var currentFrame = -1
@@ -32,6 +32,12 @@ final class EnemyVisual {
     /// Gold ring on the ground under elite enemies.
     let eliteRing = SKSpriteNode()
     var isElite = false
+    /// Expose (Heavy): a red target ring on the ground. Armour Shred (Rapid Fire): a purple
+    /// diamond beside the health bar that grows with the armour stripped.
+    let markRing = SKSpriteNode()
+    var hasMark = false
+    let shredPip = SKSpriteNode(color: PlatformColor(srgbRed: 0.78, green: 0.5, blue: 1, alpha: 1), size: CGSize(width: 6, height: 6))
+    var hasShred = false
 
     init() {
         barFill.anchorPoint = CGPoint(x: 0, y: 0.5)
@@ -39,6 +45,8 @@ final class EnemyVisual {
         body.color = .white
         body.shader = Shaders.status
         shield.zPosition = 6
+        shredPip.zRotation = .pi / 4
+        shredPip.zPosition = 2
     }
 }
 
@@ -132,6 +140,40 @@ final class EnemyRenderer {
                 v.shield.alpha = 0.35 + 0.65 * frac
             }
 
+            // Tower team effects (Docs/TOWER_EFFECTS.md).
+            let marked = e.isExposed && !e.isCloaked
+            if marked != v.hasMark {
+                v.hasMark = marked
+                if marked {
+                    if v.markRing.texture == nil {
+                        v.markRing.apply(art.fx("ring"))
+                        v.markRing.color = Self.exposeRed
+                        v.markRing.colorBlendFactor = 1
+                        v.markRing.blendMode = .add
+                    }
+                    let w = max(e.radius * 2.6, 30)
+                    v.markRing.setScale(1)
+                    v.markRing.setUnscaledSize(CGSize(width: w, height: w * view.groundScaleY))
+                    layer.addChild(v.markRing)
+                } else {
+                    v.markRing.removeFromParent()
+                }
+            }
+            if marked {
+                v.markRing.position = screen
+                v.markRing.zPosition = v.body.zPosition - 0.0015
+                v.markRing.alpha = lightweight ? 0.8 : 0.65 + 0.3 * CGFloat(sin(now * 9))
+            }
+            let shredded = e.isShredded && !e.isCloaked
+            if shredded != v.hasShred {
+                v.hasShred = shredded
+                if shredded { barLayer.addChild(v.shredPip) } else { v.shredPip.removeFromParent() }
+            }
+            if shredded {
+                v.shredPip.position = CGPoint(x: screen.x - v.barWidth / 2 - 7, y: screen.y + v.barOffsetY)
+                v.shredPip.setScale(0.7 + 0.6 * CGFloat(min(1, e.shredAmount / 14)))
+            }
+
             let showBar = !e.isCloaked && (e.isBoss || e.hp < e.maxHP || (shielded && e.shieldHP < e.maxShieldHP))
             v.barBack.isHidden = !showBar
             v.barFill.isHidden = !showBar
@@ -142,10 +184,10 @@ final class EnemyRenderer {
                 v.barFill.position = CGPoint(x: top.x - v.barWidth / 2, y: top.y)
                 let frac = CGFloat(e.hpFraction)
                 v.barFill.size.width = max(0.5, v.barWidth * frac)
-                v.barFill.color = e.isBoss ? NSColor(srgbRed: 0.85, green: 0.25, blue: 0.95, alpha: 1)
-                    : frac > 0.6 ? NSColor(srgbRed: 0.35, green: 0.85, blue: 0.3, alpha: 1)
-                    : frac > 0.3 ? NSColor(srgbRed: 0.98, green: 0.78, blue: 0.2, alpha: 1)
-                    : NSColor(srgbRed: 0.95, green: 0.3, blue: 0.25, alpha: 1)
+                v.barFill.color = e.isBoss ? PlatformColor(srgbRed: 0.85, green: 0.25, blue: 0.95, alpha: 1)
+                    : frac > 0.6 ? PlatformColor(srgbRed: 0.35, green: 0.85, blue: 0.3, alpha: 1)
+                    : frac > 0.3 ? PlatformColor(srgbRed: 0.98, green: 0.78, blue: 0.2, alpha: 1)
+                    : PlatformColor(srgbRed: 0.95, green: 0.3, blue: 0.25, alpha: 1)
                 if shielded {
                     v.shieldBar.position = CGPoint(x: top.x - v.barWidth / 2, y: top.y + 4)
                     v.shieldBar.size.width = max(0.5, v.barWidth * CGFloat(e.shieldFraction))
@@ -160,6 +202,8 @@ final class EnemyRenderer {
             guard let v = active.removeValue(forKey: id) else { continue }
             v.body.removeFromParent(); v.barBack.removeFromParent(); v.barFill.removeFromParent()
             v.eliteRing.removeFromParent()
+            v.markRing.removeFromParent(); v.hasMark = false
+            v.shredPip.removeFromParent(); v.hasShred = false
             v.shield.removeFromParent(); v.shieldBar.removeFromParent(); v.hasShield = false
             pool.append(v)
         }
@@ -184,7 +228,8 @@ final class EnemyRenderer {
     private lazy var bossBreathing = art.layout("enemy.bossBreathing", 0.035)
     /// Elite body scale (visual only), from the pack's layout.
     private lazy var eliteScale = art.layout("enemy.eliteScale", 1.12)
-    private static let eliteGold = NSColor(srgbRed: 1, green: 0.78, blue: 0.25, alpha: 1)
+    private static let eliteGold = PlatformColor(srgbRed: 1, green: 0.78, blue: 0.25, alpha: 1)
+    private static let exposeRed = PlatformColor(srgbRed: 1, green: 0.25, blue: 0.2, alpha: 1)
     private lazy var view = art.view
 
     private func attach(_ e: Enemy) -> EnemyVisual {
@@ -210,7 +255,7 @@ final class EnemyRenderer {
         // Elites: a pulsing gold ring on the ground, a slightly larger body and a
         // gold health-bar frame. Visual only: the hit radius stays the same.
         v.isElite = e.isElite
-        v.barBack.color = e.isElite ? Self.eliteGold.withAlphaComponent(0.9) : NSColor(white: 0, alpha: 0.65)
+        v.barBack.color = e.isElite ? Self.eliteGold.withAlphaComponent(0.9) : PlatformColor(white: 0, alpha: 0.65)
         if e.isElite {
             v.body.setScale(eliteScale)
             v.eliteRing.apply(art.fx("ring"))
@@ -358,7 +403,7 @@ final class TowerRenderer {
                 v.showsDisabled = disabled
                 v.disabledMark.isHidden = !disabled
                 for n in [v.base, v.head] {
-                    n.color = NSColor(srgbRed: 0.25, green: 0.35, blue: 0.55, alpha: 1)
+                    n.color = PlatformColor(srgbRed: 0.25, green: 0.35, blue: 0.55, alpha: 1)
                     n.colorBlendFactor = disabled ? 0.55 : 0
                 }
             }

@@ -101,9 +101,36 @@ final class AudioManager {
         }
     }
 
-    private struct AudioManifest: Decodable {
-        struct Entry: Decodable { var file: String; var gain: Float? }
+    private struct AudioManifest: Decodable, Sendable {
+        struct Entry: Decodable, Sendable { var file: String; var gain: Float? }
         var effects: [String: Entry]
+        /// Recorded music loops by track name (menu, primitive, …). Optional: tracks not listed are synthesized.
+        var music: [String: Entry]?
+    }
+
+    nonisolated private static let manifest: AudioManifest? = {
+        guard let url = Bundle.main.url(forResource: "audio_manifest", withExtension: "json"),
+              let data = try? Data(contentsOf: url) else { return nil }
+        return try? JSONDecoder().decode(AudioManifest.self, from: data)
+    }()
+    /// Per-track gain from the manifest.
+    private var musicGains: [MusicLoop: Float] = [:]
+    /// True when the track playing came from a recorded file (diagnostics).
+    private(set) var recordedMusicTracks: Set<String> = []
+
+    /// A recorded loop for `track` from the art pack, decoded to the engine's format. Nil if there is none.
+    nonisolated private static func recordedMusic(_ track: MusicLoop, format: AVAudioFormat) -> (AVAudioPCMBuffer, Float)? {
+        guard let entry = manifest?.music?[String(describing: track)] else { return nil }
+        let name = (entry.file as NSString).deletingPathExtension, ext = (entry.file as NSString).pathExtension
+        guard let url = Bundle.main.url(forResource: name, withExtension: ext),
+              let file = try? AVAudioFile(forReading: url),
+              file.processingFormat.sampleRate == format.sampleRate, file.processingFormat.channelCount == 1,
+              let buf = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(file.length)),
+              (try? file.read(into: buf)) != nil, buf.frameLength > 0 else {
+            print("Audio: music file \(entry.file) unavailable, using the synthesized \(track) loop")
+            return nil
+        }
+        return (buf, entry.gain ?? 1)
     }
 
     /// Loads recorded effects listed in the audio manifest. Missing files fall back to synthesis.
@@ -153,11 +180,18 @@ final class AudioManager {
             crossfade(to: buf, track: track)
             return
         }
+        // Recorded loops are long: keep only the one playing in memory besides the one being loaded.
+        for other in music.keys where other != currentTrack { music[other] = nil }
+        let format = self.format
         Task.detached(priority: .utility) {
-            let samples = SoundSynth.music(track)
+            // A recorded loop from the art pack if there is one, otherwise the synthesized loop.
+            let recorded = Self.recordedMusic(track, format: format)
+            let samples = recorded == nil ? SoundSynth.music(track) : []
             await MainActor.run {
-                let buf = self.buffer(samples)
+                let buf = recorded?.0 ?? self.buffer(samples)
                 self.music[track] = buf
+                self.musicGains[track] = recorded?.1 ?? 1
+                if recorded != nil { self.recordedMusicTracks.insert(String(describing: track)) }
                 if self.wantedTrack == track { self.crossfade(to: buf, track: track) }
             }
         }
@@ -186,7 +220,7 @@ final class AudioManager {
                 try? await Task.sleep(for: .milliseconds(50))
                 if Task.isCancelled { return }
                 let k = Float(i) / Float(steps)
-                new.volume = k
+                new.volume = k * (self.musicGains[track] ?? 1)
                 old.volume = 1 - k
             }
             old.stop()
@@ -231,15 +265,25 @@ final class AudioManager {
             play(e)
             try? await Task.sleep(for: .milliseconds(250))
         }
-        playMusic(.futuristic)
-        waited = 0
-        while musicMeter.peak == 0 && waited < 150 { try? await Task.sleep(for: .milliseconds(100)); waited += 1 }
+        // Every music track: it must load (recorded or synthesized) and put a signal on the music bus.
+        var silentTracks: [String] = []
+        for track in MusicLoop.allCases {
+            playMusic(track)
+            waited = 0
+            while currentTrack != track && waited < 150 { try? await Task.sleep(for: .milliseconds(100)); waited += 1 }
+            try? await Task.sleep(for: .milliseconds(1800))      // let the cross-fade from the previous track finish
+            musicMeter.reset()
+            try? await Task.sleep(for: .milliseconds(600))
+            if musicMeter.peak == 0 { silentTracks.append(String(describing: track)) }
+        }
         sfxMixer.removeTap(onBus: 0)
         musicMixer.removeTap(onBus: 0)
         stopMusic()
         apply(saved)
         return String(format: "effects=%d/%d (recorded %d) sfxPeak=%.3f musicPeak=%.3f", effects.count, SoundEffect.allCases.count, recordedCount,
                       sfxMeter.peak, musicMeter.peak)
+            + " music=\(MusicLoop.allCases.count - silentTracks.count)/\(MusicLoop.allCases.count) playing, recorded=\(recordedMusicTracks.sorted())"
+            + (silentTracks.isEmpty ? "" : " SILENT=\(silentTracks)")
     }
 }
 
@@ -248,6 +292,7 @@ private final class PeakMeter: @unchecked Sendable {
     private let lock = NSLock()
     private var value: Float = 0
     var peak: Float { lock.withLock { value } }
+    func reset() { lock.withLock { value = 0 } }
     nonisolated func tapBlock() -> AVAudioNodeTapBlock { { [self] b, _ in self.feed(b) } }
     func feed(_ b: AVAudioPCMBuffer) {
         guard let ch = b.floatChannelData?[0] else { return }

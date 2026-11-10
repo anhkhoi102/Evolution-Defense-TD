@@ -13,11 +13,11 @@ macOS 14+.
 | 1 | Core prototype: app, menu, winding map, enemy movement, tower placement, 4 archetypes, projectiles, enemy HP, base HP, combat | ✅ |
 | — | Migration from pure SwiftPM to an Xcode app project + local Swift package | ✅ |
 | 2 | Wave manager with preparation countdown, gold economy, 5-level upgrades + selling, base repair, wave summaries | ✅ |
-| 3 | 4 eras / 20 waves, enemy abilities, 4 bosses (multi-phase final boss), tech tree, Research Points | ✅ |
+| 3 | 4 eras / 30 stages, enemy abilities, 4 bosses (multi-phase final boss), tech tree, Research Points | ✅ |
 | 4 | Polish: audio, animations, random events, difficulty, achievements, saves, perf mode | ✅ |
 | — | Visual overhaul: 2.5D tabletop art baked from CC0 3D kits, particle effects, shaders, UI skin, recorded sound effects | ✅ |
 
-Version **1.3.0**. See *Art & audio* below, [ASSETS.md](ASSETS.md) § 7 and [BALANCE.md](BALANCE.md).
+Version **1.4.0**. See *Art & audio* below, [ASSETS.md](ASSETS.md) § 7 and [BALANCE.md](BALANCE.md).
 
 ### Polish (Phase 4)
 
@@ -66,7 +66,7 @@ Version **1.3.0**. See *Art & audio* below, [ASSETS.md](ASSETS.md) § 7 and [BAL
 
 ### Evolution (Phase 3)
 
-* **Four eras, 20 waves.** Five waves per era, with a boss on waves 5, 10, 15 and 20. When an era ends, the
+* **Four eras, 30 stages.** Five stages in each of the first three eras and fifteen in the Futuristic Age, with a boss on every fifth stage and a 1–3 star rating per stage ([CAMPAIGN.md](CAMPAIGN.md)). When an era ends, the
   map re-tints and the base evolves: village → stone keep → factory → energy citadel.
 * **19 enemies with their own behaviours**, not just more HP:
 

@@ -1,3 +1,6 @@
+// Developer tools that drive the app and screenshot its window. They use AppKit window capture,
+// so they exist on macOS only; other platforms get an inert stand-in (end of file).
+#if os(macOS)
 import AppKit
 import EvolutionDefenseCore
 import SpriteKit
@@ -21,6 +24,17 @@ enum SnapshotTool {
 
     /// Output folder. The app is sandboxed, so images go to the container's
     /// temporary folder and Scripts/snapshot.sh copies them out.
+    /// Starts whichever tool the environment asks for (none in normal use).
+    static func runAllIfRequested(router: AppRouter) {
+        runIfRequested(router: router)
+        runBenchmarkIfRequested(router: router)
+        runAudioCheckIfRequested()
+        runAssetDemoIfRequested(router: router)
+        runDeathTestIfRequested(router: router)
+        runSummonTestIfRequested(router: router)
+        runBattlefieldTestIfRequested(router: router)
+    }
+
     static var outputDirectory: URL {
         FileManager.default.temporaryDirectory.appendingPathComponent("snapshots", isDirectory: true)
     }
@@ -427,10 +441,23 @@ enum SnapshotTool {
                 }
                 w.debugSetGold(100_000)
                 w.debugSkipToWave(7)
-                var built = 0
+                // A real mouse click through the window: pick a tower, click the first pad.
+                if let first = w.config.map.buildSlots.first, let win = NSApp.windows.first(where: { $0.isVisible }),
+                   let at = c.scene.debugWindowPoint(forWorld: w.config.map.slotPosition(first)) {
+                    c.selectBuild(.sniper)
+                    for type in [NSEvent.EventType.leftMouseDown, .leftMouseUp] {
+                        if let e = NSEvent.mouseEvent(with: type, location: at, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                                                      windowNumber: win.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 1) {
+                            win.sendEvent(e)
+                        }
+                    }
+                    await pause(0.2)
+                    if w.tower(atSlot: first.id)?.archetype != .sniper { failures.append("\(map.id): a mouse click on a pad did not build a tower") }
+                } else { failures.append("\(map.id): could not aim a mouse click") }
                 for (k, s) in w.config.map.buildSlots.enumerated() {
-                    if case .success = w.build([.splash, .sniper, .heavy, .rapid][k % 4], atSlot: s.id) { built += 1 }
+                    _ = w.build([.splash, .sniper, .heavy, .rapid][k % 4], atSlot: s.id)
                 }
+                let built = w.towers.count
                 if built != w.config.map.buildSlots.count { failures.append("\(map.id): built \(built) of \(w.config.map.buildSlots.count) pads") }
                 for t in w.towers { for _ in 0..<2 { _ = w.upgrade(t) } }
                 c.startNextWave()
@@ -443,9 +470,21 @@ enum SnapshotTool {
                 await pause(1.2)
                 capture(out.appendingPathComponent("bf-\(i + 1)1-play-\(map.id).png"))
                 c.scene.fastForward(seconds: 40)
+                // Finish the stage so its progress is recorded.
+                var extra = 0
+                while w.phase == .waveInProgress && extra < 20 { c.scene.fastForward(seconds: 10); extra += 1 }
+                await pause(0.3)
                 if w.phase.isOver && w.phase != .victory { failures.append("\(map.id): lost wave 7 with a full defence") }
+                if w.stats.wavesCleared < 1 { failures.append("\(map.id): stage 7 was not cleared") }
+                if w.matchStars != 0 { failures.append("\(map.id): an unfinished match was rated") }
                 c.onExitToMenu?()
                 await pause(0.6)
+            }
+            router.menuPanel = .campaign
+            await pause(0.7)
+            capture(out.appendingPathComponent("bf-80-campaign.png"))
+            for map in router.battlefields where router.profile.stagesCleared(battlefield: map.id) < 7 {
+                failures.append("\(map.id): clearing stage 7 was not recorded")
             }
             router.menuPanel = .credits
             await pause(0.6)
@@ -518,6 +557,49 @@ enum SnapshotTool {
             capture(out.appendingPathComponent("summon-13-after-expiry.png"))
             if !w.summons.isEmpty { failures.append("\(w.summons.count) units outlived their duration") }
             if c.scene.debugSummonNodes != 0 { failures.append("\(c.scene.debugSummonNodes) summon sprites leaked") }
+            // The unlockable heroes: each goes into its own match, fights, uses its special and leaves.
+            c.onExitToMenu?()
+            await pause(0.4)
+            router.menuPanel = .newGame
+            await pause(0.6)
+            capture(out.appendingPathComponent("hero-00-new-game-locked.png"))
+            if router.heroes.filter({ router.isUnlocked($0) }).count != 1 { failures.append("a fresh profile should have one hero") }
+            for (i, hero) in router.heroes.filter({ $0.requiredStage > 0 }).enumerated() {
+                router.newGame(MatchOptions(difficulty: .normal, randomEvents: false, hero: hero.id))
+                await pause(0.8)
+                guard let hc = router.game else { failures.append("\(hero.id): no game"); continue }
+                let hw = hc.world
+                if hc.abilities.map(\.id) != ["militia", hero.id] { failures.append("\(hero.id): buttons \(hc.abilities.map(\.id))") }
+                hw.debugSetGold(100_000)
+                hw.debugSkipToWave(10)
+                for (k, s) in hw.config.map.buildSlots.prefix(4).enumerated() { hw.build([.splash, .sniper][k % 2], atSlot: s.id) }
+                hc.startNextWave()
+                hc.scene.fastForward(seconds: 14)
+                let front = hw.enemies.filter { $0.isActive && !$0.isFlying }.max { $0.distance < $1.distance }
+                let lead: CGFloat = hero.unit.isRanged ? 150 : 110
+                hc.selectSummon(hero.id)
+                hc.confirmSummon(at: hw.path.position(at: min((front?.distance ?? 400) + lead, hw.path.totalLength - 120)))
+                if hw.summons.count != 1 { failures.append("\(hero.id): not deployed") }
+                var specials = 0
+                for n in 0..<8 {
+                    await pause(0.35)
+                    capture(out.appendingPathComponent(String(format: "hero-%d%d-%@.png", i + 1, n, hero.id)))
+                    if hc.scene.debugEffectSizeMismatches > 0 { failures.append("\(hero.id): mis-sized effect sprites") }
+                    if (hw.summons.first?.damageDealt ?? 0) > 0 { specials += 1 }
+                }
+                if specials == 0 { failures.append("\(hero.id): dealt no damage") }
+                hc.scene.fastForward(seconds: 30)
+                await pause(0.3)
+                if !hw.summons.isEmpty || hc.scene.debugSummonNodes != 0 { failures.append("\(hero.id): outlived its duration") }
+                if i == 0 {
+                    hc.heroUnlock = hero
+                    await pause(0.8)
+                    capture(out.appendingPathComponent("hero-90-unlock-card.png"))
+                    hc.heroUnlock = nil
+                }
+                hc.onExitToMenu?()
+                await pause(0.4)
+            }
             let st = c.abilities
             print("SUMMONTEST \(failures.isEmpty ? "PASS" : "FAIL: " + failures.joined(separator: "; ")) abilities=\(st.map { "\($0.id):cd\($0.cooldown)" })")
             fflush(stdout)
@@ -573,3 +655,11 @@ enum SnapshotTool {
         return nil
     }
 }
+#else
+@MainActor
+enum SnapshotTool {
+    static let capturesWindow = false
+    static let isBenchmark = false
+    static func runAllIfRequested(router: AppRouter) {}
+}
+#endif

@@ -54,6 +54,8 @@ public struct RulesConfig: Codable, Sendable {
     public var progression: [ProgressionPhase]?
     /// Stats of elite enemies (wave groups with "elite": true).
     public var elite: EliteConfig?
+    /// Star rating thresholds for a won match.
+    public var stars: StarRatingConfig?
 }
 
 public enum ConfigurationError: Error, CustomStringConvertible {
@@ -78,7 +80,10 @@ public struct GameConfiguration: Sendable {
     public var map: MapDefinition
     /// Every battlefield, in menu order (battlefields.json).
     public var maps: [MapDefinition]
+    /// The stages as played on `map`: waves.json with the battlefield's roster applied.
     public var waves: [WaveDefinition]
+    /// The stages as written in waves.json (before any battlefield roster).
+    public private(set) var authoredWaves: [WaveDefinition]
     public var techs: [TechDefinition]
     public var difficulties: [DifficultyDefinition]
     public var events: [RandomEventDefinition]
@@ -91,7 +96,9 @@ public struct GameConfiguration: Sendable {
                 techs: [TechDefinition] = [], difficulties: [DifficultyDefinition] = [],
                 events: [RandomEventDefinition] = [], achievements: [AchievementDefinition] = [],
                 summons: SummonConfig = .none) {
-        self.rules = rules; self.towers = towers; self.enemies = enemies; self.map = map; self.waves = waves
+        self.rules = rules; self.towers = towers; self.enemies = enemies; self.map = map
+        self.authoredWaves = waves
+        self.waves = Self.apply(roster: map.roster, to: waves)
         self.maps = [map]
         self.techs = techs; self.difficulties = difficulties; self.events = events; self.achievements = achievements
         self.summons = summons
@@ -113,7 +120,41 @@ public struct GameConfiguration: Sendable {
         guard id != map.id, let m = battlefield(id) else { return self }
         var c = self
         c.map = m
+        c.waves = Self.apply(roster: m.roster, to: authoredWaves)
         return c
+    }
+
+    /// Swaps each wave group's enemy for the battlefield's own creature.
+    static func apply(roster: [String: String]?, to waves: [WaveDefinition]) -> [WaveDefinition] {
+        guard let roster, !roster.isEmpty else { return waves }
+        return waves.map { w in
+            var w = w
+            w.groups = w.groups.map { g in
+                var g = g
+                if let own = roster[g.enemy] { g.enemy = own }
+                return g
+            }
+            return w
+        }
+    }
+
+    /// The campaign enemy that `id` replaces on the battlefield in play (nil if it is not a replacement).
+    public func campaignID(for id: String) -> String? {
+        map.roster?.first { $0.value == id }?.key
+    }
+
+    /// Every enemy that can appear on the battlefield in play: the stages' enemies plus
+    /// whatever they summon, split into or spawn (followed all the way down).
+    public var enemiesInPlay: Set<String> {
+        var seen = Set<String>()
+        var queue = waves.flatMap { $0.groups.map(\.enemy) }
+        while let id = queue.popLast() {
+            guard seen.insert(id).inserted, let e = enemies[id] else { continue }
+            for a in [e.baseAbilities] + e.sortedPhases.compactMap(\.abilities) {
+                queue += [a.summon?.enemy, a.splitOnDeath?.enemy, a.brood?.enemy].compactMap { $0 }
+            }
+        }
+        return seen
     }
 
     public func tech(_ id: String) -> TechDefinition? { techs.first { $0.id == id } }
@@ -189,6 +230,30 @@ public struct GameConfiguration: Sendable {
                 throw ConfigurationError.invalid("wave \(w.number) references unknown enemy '\(g.enemy)'")
             }
         }
+        // Battlefield rosters: every swap must keep the stage playable the same way.
+        for m in maps {
+            for (from, to) in (m.roster ?? [:]).sorted(by: { $0.key < $1.key }) {
+                guard let a = enemies[from], let b = enemies[to] else {
+                    throw ConfigurationError.invalid("map \(m.id): roster \(from) → \(to) names an unknown enemy")
+                }
+                guard a.isBoss == b.isBoss, a.isFlying == b.isFlying, a.era == b.era else {
+                    throw ConfigurationError.invalid("map \(m.id): \(to) must match \(from) in era, boss and flying")
+                }
+                guard b.battlefield == nil || b.battlefield == m.id else {
+                    throw ConfigurationError.invalid("map \(m.id): \(to) belongs to battlefield \(b.battlefield ?? "")")
+                }
+                guard m.roster?[to] == nil else {
+                    throw ConfigurationError.invalid("map \(m.id): roster target \(to) is itself replaced")
+                }
+            }
+        }
+        for e in enemies.values {
+            for a in [e.baseAbilities] + e.sortedPhases.compactMap(\.abilities) {
+                for ref in [a.summon?.enemy, a.splitOnDeath?.enemy, a.brood?.enemy].compactMap({ $0 }) where enemies[ref] == nil {
+                    throw ConfigurationError.invalid("enemy \(e.id) refers to unknown enemy '\(ref)'")
+                }
+            }
+        }
         var summonIDs = Set<String>()
         for s in summons.abilities {
             guard summonIDs.insert(s.id).inserted else { throw ConfigurationError.invalid("duplicate summon '\(s.id)'") }
@@ -197,6 +262,14 @@ public struct GameConfiguration: Sendable {
                   u.hp > 0, u.damage > 0, u.attacksPerSecond > 0, u.range > 0, u.moveSpeed > 0 else {
                 throw ConfigurationError.invalid("summon '\(s.id)' needs positive stats and a cooldown at least as long as its duration")
             }
+            guard s.requiredStage >= 0, s.requiredStage <= waves.count else {
+                throw ConfigurationError.invalid("summon '\(s.id)' unlocks after stage \(s.requiredStage), which does not exist")
+            }
+        }
+        if !summons.heroes.isEmpty, summons.defaultHero?.requiredStage != 0 {
+            throw ConfigurationError.invalid("one hero must be available from the start (no unlockStage)")
+        }
+        do {
         }
         for (i, w) in waves.enumerated() where w.number != i + 1 {
             throw ConfigurationError.invalid("wave numbers must be 1…n without gaps (found \(w.number) at \(i + 1))")

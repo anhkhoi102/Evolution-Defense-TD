@@ -18,12 +18,21 @@ def proc(gen, **kw):
 
 sprites = {}
 
+# Battlefield creatures have no code-drawn art of their own: as a fallback they borrow
+# the drawing of the campaign enemy they replace (the shipped pack has baked sprites).
+ENEMIES = json.load(open(os.path.join(CFG, "enemies.json")))
+VISUAL = {e["id"]: e["visual"] for e in ENEMIES}
+STAND_IN = {}
+for f in json.load(open(os.path.join(CFG, "battlefields.json"))):
+    for base, own in (json.load(open(os.path.join(CFG, f))).get("roster") or {}).items():
+        STAND_IN[VISUAL[own]] = VISUAL[base]
+
 # Enemies: 4-frame walk cycle advanced by distance travelled.
-for e in json.load(open(os.path.join(CFG, "enemies.json"))):
+for e in ENEMIES:
     r = e["radius"]
     sprites[f"enemy.{e['visual']}"] = {
         "facing": "rotate",
-        "animations": {"walk": {"frames": [proc("creature", key=e["visual"], radius=r, frame=i) for i in range(4)],
+        "animations": {"walk": {"frames": [proc("creature", key=STAND_IN.get(e["visual"], e["visual"]), radius=r, frame=i) for i in range(4)],
                                 "distancePerFrame": round(max(6, r * 0.75), 2)}},
         "metrics": {"healthBarOffsetY": r + 9,
                     "healthBarWidth": 70 if e["isBoss"] else round(max(24, r * 1.9), 1),
@@ -32,7 +41,8 @@ for e in json.load(open(os.path.join(CFG, "enemies.json"))):
 
 # Summoned allies: the placeholder art has no people, so they borrow the humanoid
 # robot drawings (a fallback only; the shipped pack has baked soldiers).
-SUMMON_STAND_IN = {"militia": ("scoutRobot", 12), "knight": ("assaultRobot", 17)}
+SUMMON_STAND_IN = {"militia": ("scoutRobot", 12), "knight": ("assaultRobot", 17), "king": ("heavyMech", 20),
+                   "queen": ("stealthRobot", 14)}
 summons_path = os.path.join(CFG, "summons.json")
 if os.path.exists(summons_path):
     for a in json.load(open(summons_path))["abilities"]:

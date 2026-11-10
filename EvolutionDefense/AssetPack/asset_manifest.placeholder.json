@@ -339,6 +339,357 @@
     "shieldDiameter": 41.6
    }
   },
+  "enemy.bogLurker": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "mutantBeast",
+       "radius": 18,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "mutantBeast",
+       "radius": 18,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "mutantBeast",
+       "radius": 18,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "mutantBeast",
+       "radius": 18,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 13.5
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 27,
+    "healthBarWidth": 34.2,
+    "shieldDiameter": 46.8
+   }
+  },
+  "enemy.bogwood": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "armoredBeast",
+       "radius": 19,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "armoredBeast",
+       "radius": 19,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "armoredBeast",
+       "radius": 19,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "armoredBeast",
+       "radius": 19,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 14.25
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 28,
+    "healthBarWidth": 36.1,
+    "shieldDiameter": 49.4
+   }
+  },
+  "enemy.boneRunner": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "wolf",
+       "radius": 14,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "wolf",
+       "radius": 14,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "wolf",
+       "radius": 14,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "wolf",
+       "radius": 14,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 10.5
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 23,
+    "healthBarWidth": 26.6,
+    "shieldDiameter": 36.4
+   }
+  },
+  "enemy.boneShaman": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "troll",
+       "radius": 24,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "troll",
+       "radius": 24,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "troll",
+       "radius": 24,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "troll",
+       "radius": 24,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 18.0
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 33,
+    "healthBarWidth": 45.6,
+    "shieldDiameter": 62.4
+   }
+  },
+  "enemy.cactling": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "boar",
+       "radius": 16,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "boar",
+       "radius": 16,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "boar",
+       "radius": 16,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "boar",
+       "radius": 16,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 12.0
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 25,
+    "healthBarWidth": 30.4,
+    "shieldDiameter": 41.6
+   }
+  },
+  "enemy.cactoroChief": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "alphaBeast",
+       "radius": 32,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "alphaBeast",
+       "radius": 32,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "alphaBeast",
+       "radius": 32,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "alphaBeast",
+       "radius": 32,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 24.0
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 41,
+    "healthBarWidth": 70,
+    "shieldDiameter": 83.2
+   }
+  },
+  "enemy.deepOne": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "giantMutant",
+       "radius": 27,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "giantMutant",
+       "radius": 27,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "giantMutant",
+       "radius": 27,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "giantMutant",
+       "radius": 27,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 20.25
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 36,
+    "healthBarWidth": 51.3,
+    "shieldDiameter": 70.2
+   }
+  },
+  "enemy.duneRaptor": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "mutantBeast",
+       "radius": 18,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "mutantBeast",
+       "radius": 18,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "mutantBeast",
+       "radius": 18,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "mutantBeast",
+       "radius": 18,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 13.5
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 27,
+    "healthBarWidth": 34.2,
+    "shieldDiameter": 46.8
+   }
+  },
+  "enemy.duneTyrant": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "mutantTitan",
+       "radius": 40,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "mutantTitan",
+       "radius": 40,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "mutantTitan",
+       "radius": 40,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "mutantTitan",
+       "radius": 40,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 30.0
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 49,
+    "healthBarWidth": 70,
+    "shieldDiameter": 104.0
+   }
+  },
   "enemy.flyingMonster": {
    "facing": "rotate",
    "animations": {
@@ -456,6 +807,45 @@
     "shieldDiameter": 44.2
    }
   },
+  "enemy.graveStalker": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "giantWolf",
+       "radius": 17,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "giantWolf",
+       "radius": 17,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "giantWolf",
+       "radius": 17,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "giantWolf",
+       "radius": 17,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 12.75
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 26,
+    "healthBarWidth": 32.3,
+    "shieldDiameter": 44.2
+   }
+  },
   "enemy.heavyMech": {
    "facing": "rotate",
    "animations": {
@@ -493,6 +883,279 @@
     "healthBarOffsetY": 37,
     "healthBarWidth": 53.2,
     "shieldDiameter": 72.8
+   }
+  },
+  "enemy.heronRaider": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "giantWolf",
+       "radius": 17,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "giantWolf",
+       "radius": 17,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "giantWolf",
+       "radius": 17,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "giantWolf",
+       "radius": 17,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 12.75
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 26,
+    "healthBarWidth": 32.3,
+    "shieldDiameter": 44.2
+   }
+  },
+  "enemy.lakeHorror": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "ancientDragon",
+       "radius": 36,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "ancientDragon",
+       "radius": 36,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "ancientDragon",
+       "radius": 36,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "ancientDragon",
+       "radius": 36,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 27.0
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 45,
+    "healthBarWidth": 70,
+    "shieldDiameter": 93.6
+   }
+  },
+  "enemy.lakeWisp": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "troll",
+       "radius": 24,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "troll",
+       "radius": 24,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "troll",
+       "radius": 24,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "troll",
+       "radius": 24,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 18.0
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 33,
+    "healthBarWidth": 45.6,
+    "shieldDiameter": 62.4
+   }
+  },
+  "enemy.marshHopper": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "wolf",
+       "radius": 14,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "wolf",
+       "radius": 14,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "wolf",
+       "radius": 14,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "wolf",
+       "radius": 14,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 10.5
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 23,
+    "healthBarWidth": 26.6,
+    "shieldDiameter": 36.4
+   }
+  },
+  "enemy.marshHornet": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "flyingMonster",
+       "radius": 17,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "flyingMonster",
+       "radius": 17,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "flyingMonster",
+       "radius": 17,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "flyingMonster",
+       "radius": 17,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 12.75
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 26,
+    "healthBarWidth": 32.3,
+    "shieldDiameter": 44.2
+   }
+  },
+  "enemy.mudPiranha": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "swarmCreature",
+       "radius": 10,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "swarmCreature",
+       "radius": 10,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "swarmCreature",
+       "radius": 10,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "swarmCreature",
+       "radius": 10,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 7.5
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 19,
+    "healthBarWidth": 24,
+    "shieldDiameter": 26.0
+   }
+  },
+  "enemy.mushroomKing": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "alphaBeast",
+       "radius": 32,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "alphaBeast",
+       "radius": 32,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "alphaBeast",
+       "radius": 32,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "alphaBeast",
+       "radius": 32,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 24.0
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 41,
+    "healthBarWidth": 70,
+    "shieldDiameter": 83.2
    }
   },
   "enemy.mutantBeast": {
@@ -573,6 +1236,162 @@
     "shieldDiameter": 104.0
    }
   },
+  "enemy.orcWarlord": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "giantMutant",
+       "radius": 27,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "giantMutant",
+       "radius": 27,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "giantMutant",
+       "radius": 27,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "giantMutant",
+       "radius": 27,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 20.25
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 36,
+    "healthBarWidth": 51.3,
+    "shieldDiameter": 70.2
+   }
+  },
+  "enemy.reefBrute": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "bear",
+       "radius": 21,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "bear",
+       "radius": 21,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "bear",
+       "radius": 21,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "bear",
+       "radius": 21,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 15.75
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 30,
+    "healthBarWidth": 39.9,
+    "shieldDiameter": 54.6
+   }
+  },
+  "enemy.sandImp": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "swarmCreature",
+       "radius": 10,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "swarmCreature",
+       "radius": 10,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "swarmCreature",
+       "radius": 10,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "swarmCreature",
+       "radius": 10,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 7.5
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 19,
+    "healthBarWidth": 24,
+    "shieldDiameter": 26.0
+   }
+  },
+  "enemy.sandWyrm": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "ancientDragon",
+       "radius": 36,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "ancientDragon",
+       "radius": 36,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "ancientDragon",
+       "radius": 36,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "ancientDragon",
+       "radius": 36,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 27.0
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 45,
+    "healthBarWidth": 70,
+    "shieldDiameter": 93.6
+   }
+  },
   "enemy.scoutRobot": {
    "facing": "rotate",
    "animations": {
@@ -610,6 +1429,123 @@
     "healthBarOffsetY": 24,
     "healthBarWidth": 28.5,
     "shieldDiameter": 39.0
+   }
+  },
+  "enemy.shellBrute": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "armoredMonster",
+       "radius": 22,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "armoredMonster",
+       "radius": 22,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "armoredMonster",
+       "radius": 22,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "armoredMonster",
+       "radius": 22,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 16.5
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 31,
+    "healthBarWidth": 41.8,
+    "shieldDiameter": 57.2
+   }
+  },
+  "enemy.skullOrc": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "armoredBeast",
+       "radius": 19,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "armoredBeast",
+       "radius": 19,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "armoredBeast",
+       "radius": 19,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "armoredBeast",
+       "radius": 19,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 14.25
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 28,
+    "healthBarWidth": 36.1,
+    "shieldDiameter": 49.4
+   }
+  },
+  "enemy.sporecap": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "boar",
+       "radius": 16,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "boar",
+       "radius": 16,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "boar",
+       "radius": 16,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "boar",
+       "radius": 16,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 12.0
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 25,
+    "healthBarWidth": 30.4,
+    "shieldDiameter": 41.6
    }
   },
   "enemy.stealthRobot": {
@@ -651,6 +1587,45 @@
     "shieldDiameter": 41.6
    }
   },
+  "enemy.stoneSkull": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "armoredMonster",
+       "radius": 22,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "armoredMonster",
+       "radius": 22,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "armoredMonster",
+       "radius": 22,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "armoredMonster",
+       "radius": 22,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 16.5
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 31,
+    "healthBarWidth": 41.8,
+    "shieldDiameter": 57.2
+   }
+  },
   "enemy.swarmCreature": {
    "facing": "rotate",
    "animations": {
@@ -688,6 +1663,45 @@
     "healthBarOffsetY": 19,
     "healthBarWidth": 24,
     "shieldDiameter": 26.0
+   }
+  },
+  "enemy.tideTyrant": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "mutantTitan",
+       "radius": 40,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "mutantTitan",
+       "radius": 40,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "mutantTitan",
+       "radius": 40,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "mutantTitan",
+       "radius": 40,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 30.0
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 49,
+    "healthBarWidth": 70,
+    "shieldDiameter": 104.0
    }
   },
   "enemy.titanWarMachine": {
@@ -729,6 +1743,45 @@
     "shieldDiameter": 119.6
    }
   },
+  "enemy.tombGuard": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "bear",
+       "radius": 21,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "bear",
+       "radius": 21,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "bear",
+       "radius": 21,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "bear",
+       "radius": 21,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 15.75
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 30,
+    "healthBarWidth": 39.9,
+    "shieldDiameter": 54.6
+   }
+  },
   "enemy.troll": {
    "facing": "rotate",
    "animations": {
@@ -766,6 +1819,45 @@
     "healthBarOffsetY": 33,
     "healthBarWidth": 45.6,
     "shieldDiameter": 62.4
+   }
+  },
+  "enemy.vulture": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "flyingMonster",
+       "radius": 17,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "flyingMonster",
+       "radius": 17,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "flyingMonster",
+       "radius": 17,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "flyingMonster",
+       "radius": 17,
+       "frame": 3
+      }
+     ],
+     "distancePerFrame": 12.75
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 26,
+    "healthBarWidth": 32.3,
+    "shieldDiameter": 44.2
    }
   },
   "enemy.wolf": {
@@ -1254,6 +2346,72 @@
     "spinPerSecond": 15
    }
   },
+  "summon.king": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "heavyMech",
+       "radius": 20,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "heavyMech",
+       "radius": 20,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "heavyMech",
+       "radius": 20,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "heavyMech",
+       "radius": 20,
+       "frame": 3
+      }
+     ],
+     "fps": 8
+    },
+    "idle": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "heavyMech",
+       "radius": 20,
+       "frame": 0
+      }
+     ]
+    },
+    "attack": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "heavyMech",
+       "radius": 20,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "heavyMech",
+       "radius": 20,
+       "frame": 2
+      }
+     ],
+     "fps": 8,
+     "loop": false
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 29,
+    "healthBarWidth": 44.0
+   }
+  },
   "summon.knight": {
    "facing": "rotate",
    "animations": {
@@ -1384,6 +2542,72 @@
    "metrics": {
     "healthBarOffsetY": 21,
     "healthBarWidth": 26.4
+   }
+  },
+  "summon.queen": {
+   "facing": "rotate",
+   "animations": {
+    "walk": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "stealthRobot",
+       "radius": 14,
+       "frame": 0
+      },
+      {
+       "procedural": "creature",
+       "key": "stealthRobot",
+       "radius": 14,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "stealthRobot",
+       "radius": 14,
+       "frame": 2
+      },
+      {
+       "procedural": "creature",
+       "key": "stealthRobot",
+       "radius": 14,
+       "frame": 3
+      }
+     ],
+     "fps": 8
+    },
+    "idle": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "stealthRobot",
+       "radius": 14,
+       "frame": 0
+      }
+     ]
+    },
+    "attack": {
+     "frames": [
+      {
+       "procedural": "creature",
+       "key": "stealthRobot",
+       "radius": 14,
+       "frame": 1
+      },
+      {
+       "procedural": "creature",
+       "key": "stealthRobot",
+       "radius": 14,
+       "frame": 2
+      }
+     ],
+     "fps": 8,
+     "loop": false
+    }
+   },
+   "metrics": {
+    "healthBarOffsetY": 23,
+    "healthBarWidth": 30.8
    }
   },
   "tower.heavy.1.base": {

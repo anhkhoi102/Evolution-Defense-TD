@@ -12,7 +12,7 @@ mkdir -p "$SRC"
 JAR="$(mktemp)"
 UA="Mozilla/5.0 (EvolutionDefense asset bake)"
 
-KENNEY_PACKS=(tower-defense-kit castle-kit nature-kit space-kit blaster-kit mini-characters
+KENNEY_PACKS=(tower-defense-kit castle-kit nature-kit space-kit blaster-kit mini-characters graveyard-kit pirate-kit
               particle-pack ui-pack-adventure interface-sounds impact-sounds sci-fi-sounds rpg-audio)
 PACKS=("${@:-${KENNEY_PACKS[@]}}")
 
@@ -59,7 +59,22 @@ for entry in "${OGA[@]}"; do
     echo "✓ $name"
 done
 
+# KayKit character packs (CC0, the author's own GitHub): heroes, militia and the Desert skeletons.
+for r in Adventures Skeletons; do
+    name="kaykit-$(tr '[:upper:]' '[:lower:]' <<<"$r")"
+    dest="$SRC/$name"
+    if [[ -d "$dest" ]]; then echo "✓ $name (already downloaded)"; continue; fi
+    url="https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-$r-1.0"
+    git clone -q --depth 1 "$url" "$dest" && rm -rf "$dest/.git"
+    echo "$url" > "$dest/.source-url"; echo "CC0 1.0 (pack README)" > "$dest/.license"; date -u +%Y-%m-%d > "$dest/.downloaded"
+    echo "✓ $name"
+done
+
 # Manual downloads (no stable direct link):
+#  • Quaternius "Ultimate Monsters" (CC0): https://quaternius.com/packs/ultimatemonsters.html
+#    → the "Big" set's glTF folder goes to sources/quaternius-ultimatemonsters/Ultimate Monsters/Big/glTF/.
+#  • Quaternius "Animal Pack vol. 2" (CC0): https://opengameart.org/content/animated-animales-low-poly
+#    → unzip into sources/oga-quaternius-animal-pack-vol2/.
 #  • Quaternius "Ultimate Animated Animals" (CC0): https://quaternius.com/packs/ultimateanimatedanimals.html
 #    → unzip into sources/quaternius-ultimateanimatedanimals/ (keeps "Ultimate Animated Animals - July 2021/glTF").
 #  • Lilita One (SIL OFL 1.1): https://fonts.google.com/specimen/Lilita+One

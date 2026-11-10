@@ -41,28 +41,36 @@ private func events(_ w: GameWorld) -> [GameEvent] {
 
 @Suite("Eras & content")
 struct EraContentTests {
-    @Test func twentyWavesFivePerEraBossesOnEveryFifth() {
-        #expect(config.waves.count == 20)
+    @Test func thirtyStagesWithABossOnEveryFifth() {
+        #expect(config.waves.count == 30)
+        // The first three ages last five stages each; the Futuristic Age runs from 16 to the end.
         for era in Era.allCases {
             let waves = config.waves.filter { $0.era == era }
-            #expect(waves.count == 5, "\(era) should have 5 waves")
+            #expect(waves.count == (era == .futuristic ? 15 : 5), "\(era) stage count")
         }
-        let expectedBoss = [5: "alphaBeast", 10: "ancientDragon", 15: "mutantTitan", 20: "titanWarMachine"]
+        // One boss per age in the first 20 stages, then two boss gauntlets.
+        let expectedBoss: [Int: [String]] = [5: ["alphaBeast"], 10: ["ancientDragon"], 15: ["mutantTitan"], 20: ["titanWarMachine"],
+                                             25: ["ancientDragon", "mutantTitan"],
+                                             30: ["mutantTitan", "ancientDragon", "titanWarMachine"]]
         for w in config.waves {
             let bosses = w.groups.filter { config.enemies[$0.enemy]!.isBoss }.map(\.enemy)
             if let b = expectedBoss[w.number] {
                 #expect(w.isBossWave)
-                #expect(bosses == [b], "wave \(w.number) boss")
-                #expect(config.enemies[b]!.era == w.era)
+                #expect(bosses == b, "stage \(w.number) bosses")
             } else {
-                #expect(!w.isBossWave && bosses.isEmpty, "wave \(w.number) should have no boss")
+                #expect(!w.isBossWave && bosses.isEmpty, "stage \(w.number) should have no boss")
             }
         }
+        // Stages 21–30 are new designs, not copies: every one has a theme and no two share a line-up.
+        let late = config.waves.filter { $0.number > 20 }
+        #expect(late.allSatisfy { $0.theme != nil })
+        #expect(Set(late.map { $0.groups.map { "\($0.enemy)x\($0.count)" }.joined() }).count == late.count)
+        #expect(late.filter { $0.groups.contains { $0.elite == true } }.count >= 8, "elites feature throughout the late campaign")
     }
 
     @Test func everyEraHasItsOwnRoster() {
         for era in Era.allCases {
-            let roster = config.enemies.values.filter { $0.era == era && !$0.isBoss }
+            let roster = config.enemies.values.filter { $0.era == era && !$0.isBoss && $0.battlefield == nil }
             #expect(roster.count == (era == .primitive ? 3 : 4), "\(era) regular enemies")
             // Each later wave set actually uses its own era's enemies.
             let used = Set(config.waves.filter { $0.era == era }.flatMap { $0.groups.map(\.enemy) })

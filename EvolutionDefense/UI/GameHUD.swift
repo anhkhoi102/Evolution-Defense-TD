@@ -100,7 +100,7 @@ private struct WaveBlock: View {
     let controller: GameController
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("WAVE · \(controller.difficultyName.uppercased())").font(.system(size: 10, weight: .bold, design: .rounded)).foregroundStyle(Theme.textDim)
+            Text("STAGE · \(controller.difficultyName.uppercased())").font(.system(size: 10, weight: .bold, design: .rounded)).foregroundStyle(Theme.textDim)
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text("\(max(controller.waveNumber, 0)) / \(controller.totalWaves)")
                     .font(Theme.display(18)).monospacedDigit()

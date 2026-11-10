@@ -61,11 +61,13 @@ public struct BalancePlayer: Sendable {
         }
         // Deploy a little ahead of a moving enemy so the units meet it.
         func ahead(_ e: Enemy, _ by: CGFloat) -> CGPoint { w.path.position(at: min(e.distance + by, w.path.totalLength - 60)) }
-        if w.summonStatus("hero")?.isReady == true {
+        if let hero = w.matchHero, w.summonStatus(hero.id)?.isReady == true {
+            // Ranged heroes stand further back so the enemy walks into their reach.
+            let lead: CGFloat = hero.unit.isRanged ? CGFloat(hero.unit.range) * 0.6 : 90
             if let big = live.filter({ $0.isBoss || $0.isElite }).max(by: { $0.distance < $1.distance }) {
-                w.summon("hero", at: ahead(big, 90))
+                w.summon(hero.id, at: ahead(big, lead))
             } else if let (e, n) = crowd(), n >= 8 {
-                w.summon("hero", at: ahead(e, 70))
+                w.summon(hero.id, at: ahead(e, lead - 20))
             }
         }
         if w.summonStatus("militia")?.isReady == true, let (e, n) = crowd(), n >= 5 {
@@ -118,6 +120,17 @@ public struct BalancePlayer: Sendable {
         public var leaksByEnemy: [String: Int] = [:]
     }
 
+    public struct TowerStat: Sendable {
+        public var count = 0
+        public var levels = 0
+        public var invested = 0
+        public var damage = 0.0
+        /// Extra damage enabled by this type's Armour Shred / Expose.
+        public var assist = 0.0
+        public var kills = 0
+        public init() {}
+    }
+
     public struct Result: Sendable, CustomStringConvertible {
         public var phase: MatchPhase
         public var baseHP: Int
@@ -128,6 +141,8 @@ public struct BalancePlayer: Sendable {
         public var towers: Int
         public var levels: Int
         public var waves: [WaveReport]
+        /// What each tower type contributed (towers standing at the end of the match).
+        public var towerStats: [TowerArchetype: TowerStat] = [:]
 
         public var description: String {
             "\(phase) wave=\(wavesCleared) hp=\(baseHP) time=\(Int(time))s bosses=\(bossesDefeated) techs=\(techs) towers=\(towers) levels=\(levels)"
@@ -182,9 +197,16 @@ public struct BalancePlayer: Sendable {
             if w.phase == .defeat { r.deepestProgress = 1 }
             reports.append(r)
         }
-        return Result(phase: w.phase, baseHP: w.baseHP, time: w.time, wavesCleared: w.stats.wavesCleared,
-                      bossesDefeated: w.stats.bossesDefeated, techs: w.researchedTechs.count,
-                      towers: w.towers.count, levels: w.towers.reduce(0) { $0 + $1.level }, waves: reports)
+        var result = Result(phase: w.phase, baseHP: w.baseHP, time: w.time, wavesCleared: w.stats.wavesCleared,
+                            bossesDefeated: w.stats.bossesDefeated, techs: w.researchedTechs.count,
+                            towers: w.towers.count, levels: w.towers.reduce(0) { $0 + $1.level }, waves: reports)
+        for t in w.towers {
+            var st = result.towerStats[t.definition.archetype] ?? TowerStat()
+            st.count += 1; st.levels += t.level; st.invested += t.totalInvested
+            st.damage += t.damageDealt; st.assist += t.assistDamage; st.kills += t.kills
+            result.towerStats[t.definition.archetype] = st
+        }
+        return result
     }
 }
 
@@ -219,18 +241,20 @@ extension BalancePlayer {
     }
 
     static func profiles(plan goodPlan: [Slot], extra: [Slot]) -> [BalancePlayer] {
-        func monoPlan(_ t: TowerArchetype) -> [Slot] { goodPlan.map { Slot($0.slot, t) } }
+        // Every strategy that upgrades ends up using all pads: once its towers are maxed it keeps building.
+        let full = goodPlan + extra
+        func monoPlan(_ t: TowerArchetype) -> [Slot] { full.map { Slot($0.slot, t) } }
         return [
-        BalancePlayer(name: "expert (8 mixed, tech)", plan: goodPlan, maxTowers: 8),
-        BalancePlayer(name: "spread (12 mixed, tech)", plan: goodPlan, maxTowers: 12),
-        BalancePlayer(name: "focused, no tech", plan: goodPlan, maxTowers: 8, research: false),
-        BalancePlayer(name: "casual (between waves, no tech)", plan: goodPlan, maxTowers: 8, research: false,
+        BalancePlayer(name: "expert (8 mixed, tech)", plan: full, maxTowers: 8),
+        BalancePlayer(name: "spread (12 mixed, tech)", plan: full, maxTowers: 12),
+        BalancePlayer(name: "focused, no tech", plan: full, maxTowers: 8, research: false),
+        BalancePlayer(name: "casual (between waves, no tech)", plan: full, maxTowers: 8, research: false,
                       upgradeOnlyBetweenWaves: true),
         BalancePlayer(name: "only splash", plan: monoPlan(.splash), maxTowers: 8),
         BalancePlayer(name: "only sniper", plan: monoPlan(.sniper), maxTowers: 8),
         BalancePlayer(name: "only heavy", plan: monoPlan(.heavy), maxTowers: 8),
         BalancePlayer(name: "only rapid", plan: monoPlan(.rapid), maxTowers: 8),
-        BalancePlayer(name: "L1 spam (16 towers, no upgrades)", plan: goodPlan + extra,
+        BalancePlayer(name: "L1 spam (16 towers, no upgrades)", plan: full,
                       maxTowers: 16, upgrades: false),
         BalancePlayer(name: "passive (2 towers)", plan: Array(goodPlan.prefix(2)), maxTowers: 2, upgrades: false,
                       repairs: false, research: false),

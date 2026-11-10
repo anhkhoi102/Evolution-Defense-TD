@@ -165,6 +165,16 @@ def nat(name):
     return os.path.join(NAT, name + ".glb")
 
 
+def gyk(name):
+    """Kenney Graveyard Kit (CC0): tombs and gravestones for the Desert ruins."""
+    return os.path.join(rig.SRC_DIR, "kenney-graveyard-kit", "Models", "GLB format", name + ".glb")
+
+
+def pik(name):
+    """Kenney Pirate Kit (CC0): boats, dock and cargo for the Lakeside."""
+    return os.path.join(rig.SRC_DIR, "kenney-pirate-kit", "Models", "GLB format", name + ".glb")
+
+
 def free_spot(p, clear_path=1.0, clear_pads=1.0):
     if dist_to_path(p) < PATH_W / 2 + clear_path:
         return False
@@ -546,9 +556,9 @@ def build_water(rng):
             wide_x = (max(xs) - min(xs)) < (max(ys) - min(ys))
             bank = [Vector((p.x + (0.26 if p.x > c.x else -0.26), p.y, 0)) if wide_x
                     else Vector((p.x, p.y + (0.26 if p.y > c.y else -0.26), 0)) for p in poly]
-            poly_mesh(bank, 0.004, sand, f"Shore{k}")
+            poly_mesh(bank, 0.004 + k * 1e-4, sand, f"Shore{k}")   # never coplanar with another shore (renders black)
         else:
-            poly_mesh(offset_poly(poly, 0.26), 0.004, sand, f"Shore{k}")
+            poly_mesh(offset_poly(poly, 0.26), 0.004 + k * 1e-4, sand, f"Shore{k}")
         poly_mesh(poly, 0.010 + k * 1e-4, water_material("WaterShallow", shallow), f"Water{k}a")
         if not thin:
             poly_mesh(toward_centre(poly, 0.55), 0.012 + k * 1e-4, water_material("Water", base), f"Water{k}b")
@@ -720,6 +730,13 @@ def bake_desert_background():
                 q = p + Vector((rng.uniform(-0.8, 0.8), rng.uniform(-0.6, 0.6), 0))
                 if free_spot(q, 0.4, 0.8) and (q - p).length > 0.45:
                     place(nat(rng.choice(["statue_block", "pot_large", "pot_small", "stone_smallD", "statue_block"])), q, rng.uniform(0, 6.28), rng.uniform(0.6, 0.9))
+            # An old burial ground around each ruin (Graveyard Kit): the home of the Desert's skeletons.
+            for _ in range(5):
+                q = p + Vector((rng.uniform(-1.3, 1.3), rng.uniform(-1.0, 1.0), 0))
+                if free_spot(q, 0.55, 0.9) and (q - p).length > 0.6:
+                    place(gyk(rng.choice(["gravestone-broken", "gravestone-round", "gravestone-debris", "gravestone-bevel", "coffin-old",
+                                          "urn-round", "urn-square", "debris", "pillar-small", "grave-border"])),
+                          q, rng.choice([0, 1.57, 3.14, 4.71]) + rng.uniform(-0.3, 0.3), rng.uniform(0.75, 0.95))
     # Rocky mesa beyond the top edge, low rocks along the bottom edge.
     for _ in range(90):
         p = Vector((rng.uniform(-1.5, w / U + 1.5), rng.uniform(h / U + 0.7, h / U + 4.5), 0))
@@ -805,6 +822,26 @@ def bake_lakeside_background():
         c = sum(pond, Vector()) / len(pond)
         place(nat("canoe"), c + Vector((0.6, -0.3, 0.02)), 0.5, 0.9)
         place(nat("canoe_paddle"), c + Vector((0.75, -0.2, 0.08)), 0.6, 0.9)
+    # A fishing dock on the lake with rowing boats and cargo on the bank (Pirate Kit).
+    if WATER:
+        lake = max(WATER, key=lambda poly: (max(q.x for q in poly) - min(q.x for q in poly)) * (max(q.y for q in poly) - min(q.y for q in poly)))
+        centre = sum(lake, Vector()) / len(lake)
+        K = 0.36                                                    # the kit is modelled about three times larger than the map's props
+        # The dock stands on the lake's western bank (facing the battlefield), clear of the road and pads.
+        shore = sorted(lake, key=lambda q: q.x)
+        spot = next((q for q in shore if abs(q.y - centre.y) < 1.2 and free_spot(q - Vector((0.5, 0, 0)), 0.9, 1.1)), None)
+        if spot is not None:
+            out = Vector((1, 0, 0))                                 # from the bank towards open water
+            ang = -math.pi / 2
+            place(pik("structure-platform-dock"), spot + out * 0.25 + Vector((0, 0, 0.03)), ang, K)
+            place(pik("structure-platform-dock-small"), spot + out * 0.75 + Vector((0, 0, 0.03)), ang, K)
+            place(pik("boat-row-small"), spot + Vector((0.95, 0.42, 0.02)), 0.4, K)
+            for k, name in enumerate(["barrel", "crate", "barrel", "crate-bottles"]):
+                q = spot + Vector((-0.3 - 0.12 * (k % 2), 0.36 * (k - 1.5) * 0.6, 0))
+                if not in_water(q, 0.02):
+                    place(pik(name), q, rng.uniform(0, 6.28), K)
+        place(pik("boat-row-large"), centre + Vector((0.9, 0.5, 0.02)), 2.4, K)
+        place(pik("boat-row-small"), centre + Vector((-0.4, -0.9, 0.02)), 0.9, K)
     for _ in range(150):
         p = Vector((rng.uniform(-1.5, w / U + 1.5), rng.uniform(h / U + 0.6, h / U + 4.5), 0))
         if in_water(p, 0.6):

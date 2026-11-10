@@ -271,10 +271,11 @@ struct WaveTests {
             }
             w.step(dt)
             w.drainEvents { if case .bossSpawned = $0 { bossesSeen += 1 } }
-            if w.time > 60 * 40 { break }
+            if w.time > 60 * 70 { break }
         }
-        #expect(bossesSeen == 4)
-        #expect(w.stats.bossesDefeated == 4)
+        let bosses = baseConfig.waves.flatMap(\.groups).filter { baseConfig.enemies[$0.enemy]!.isBoss }.count
+        #expect(bossesSeen == bosses)
+        #expect(w.stats.bossesDefeated == bosses)
         #expect(w.phase == .victory)
         #expect(w.waveNumber == w.totalWaves)
         #expect(w.baseHP > 0)

@@ -9,7 +9,7 @@
 // Swapping the whole art style means shipping new images and a manifest —
 // gameplay code and renderers stay unchanged. See Docs/ASSETS.md.
 
-import AppKit
+import CoreGraphics
 import EvolutionDefenseAssets
 import EvolutionDefenseCore
 import SpriteKit
@@ -89,7 +89,7 @@ struct SpriteAsset {
     let facing: SpriteSpec.Facing
     let animations: [String: AnimationClip]
     let metrics: [String: Double]
-    let tint: NSColor?
+    let tint: PlatformColor?
     let motion: SpriteSpec.Motion
 
     /// First matching animation, else `default`, else any.
@@ -204,7 +204,7 @@ final class ArtLibrary {
         return SpriteAsset(id: id, size: finalSize,
                            anchor: CGPoint(x: spec.anchor?.x ?? 0.5, y: spec.anchor?.y ?? 0.5),
                            facing: spec.facing ?? .rotate, animations: clips, metrics: spec.metrics ?? [:],
-                           tint: spec.tint.flatMap(AssetValidator.parseHex).map { NSColor(cgColor: rgb($0))! },
+                           tint: spec.tint.flatMap(AssetValidator.parseHex).map { Platform.color(rgb($0)) },
                            motion: spec.motion ?? .straight)
     }
 
@@ -215,11 +215,9 @@ final class ArtLibrary {
             guard let (img, size) = ProceduralArt.render(p, config: config) else { return nil }
             return (texture(img), size)
         case .image(let name):
-            guard let img = NSImage(named: name), let cg = img.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-                return nil
-            }
             // Asset-catalog / @2x images report their size in points.
-            return (texture(cg), img.size)
+            guard let (cg, points) = Platform.catalogImage(named: name) else { return nil }
+            return (texture(cg), points)
         case .atlas(let atlasName, let name):
             let atlas = SKTextureAtlas(named: atlasName)
             guard atlas.textureNames.contains(where: { ($0 as NSString).deletingPathExtension == name || $0 == name }) else { return nil }
@@ -425,7 +423,10 @@ final class ArtLibrary {
     func warmUp(config: GameConfiguration, era: Era? = nil) {
         if self.config == nil { prepare(config: config) }
         releaseBattlefieldArt(keeping: config.map)
+        // Only this battlefield's creatures: other maps' rosters are never decoded.
+        let inPlay = config.enemiesInPlay
         let skip = Set(config.enemies.values.filter { e in
+            guard inPlay.contains(e.id) else { return true }
             guard let era else { return false }
             return e.era < era || e.era.rawValue > era.rawValue + 1
         }.map { AssetID.enemy($0.visual) })

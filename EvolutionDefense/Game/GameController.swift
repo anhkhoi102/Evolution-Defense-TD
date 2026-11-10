@@ -1,4 +1,4 @@
-import AppKit
+import Foundation
 import EvolutionDefenseAudio
 import EvolutionDefenseCore
 import Observation
@@ -37,6 +37,8 @@ struct TowerSnapshot: Equatable {
     var targeting: TargetingPriority
     var kills: Int
     var damageDealt: Int
+    /// Extra damage the team dealt thanks to this tower's Armour Shred or Expose.
+    var assistDamage: Int
     var disabled: Bool
     /// Reinforcement tower: can't be upgraded or sold.
     var isTemporary: Bool
@@ -51,7 +53,7 @@ struct TowerSnapshot: Equatable {
         next = t.isMaxLevel ? nil : LevelStats(world.effectiveStats(t.archetype, level: t.level + 1))
         upgradeCost = world.upgradeCost(for: t)
         sellValue = world.sellValue(for: t)
-        targeting = t.targeting; kills = t.kills; damageDealt = Int(t.damageDealt.rounded())
+        targeting = t.targeting; kills = t.kills; damageDealt = Int(t.damageDealt.rounded()); assistDamage = Int(t.assistDamage.rounded())
         disabled = t.isDisabled(at: world.time)
         isTemporary = t.isTemporary
         brokenDown = t.eventSpeedFactor < 1
@@ -205,6 +207,10 @@ final class GameController {
     @ObservationIgnored var onCheckpoint: (@MainActor (GameWorld) -> Void)?
     @ObservationIgnored var onMatchEnded: (@MainActor (GameWorld) -> Void)?
     @ObservationIgnored var onCheckAchievements: (@MainActor (GameWorld) -> [AchievementDefinition])?
+    /// Records campaign progress after a stage and returns heroes that this just unlocked.
+    @ObservationIgnored var onStageCleared: (@MainActor (GameWorld) -> [SummonAbilityDefinition])?
+    /// Heroes unlocked during this match (shown on the end screen).
+    private(set) var heroesUnlockedThisMatch: [SummonAbilityDefinition] = []
     @ObservationIgnored private(set) var settings: GameSettings
     @ObservationIgnored private var audio: AudioManager { .shared }
 
@@ -232,6 +238,10 @@ final class GameController {
     /// True while the countdown is frozen because a management panel is open.
     private(set) var countdownHeld = false
     private(set) var lastSummary: WaveSummary?
+    /// A hero that was just unlocked: shown as a card until dismissed.
+    var heroUnlock: SummonAbilityDefinition?
+    /// The finished match's star rating (1–3 for a win, 0 otherwise).
+    private(set) var matchStars = 0
     var showSummary = false
 
     // Interaction state
@@ -302,7 +312,7 @@ final class GameController {
     var canRepair: Bool { phase == .preparation && baseHP < maxBaseHP }
 
     /// Management UI is open → the preparation countdown must wait for the player.
-    var isManaging: Bool { selectedTower != nil || isRepairPanelOpen || isTechPanelOpen }
+    var isManaging: Bool { selectedTower != nil || isRepairPanelOpen || isTechPanelOpen || heroUnlock != nil }
 
     /// Enemy types in the coming wave (or the running one), biggest threats first.
     var waveIntel: [EnemyIntel] {
@@ -441,7 +451,7 @@ final class GameController {
         guard !isOver, let st = world.summonStatus(id) else { return }
         if summonSelection == id { summonSelection = nil; return }
         if !st.isUnlocked {
-            showToast("\(st.ability.name) unlocks at wave \(st.ability.unlockWave)", .info)
+            showToast("\(st.ability.name) unlocks at stage \(st.ability.unlockWave)", .info)
         } else if st.cooldownRemaining > 0 {
             showToast("\(st.ability.name) is ready in \(Int(st.cooldownRemaining.rounded(.up))) s", .warning)
             audio.play(.error)
@@ -641,10 +651,11 @@ final class GameController {
         case .waveStarted(let n, let bonus):
             showSummary = false
             eventCard = nil
+            heroUnlock = nil          // the unlock card never stays over a running stage
             audio.play(.waveStart)
             let wave = config.waves[n - 1]
             if !wave.isBossWave {
-                showBanner(Banner(title: "WAVE \(n)", subtitle: "\(wave.era.displayName) · \(wave.totalEnemies) enemies", kind: .wave))
+                showBanner(Banner(title: "STAGE \(n)", subtitle: "\(wave.era.displayName) · \(wave.totalEnemies) enemies", kind: .wave))
             }
             if bonus > 0 { showToast("Early start bonus +\(bonus) gold", .success) }
         case .enemySpawned(let e):
@@ -677,6 +688,11 @@ final class GameController {
             showSummary = summary.number < totalWaves
             if summary.number < totalWaves { audio.play(.waveClear) }
             checkAchievements()
+            for hero in onStageCleared?(world) ?? [] {
+                heroesUnlockedThisMatch.append(hero)
+                heroUnlock = hero
+                audio.play(.achievement)
+            }
         case .preparationStarted:
             onCheckpoint?(world)
         case .randomEvent(let def, let text):
@@ -703,6 +719,13 @@ final class GameController {
         case .matchEnded(let result):
             audio.stopMusic()
             audio.play(result == .victory ? .victory : .defeat)
+            matchStars = world.matchStars
+            // One tick per star, in time with the stars popping in on the end screen.
+            for i in 0..<matchStars {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3 + Double(i) * 0.25) { [weak self] in
+                    self?.audio.play(.click, volume: 0.9)
+                }
+            }
             onMatchEnded?(world)
             checkAchievements()
             buildSelection = nil

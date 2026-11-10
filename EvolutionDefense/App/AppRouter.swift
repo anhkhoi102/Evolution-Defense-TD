@@ -1,4 +1,3 @@
-import AppKit
 import EvolutionDefenseAudio
 import EvolutionDefenseCore
 import Observation
@@ -10,7 +9,7 @@ import SwiftUI
 @Observable
 final class AppRouter {
     enum Screen { case menu, game }
-    enum MenuPanel { case none, newGame, battlefields, settings, achievements, records, credits }
+    enum MenuPanel { case none, newGame, battlefields, campaign, settings, achievements, records, credits }
 
     private(set) var screen: Screen = .menu
     private(set) var game: GameController?
@@ -30,6 +29,17 @@ final class AppRouter {
     var battlefields: [MapDefinition] { config?.maps ?? [] }
     /// The battlefield chosen in the menu (falls back to the default if a saved id no longer exists).
     var selectedBattlefield: MapDefinition? { config?.battlefield(settings.battlefield) ?? config?.map }
+    /// Every hero, in menu order, and the one that goes into the next match.
+    var heroes: [SummonAbilityDefinition] { config?.summons.heroes ?? [] }
+    var selectedHero: SummonAbilityDefinition? { config.flatMap { profile.activeHero(in: $0.summons) } }
+    func isUnlocked(_ hero: SummonAbilityDefinition) -> Bool { profile.isUnlocked(hero) }
+    func selectHero(_ id: String) {
+        guard let h = heroes.first(where: { $0.id == id }), profile.isUnlocked(h), id != selectedHero?.id else { return }
+        updateSettings { $0.hero = id }
+    }
+
+    /// Every star there is to earn: three per battlefield.
+    var maxStars: Int { StarRatingConfig.maxStars * max(battlefields.count, 1) }
     func selectBattlefield(_ id: String) {
         guard config?.battlefield(id) != nil, id != settings.battlefield else { return }
         updateSettings { $0.battlefield = id }
@@ -56,7 +66,7 @@ final class AppRouter {
         }
         AudioManager.shared.start(settings: profile.settings)
         AudioManager.shared.playMusic(.menu)
-        quitObserver = NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification,
+        quitObserver = NotificationCenter.default.addObserver(forName: Platform.shouldSaveNotification,
                                                               object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.saveCurrentMatch() }
         }
@@ -67,7 +77,8 @@ final class AppRouter {
     func newGame(_ options: MatchOptions? = nil) {
         guard let config else { return }
         let opts = options ?? MatchOptions(difficulty: settings.difficulty, randomEvents: settings.randomEvents,
-                                           battlefield: selectedBattlefield?.id ?? MatchOptions.defaultBattlefield)
+                                           battlefield: selectedBattlefield?.id ?? MatchOptions.defaultBattlefield,
+                                           hero: selectedHero?.id)
         store.deleteCheckpoint()
         checkpoint = nil
         start(GameWorld(config: config, options: opts, seed: UInt64.random(in: 1...UInt64.max)))
@@ -91,6 +102,7 @@ final class AppRouter {
         c.onCheckpoint = { [weak self] w in self?.saveCheckpoint(w) }
         c.onMatchEnded = { [weak self] w in self?.matchEnded(w) }
         c.onCheckAchievements = { [weak self] w in self?.checkAchievements(w) ?? [] }
+        c.onStageCleared = { [weak self] w in self?.stageCleared(w) ?? [] }
         game = c
         screen = .game
         saveCheckpoint(world)
@@ -121,6 +133,14 @@ final class AppRouter {
         }
         profile.noteProgress(w)
         saveProfile()
+    }
+
+    /// Stores the stage progress straight away and reports heroes this unlocked.
+    private func stageCleared(_ w: GameWorld) -> [SummonAbilityDefinition] {
+        let locked = heroes.filter { !profile.isUnlocked($0) }
+        profile.noteProgress(w)
+        saveProfile()
+        return locked.filter { profile.isUnlocked($0) }
     }
 
     private func matchEnded(_ w: GameWorld) {

@@ -119,11 +119,11 @@ extension GameWorld {
         applyDamage(to: e, raw: p.damage, penetration: p.armorPenetration, type: p.damageType, source: p.source)
         if p.isCritical { events.append(.criticalHit(e, damage: p.damage)) }
         guard e.isActive else { return }
-        applyStatus(p.hit, rawDamage: p.damage, to: e)
+        applyStatus(p.hit, rawDamage: p.damage, to: e, source: p.source)
     }
 
     /// Slow, burn and stun from a hit. Bosses shrug off stuns and take half the slow.
-    func applyStatus(_ h: HitEffects, rawDamage: Double, to e: Enemy) {
+    func applyStatus(_ h: HitEffects, rawDamage: Double, to e: Enemy, source: Tower? = nil) {
         if h.slow > 0 && h.slowDuration > 0 {
             let amount = e.isBoss ? h.slow * 0.5 : h.slow
             if amount >= e.slowAmount || time >= e.slowUntil {
@@ -138,6 +138,25 @@ extension GameWorld {
         if h.stun > 0 && !e.isBoss {
             e.stunnedUntil = max(e.stunnedUntil, time + h.stun)
         }
+        // Armour Shred: one counter per enemy, shared by every tower that shreds. The cap is the
+        // highest one that has hit it while the effect lasts; bosses lose at most half of that.
+        if h.shred > 0 && h.shredDuration > 0 {
+            let cap = e.isBoss ? h.shredCap * 0.5 : h.shredCap
+            e.shredCap = max(e.shredCap, cap)
+            let was = e.shredAmount
+            e.shredAmount = min(e.shredCap, e.armor, e.shredAmount + h.shred)
+            e.shredUntil = time + h.shredDuration
+            e.shredSource = source
+            if was == 0 && e.shredAmount > 0 { events.append(.statusApplied(e, .shred)) }
+        }
+        // Expose: never stacks; the strongest mark wins and hits refresh it. Half as long on bosses.
+        if h.expose > 0 && h.exposeDuration > 0 {
+            let was = e.exposeAmount
+            e.exposeAmount = max(e.exposeAmount, h.expose)
+            e.exposeUntil = max(e.exposeUntil, time + (e.isBoss ? h.exposeDuration * 0.5 : h.exposeDuration))
+            e.exposeSource = source
+            if was == 0 { events.append(.statusApplied(e, .expose)) }
+        }
     }
 
     // MARK: Damage
@@ -147,9 +166,20 @@ extension GameWorld {
     func applyDamage(to e: Enemy, raw: Double, penetration: Double, type: DamageType = .physical,
                      source: Tower?, ignoreDefences: Bool = false, countsAsHit: Bool = true) {
         guard e.isActive, raw > 0 else { return }
-        var dmg = ignoreDefences ? raw : DamageModel.effectiveDamage(
-            raw: raw, armor: e.armor, penetration: penetration,
-            minimumFraction: minDamageFraction, resistance: e.definition.resistance[type])
+        // Shred lowers armour; Expose raises what gets through. Burning (ignoreDefences) is unaffected by both.
+        var dmg = raw
+        if !ignoreDefences {
+            let res = e.definition.resistance[type]
+            let shredded = DamageModel.effectiveDamage(raw: raw, armor: e.effectiveArmor, penetration: penetration,
+                                                       minimumFraction: minDamageFraction, resistance: res)
+            dmg = shredded * (1 + e.exposeAmount)
+            // Credit what the team effects added to the towers that applied them (statistics only).
+            if e.shredAmount > 0, let t = e.shredSource {
+                t.assistDamage += shredded - DamageModel.effectiveDamage(raw: raw, armor: e.armor, penetration: penetration,
+                                                                         minimumFraction: minDamageFraction, resistance: res)
+            }
+            if e.exposeAmount > 0, let t = e.exposeSource { t.assistDamage += shredded * e.exposeAmount }
+        }
         if e.shieldHP > 0 {
             // Energy weapons tear through shields 50 % faster.
             let mult = type == .energy ? 1.5 : 1.0
@@ -183,6 +213,8 @@ extension GameWorld {
         if e.isBoss {
             stats.bossesDefeated += 1
             stats.bossesKilled.append(e.definition.id)
+            // A battlefield's own boss also counts as the campaign boss it stands in for (achievements).
+            if let campaign = config.campaignID(for: e.definition.id) { stats.bossesKilled.append(campaign) }
             if let rp = e.definition.researchReward, rp > 0 {
                 addResearch(rp)
                 waves.recordResearch(rp)

@@ -59,6 +59,21 @@ public final class Enemy {
     public internal(set) var burnDPS: Double = 0
     var burnUntil: Double = 0
     public internal(set) var stunnedUntil: Double = 0
+    /// Armour Shred: armour currently stripped (never more than the armour itself).
+    public internal(set) var shredAmount: Double = 0
+    var shredCap: Double = 0
+    var shredUntil: Double = 0
+    /// Expose: extra damage taken from every source (0.2 = +20 %).
+    public internal(set) var exposeAmount: Double = 0
+    var exposeUntil: Double = 0
+    /// Towers that last applied each effect: the extra damage it enables is credited to them.
+    weak var shredSource: Tower?
+    weak var exposeSource: Tower?
+
+    public var isShredded: Bool { shredAmount > 0 }
+    public var isExposed: Bool { exposeAmount > 0 }
+    /// Armour after shred.
+    public var effectiveArmor: Double { max(0, armor - shredAmount) }
 
     public var isActive: Bool { isAlive && !reachedBase }
     public var isBoss: Bool { definition.isBoss }
@@ -116,6 +131,8 @@ public final class Tower {
     public internal(set) var cooldown: Double = 0
     public internal(set) var totalInvested: Int
     public internal(set) var kills = 0
+    /// Extra damage other attacks dealt because of this tower's Armour Shred or Expose.
+    public internal(set) var assistDamage: Double = 0
     public internal(set) var damageDealt: Double = 0
     /// Simulation time of the last shot (renderer uses it for recoil).
     public internal(set) var lastFireTime: Double = -100

@@ -39,6 +39,8 @@ public struct MatchCheckpoint: Codable, Sendable, Equatable {
     public var rng: SeededRandom
     public var eventRNG: SeededRandom
     public var time: Double
+    /// Base HP lost so far in this match, for the final star rating (optional: older saves don't have it).
+    public var damageTaken: Int?
 }
 
 public enum CheckpointError: Error, Equatable {
@@ -60,7 +62,8 @@ extension GameWorld {
                            invested: $0.totalInvested, kills: $0.kills, damageDealt: $0.damageDealt,
                            isTemporary: $0.isTemporary, eventSpeedFactor: $0.eventSpeedFactor)
             },
-            activeEvent: activeEvent, nextEventWave: nextEventWave, rng: rng, eventRNG: eventRNG, time: time)
+            activeEvent: activeEvent, nextEventWave: nextEventWave, rng: rng, eventRNG: eventRNG, time: time,
+            damageTaken: baseDamageTaken)
     }
 
     /// Restores a match at the start of the preparation phase it was saved in.
@@ -84,6 +87,8 @@ extension GameWorld {
         rng = c.rng
         eventRNG = c.eventRNG
         time = c.time
+        // An older save has no count: what is missing from the base now is the best estimate.
+        baseDamageTaken = c.damageTaken ?? max(0, c.maxBaseHP - c.baseHP)
         for s in c.towers {
             guard let slot = slot(withID: s.slot), towersBySlot[s.slot] == nil, let def = config.towers[s.archetype] else { continue }
             let t = Tower(id: makeID(), slotID: s.slot, definition: def, position: config.map.slotPosition(slot), modifiers: modifiers)

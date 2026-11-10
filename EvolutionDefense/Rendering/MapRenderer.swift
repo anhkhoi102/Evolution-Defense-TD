@@ -128,7 +128,7 @@ final class MapRenderer {
                 e.particleAlphaSequence = SKKeyframeSequence(keyframeValues: [0, 0.16, 0.12, 0], times: [0, 0.15, 0.8, 1])
                 e.particleScale = 1.6; e.particleScaleRange = 0.9; e.particleScaleSpeed = 0.12
                 e.particleRotationRange = 2 * .pi; e.particleRotationSpeed = 0.2
-                e.particleColor = NSColor(srgbRed: 0.95, green: 0.84, blue: 0.62, alpha: 1)
+                e.particleColor = PlatformColor(srgbRed: 0.95, green: 0.84, blue: 0.62, alpha: 1)
                 e.particleColorBlendFactor = 1
                 e.zPosition = Layer.projectiles - 1
                 e.advanceSimulationTime(10)          // already drifting when the match opens
@@ -205,12 +205,12 @@ final class MapRenderer {
     func baseHit() { baseShake = 0.35 }
 
     /// Tint colour and strength per era (Primitive = untinted daylight).
-    static func tint(for era: Era) -> (NSColor, CGFloat) {
+    static func tint(for era: Era) -> (PlatformColor, CGFloat) {
         switch era {
-        case .primitive: (NSColor(srgbRed: 1, green: 1, blue: 1, alpha: 1), 0)
-        case .medieval: (NSColor(srgbRed: 0.40, green: 0.46, blue: 0.62, alpha: 1), 0.22)
-        case .industrial: (NSColor(srgbRed: 0.55, green: 0.38, blue: 0.16, alpha: 1), 0.34)
-        case .futuristic: (NSColor(srgbRed: 0.04, green: 0.10, blue: 0.22, alpha: 1), 0.40)
+        case .primitive: (PlatformColor(srgbRed: 1, green: 1, blue: 1, alpha: 1), 0)
+        case .medieval: (PlatformColor(srgbRed: 0.40, green: 0.46, blue: 0.62, alpha: 1), 0.22)
+        case .industrial: (PlatformColor(srgbRed: 0.55, green: 0.38, blue: 0.16, alpha: 1), 0.34)
+        case .futuristic: (PlatformColor(srgbRed: 0.04, green: 0.10, blue: 0.22, alpha: 1), 0.40)
         }
     }
 

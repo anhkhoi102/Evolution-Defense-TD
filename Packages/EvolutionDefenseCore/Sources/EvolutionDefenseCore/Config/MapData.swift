@@ -100,6 +100,9 @@ public struct MapDefinition: Codable, Sendable {
     public var bridges: [BridgeDefinition]?
     /// Ambient visual effects, e.g. "dust", "waterSparkle" (see MapRenderer).
     public var ambient: [String]?
+    /// This battlefield's own creatures: campaign enemy id → the enemy that replaces it here
+    /// (e.g. "wolf" → "sandSkitter"). Enemies not listed appear as authored in waves.json.
+    public var roster: [String: String]?
 
     /// Whether `p` (tile units) is in water, or within `margin` tiles of its shore.
     public func isInWater(_ p: GridPoint, margin: Double = 0) -> Bool {

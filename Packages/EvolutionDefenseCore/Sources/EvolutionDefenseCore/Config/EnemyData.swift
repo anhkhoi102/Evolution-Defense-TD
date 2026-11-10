@@ -235,6 +235,9 @@ public struct EnemyDefinition: Codable, Sendable, Identifiable {
     public var phases: [BossPhase]?
     /// Research Points awarded when killed (bosses).
     public var researchReward: Int?
+    /// The battlefield this creature belongs to (map id); nil = the shared campaign roster.
+    /// Its art lives in that battlefield's atlas, so other maps never load it.
+    public var battlefield: String?
 
     public var resistance: Resistances { resistances ?? Resistances() }
     public var baseAbilities: EnemyAbilities { abilities ?? EnemyAbilities() }

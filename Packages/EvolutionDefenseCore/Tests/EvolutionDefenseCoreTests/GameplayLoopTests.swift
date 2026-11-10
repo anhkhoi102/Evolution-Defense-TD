@@ -306,15 +306,15 @@ private func pressure(_ r: BalancePlayer.Result, _ waves: ClosedRange<Int>) -> D
 
 @Suite("Balance (difficulty curve)")
 struct BalanceTests {
-    /// A full match: 20 waves of roughly 45–110 s plus preparation.
-    static let maxMatchSeconds = 32.0 * 60
+    /// A full match: 30 stages of roughly 45–130 s plus preparation.
+    static let maxMatchSeconds = 50.0 * 60
 
     @Test(arguments: [3, 7, 11] as [UInt64])
     func optimisedDefenceWinsNormal(seed: UInt64) {
         let r = play("expert", seed: seed)
         print("BALANCE expert seed \(seed): \(r)")
         #expect(r.phase == .victory)
-        #expect(r.bossesDefeated == 4)
+        #expect(r.bossesDefeated == config.waves.flatMap(\.groups).filter { config.enemies[$0.enemy]!.isBoss }.count)
         #expect(r.baseHP >= 40, "the intended strategy should win with a margin")
         #expect(r.time < Self.maxMatchSeconds)
     }
@@ -332,10 +332,13 @@ struct BalanceTests {
     @Test func pressureRisesAfterTheOpening() {
         // For the optimised player the endgame pushes enemies much deeper than the opening.
         let r = play("expert")
-        let opening = pressure(r, 1...4), endgame = pressure(r, 17...19)
-        print("BALANCE expert pressure: opening \(opening) endgame \(endgame)")
+        let opening = pressure(r, 1...4), endgame = pressure(r, 17...19), veryHard = pressure(r, 21...25), expert = pressure(r, 26...29)
+        print("BALANCE expert pressure: opening \(opening) endgame \(endgame) very hard \(veryHard) expert \(expert)")
         #expect(endgame > opening + 0.1)
         #expect(endgame >= 0.7, "the endgame should push even an optimised defence")
+        // Stages 21–30: the last five press harder than the five before them.
+        #expect(expert > veryHard + 0.08)
+        #expect(expert >= 0.75)
     }
 
     @Test func averagePlayersFallInTheHardPhases() {

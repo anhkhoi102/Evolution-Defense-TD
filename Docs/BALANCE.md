@@ -1,5 +1,7 @@
 # Evolution Defense: Difficulty Rebalancing
 
+> Later changes: 30 stages and stars ([CAMPAIGN.md](CAMPAIGN.md)), per-map creatures ([ROSTERS.md](ROSTERS.md)), and the tower effects Armour Shred and Expose with their measurements ([TOWER_EFFECTS.md](TOWER_EFFECTS.md)). Tower numbers quoted below predate those.
+
 This covers the audit of the original difficulty system, the problems found,
 the new difficulty curve, and how it was tested. Every number comes from
 `edtool balance`, which plays scripted strategies through the whole match
@@ -9,7 +11,7 @@ the new difficulty curve, and how it was tested. Every number comes from
 
 | Area | What exists |
 |---|---|
-| Length | 20 waves in 4 eras (5 each); a boss on waves 5, 10, 15 and 20 |
+| Length | 30 stages (waves): 5 per era for the first three eras, 15 in the Futuristic Age; a boss on stages 5, 10, 15 and 20, boss gauntlets on 25 and 30 (see [CAMPAIGN.md](CAMPAIGN.md)) |
 | Enemies | 19: 15 regular + 4 bosses. Abilities: sprint, regenerate, stealth, energy shield, split on death, summon, brood, tower-disabling breath and EMP, base strike, flying, damage resistances, flat armor |
 | Towers | 4 archetypes × 5 levels. Splash (area, ground only), Sniper (very long range, anti-air, sees stealth from L4), Heavy (big hits, armor penetration, anti-air from L4), Rapid (fast, weak vs armor) |
 | Damage model | Resistance % first, then flat armor minus penetration, with at least 15 % of the hit always getting through |

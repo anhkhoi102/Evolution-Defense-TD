@@ -241,7 +241,7 @@ struct PauseMenu: View {
             Color.black.opacity(0.55).ignoresSafeArea()
             VStack(spacing: 14) {
                 Text("PAUSED").font(Theme.display(36)).foregroundStyle(Theme.text)
-                Text("Wave \(controller.waveNumber) of \(controller.totalWaves) · \(controller.era.displayName) · \(controller.difficultyName)")
+                Text("Stage \(controller.waveNumber) of \(controller.totalWaves) · \(controller.era.displayName) · \(controller.difficultyName)")
                     .font(.system(size: 13, design: .rounded)).foregroundStyle(Theme.textDim)
                 VStack(spacing: 10) {
                     Button("Resume") { controller.togglePause() }.buttonStyle(GameButtonStyle())
@@ -276,15 +276,29 @@ struct MatchEndView: View {
                     .font(Theme.display(46)).foregroundStyle(Theme.text)
                 Text(won ? "Your civilisation outlasted every era." : "The base has fallen in the \(controller.era.displayName).")
                     .font(.system(size: 14, design: .rounded)).foregroundStyle(Theme.textDim)
+                if won {
+                    StarRow(stars: controller.matchStars, size: 34, animated: true)
+                    Text(controller.matchStars == StarRatingConfig.maxStars ? "Perfect defence!" : "Lose less base health to earn more stars.")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(Theme.gold)
+                }
                 HStack(spacing: 22) {
-                    stat("Waves cleared", "\(controller.stats.wavesCleared)/\(controller.totalWaves)")
+                    stat("Stages cleared", "\(controller.stats.wavesCleared)/\(controller.totalWaves)")
                     stat("Enemies defeated", "\(controller.stats.enemiesKilled)")
-                    stat("Bosses", "\(controller.stats.bossesDefeated)/\(controller.config.waves.filter(\.isBossWave).count)")
+                    stat("Bosses", "\(controller.stats.bossesDefeated)/\(controller.config.waves.flatMap(\.groups).filter { controller.config.enemies[$0.enemy]?.isBoss == true }.count)")
                     stat("Gold earned", "\(controller.stats.goldEarned)")
                     stat("Tech", "\(controller.stats.techsResearched)")
                     stat("Base HP", "\(controller.baseHP)")
                 }
                 .padding(.vertical, 8)
+                if !controller.heroesUnlockedThisMatch.isEmpty {
+                    HStack(spacing: 8) {
+                        Image(systemName: "crown.fill").foregroundStyle(Theme.gold)
+                        Text("New hero unlocked: \(controller.heroesUnlockedThisMatch.map(\.unitName).joined(separator: ", ")). Choose it in New Game.")
+                            .font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(Theme.text)
+                    }
+                    .padding(.horizontal, 12).padding(.vertical, 6)
+                    .background(Capsule().fill(Theme.gold.opacity(0.14)))
+                }
                 if !controller.unlockedThisMatch.isEmpty {
                     HStack(spacing: 8) {
                         Image(systemName: "medal.fill").foregroundStyle(Theme.gold)
@@ -316,6 +330,39 @@ struct MatchEndView: View {
             Text(value).font(Theme.display(24)).monospacedDigit().foregroundStyle(Theme.text)
             Text(label.uppercased()).font(.system(size: 10, weight: .bold, design: .rounded)).foregroundStyle(Theme.textDim)
         }
+    }
+}
+
+/// "New hero unlocked" card, shown between stages until the player closes it.
+struct HeroUnlockCard: View {
+    let controller: GameController
+    let hero: SummonAbilityDefinition
+    @State private var appeared = false
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.45).ignoresSafeArea()
+            VStack(spacing: 10) {
+                Text("NEW HERO UNLOCKED").font(.system(size: 12, weight: .heavy, design: .rounded)).kerning(2).foregroundStyle(Theme.gold)
+                Image(decorative: ArtLibrary.shared.summonIcon(hero), scale: 1)
+                    .resizable().interpolation(.high).aspectRatio(contentMode: .fit).frame(width: 120, height: 120)
+                    .shadow(color: Theme.gold.opacity(0.7), radius: appeared ? 22 : 4)
+                    .scaleEffect(appeared ? 1 : 0.5)
+                Text(hero.unitName.uppercased()).font(Theme.display(34)).foregroundStyle(Theme.text)
+                Text(hero.role ?? "").font(.system(size: 14, weight: .bold, design: .rounded)).foregroundStyle(Theme.gold)
+                Text(hero.summary).font(.system(size: 13, design: .rounded)).foregroundStyle(Theme.textDim)
+                    .multilineTextAlignment(.center).frame(maxWidth: 420).fixedSize(horizontal: false, vertical: true)
+                Text("Pick this hero on the New Game screen for your next match.")
+                    .font(.system(size: 11, design: .rounded)).foregroundStyle(Theme.textDim)
+                Button("Great!") { controller.heroUnlock = nil }.buttonStyle(GameButtonStyle())
+                    .keyboardShortcut(.defaultAction).padding(.top, 4)
+            }
+            .padding(30)
+            .background(PanelBackground(corner: 18))
+            .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(Theme.gold.opacity(0.6), lineWidth: 2))
+            .shadow(radius: 30)
+        }
+        .onAppear { withAnimation(.spring(response: 0.5, dampingFraction: 0.55)) { appeared = true } }
     }
 }
 

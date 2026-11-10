@@ -69,7 +69,12 @@ public enum TechStatus: Equatable, Sendable {
 }
 
 /// Things that happened during a step. The renderer/audio/UI drain these each frame.
+/// Team effects towers put on enemies (Docs/TOWER_EFFECTS.md).
+public enum TowerStatus: Sendable { case shred, expose }
+
 public enum GameEvent {
+    /// A tower effect took hold on an enemy that did not have it (for markers and sounds).
+    case statusApplied(Enemy, TowerStatus)
     case enemySpawned(Enemy)
     case bossSpawned(Enemy)
     case enemyKilled(Enemy, reward: Int)
@@ -98,7 +103,7 @@ public enum GameEvent {
     /// Summons: units arrived, hit an enemy, used their special, fell, ran out of time, or the ability is ready again.
     case summonDeployed(SummonAbilityDefinition, units: [SummonUnit], at: CGPoint)
     case summonAttacked(SummonUnit, Enemy)
-    case summonSpecial(SummonUnit, name: String, radius: Double, hits: Int)
+    case summonSpecial(SummonUnit, name: String, radius: Double, hits: Int, targets: [Enemy])
     case summonDefeated(SummonUnit)
     case summonExpired(SummonUnit)
     case summonReady(SummonAbilityDefinition)
@@ -224,6 +229,12 @@ public final class GameWorld {
     var summonReadyAnnounced: Set<String> = []
     /// Summon abilities used this match.
     public internal(set) var summonsCalled = 0
+    /// Base HP lost over the whole match (repairs don't reduce it): what the star rating looks at.
+    public internal(set) var baseDamageTaken = 0
+    /// The match's star rating: 1–3 once it is won, 0 before that or after a defeat.
+    public var matchStars: Int {
+        phase == .victory ? (config.rules.stars ?? StarRatingConfig()).stars(damage: baseDamageTaken, maxBaseHP: maxBaseHP) : 0
+    }
 
     /// Tests and tools default to no random events so results are reproducible.
     public init(config: GameConfiguration, options: MatchOptions = MatchOptions(randomEvents: false),
@@ -532,6 +543,7 @@ public final class GameWorld {
             events.append(.baseShieldAbsorbed(amount: absorbed, remaining: baseShield))
         }
         guard amount > 0 else { return 0 }
+        baseDamageTaken += min(amount, baseHP)
         baseHP = max(0, baseHP - amount)
         events.append(.baseDamaged(amount: amount, remaining: baseHP))
         if baseHP <= 0 {

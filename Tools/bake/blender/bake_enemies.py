@@ -81,6 +81,49 @@ ENEMIES = {
 }
 
 
+# ---- Battlefield rosters (Docs/ROSTERS.md): creatures that only appear on one map.
+def UM(n): return os.path.join(SRC, "quaternius-ultimatemonsters", "Ultimate Monsters", "Big", "glTF", n + ".gltf")
+def KS(n): return os.path.join(SRC, "kaykit-skeletons", "addons", "kaykit_character_pack_skeletons", "Characters", "gltf", n + ".glb")
+def CUTE(n): return blend("oga-quaternius-cute-monsters", n)
+def ANI2(n): return blend("oga-quaternius-animal-pack-vol2", n)
+
+
+ENEMIES.update({
+    # Desert: the dead of the tombs, cactus folk and orcs.
+    "boneRunner":   dict(src=KS("Skeleton_Minion"), walk="^Running_A$", death="^Death_A$", height=0.8),
+    "cactling":     dict(src=CUTE("Cactus"), walk="Walk", death="Death", height=0.8, face=math.pi / 2),
+    "tombGuard":    dict(src=KS("Skeleton_Warrior"), walk="^Walking_A$", death="^Death_A$", height=1.15),
+    "cactoroChief": dict(src=UM("Cactoro"), walk="^Walk$", death="Death", height=2.0),
+    "graveStalker": dict(src=KS("Skeleton_Rogue"), walk="^Running_B$", death="^Death_B$", height=1.0),
+    "skullOrc":     dict(src=UM("Orc_Skull"), walk="^Walk$", death="Death", height=1.2),
+    "boneShaman":   dict(src=KS("Skeleton_Mage"), walk="^Walking_A$", death="^Death_A$", height=1.15),
+    "vulture":      dict(src=ANI2("Eagle"), walk="Flying", death=None, length=1.15, fly=0.9, face=math.pi / 2,
+                         tint=((0.35, 0.24, 0.18), 0.5)),
+    "sandWyrm":     dict(src=CUTE("YellowDragon"), walk="Flying", death="Death", length=2.4, fly=1.2, face=math.pi / 2),
+    "duneRaptor":   dict(src=UM("Dino"), walk="^Run$", death="Death", height=1.1, tint=((0.85, 0.62, 0.30), 0.6)),
+    "stoneSkull":   dict(src=CUTE("Skull"), walk="Walk", death="Death", height=1.0, face=math.pi / 2),
+    "orcWarlord":   dict(src=UM("Orc"), walk="^Walk$", death="Death", height=1.7),
+    "sandImp":      dict(src=CUTE("Demon"), walk="Walk", death="Death", height=0.6, face=math.pi / 2),
+    "duneTyrant":   dict(src=UM("Demon"), walk="^Walk$", death="Death", height=2.5),
+    # Lakeside: marsh creatures, mushrooms and things from the deep.
+    "marshHopper":  dict(src=UM("Frog"), walk="^Run$", death="Death", height=0.8),
+    "sporecap":     dict(src=CUTE("Mushroom"), walk="Walk", death="Death", height=0.8, face=math.pi / 2),
+    "reefBrute":    dict(src=UM("Fish"), walk="^Walk$", death="Death", height=1.3),
+    "mushroomKing": dict(src=UM("MushroomKing"), walk="^Walk$", death="Death", height=2.0),
+    "heronRaider":  dict(src=UM("Birb"), walk="^Run$", death="Death", height=1.05),
+    "bogwood":      dict(src=CUTE("Tree"), walk="Walk", death="Death", height=1.15, face=math.pi / 2),
+    "lakeWisp":     dict(src=CUTE("Ghost"), walk="Walk", death="Death", height=1.0, face=math.pi / 2),
+    "marshHornet":  dict(src=CUTE("Bee"), walk="Flying", death="Death", length=1.0, fly=0.9, face=math.pi / 2),
+    "lakeHorror":   dict(src=CUTE("Cthulhu"), walk="Flying", death="Death", length=2.4, fly=1.2, face=math.pi / 2),
+    "bogLurker":    dict(src=UM("Monkroose"), walk="^Run$", death="Death", height=1.1),
+    "shellBrute":   dict(src=UM("Yeti"), walk="^Walk$", death="Death", height=1.3, tint=((0.20, 0.55, 0.55), 0.55)),
+    "deepOne":      dict(src=UM("Alien"), walk="^Walk$", death="Death", height=1.65),
+    "mudPiranha":   dict(src=ANI2("Piranha"), walk="Swimming", death=None, length=0.7, face=math.pi / 2),
+    "tideTyrant":   dict(src=UM("BlueDemon"), walk="^Walk$", death="Death", height=2.5),
+})
+MAP_OF = {e["visual"]: e.get("battlefield") for e in GAME}
+
+
 def lin(c): return tuple(rig._lin(x) for x in c) + (1,)
 
 
@@ -211,6 +254,11 @@ def bake(visual, spec):
     alt = spec.get("fly", 0.0)
     r = RADIUS.get(visual, 16)
     canvas = max(70, r * 5.0 + alt * 30)
+    if MAP_OF.get(visual):
+        # Roster creatures carry weapons, hats and wings well outside their hit radius:
+        # size the canvas from the model so nothing is cut off (hit radius is unaffected).
+        reach = max(size.x, size.y, size.z) * k * rig.PPU
+        canvas = max(canvas, round(reach * 1.7 + 24 + alt * 30))
     W = H = canvas
     anchor = (0.5, 0.26 if not alt else 0.16)
     rig.frame_camera(W, H, anchor=anchor, target=(0, 0, 0))
@@ -233,8 +281,11 @@ def bake(visual, spec):
             for i, fr in enumerate(frames):
                 if arm:
                     set_action(arm, act, fr)
-                rig.render_to(os.path.join(OUT, f"{visual}_{name}_d{d}_f{i}.png"))
+                if "speconly" not in argv:
+                    rig.render_to(os.path.join(OUT, f"{visual}_{name}_d{d}_f{i}.png"))
         counts[name] = n
+    if os.path.exists(SPEC_PATH):                # another bake may be running: merge, don't overwrite
+        SPEC.update({k: v for k, v in json.load(open(SPEC_PATH)).items() if k != visual})
     SPEC[visual] = {"size": [W, H], "anchor": list(anchor), "frames": counts, "directions": DIRS,
                     "walkDistance": round(max(6.0, r * 0.9), 1), "altitude": alt,
                     "healthBarOffsetY": round((size.z * k + alt) * rig.PPU * rig.HEIGHT_SY + 10, 1)}
@@ -243,7 +294,10 @@ def bake(visual, spec):
 
 
 for visual, spec in ENEMIES.items():
-    if ONLY and ONLY not in (visual,) and not (ONLY == "era1" and visual in ("wolf", "boar", "bear", "alphaBeast")):
+    if ONLY and ONLY not in (visual,) and not (ONLY == "era1" and visual in ("wolf", "boar", "bear", "alphaBeast")) \
+            and not (ONLY == "rosters" and MAP_OF.get(visual)) and ONLY != MAP_OF.get(visual):
+        continue
+    if "resume" in argv and visual in SPEC:      # pick up an interrupted run
         continue
     bake(visual, spec)
 print("ENEMIES_DONE")

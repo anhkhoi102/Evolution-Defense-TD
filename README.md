@@ -87,7 +87,7 @@ First, pick a battlefield: on the main menu, click **Battlefield** and choose Gr
 5. **Upgrade.** Click a tower, then click the yellow **Evolve** button to make
    it stronger (or press **U**).
 6. **Protect your base.** Don't let monsters reach your village. If its health
-   bar runs out, you lose. Survive all 20 waves to win!
+   bar runs out, you lose. Survive all 30 stages to win! When you win, you get 1 to 3 stars: the less health your base lost, the more stars.
 
 | Tower | What it's good at |
 |---|---|
@@ -107,7 +107,7 @@ First, pick a battlefield: on the main menu, click **Battlefield** and choose Gr
 | **U** | Upgrade the selected tower |
 | **T** | Open the technology tree |
 | **Q** | Call the Militia (from wave 3) |
-| **E** | Summon the Hero (from wave 5) |
+| **E** | Summon your Hero (from stage 5) |
 | **R** | Repair your base (between waves) |
 | **Esc** | Cancel / pause |
 
@@ -120,6 +120,9 @@ First, pick a battlefield: on the main menu, click **Battlefield** and choose Gr
 - 💚 **Trolls heal** the monsters around them (you'll see a green circle). Stop them first!
 - 🧭 The bottom panel tells you what kind of wave is coming (air, armored, swarm…). Get ready for it!
 - 🛡️ **Call for help!** During a wave, press **Q** for the Militia or **E** for the Hero, then click on the road. They fight for a few seconds, then need time to recharge. The Hero is great against bosses!
+- 🗺️ **Every battlefield has its own creatures and bosses.** Skeletons and cactus folk in the Desert, frogs, mushrooms and a lake horror at the Lakeside.
+- 🔧 **Towers help each other.** Rapid Fire (level 3+) strips enemy armour, and Heavy (level 3+) marks a target so every tower hurts it more.
+- 👑 **Unlock new heroes!** Clear stage 10 to unlock the **Iron King** (super tough, slows enemies). Clear stage 20 to unlock the **Star Queen** (shoots magic from far away, even at flyers). Pick your hero when you start a new game.
 - 😌 Too hard? Choose **Easy** when you start a new game.
 - 💾 The game saves by itself between waves. Click **Continue** to keep playing later.
 

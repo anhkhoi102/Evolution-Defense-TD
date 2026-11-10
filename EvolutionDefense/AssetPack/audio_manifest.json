@@ -137,5 +137,52 @@
   }
  },
  "name": "Kenney CC0 sound effects (synth fallback for the rest)",
- "version": 1
+ "version": 1,
+ "music": {
+  "menu": {
+   "file": "music_menu.m4a",
+   "gain": 1.0,
+   "title": "Medieval: The Old Tower Inn (loop)",
+   "author": "RandomMind",
+   "license": "CC0 1.0",
+   "source": "https://opengameart.org/content/medieval-the-old-tower-inn",
+   "seconds": 50.0
+  },
+  "primitive": {
+   "file": "music_primitive.m4a",
+   "gain": 1.0,
+   "title": "Jungle Battle Loop",
+   "author": "omfgdude",
+   "license": "CC0 1.0",
+   "source": "https://opengameart.org/content/jungle-battle-loop",
+   "seconds": 37.3
+  },
+  "medieval": {
+   "file": "music_medieval.m4a",
+   "gain": 1.0,
+   "title": "Medieval: Market Day (loop)",
+   "author": "RandomMind",
+   "license": "CC0 1.0",
+   "source": "https://opengameart.org/content/medieval-market-day",
+   "seconds": 64.9
+  },
+  "industrial": {
+   "file": "music_industrial.m4a",
+   "gain": 1.0,
+   "title": "Determined Pursuit (epic orchestra loop)",
+   "author": "Emma_MA",
+   "license": "CC0 1.0",
+   "source": "https://opengameart.org/content/determined-pursuit-epic-orchestra-loop",
+   "seconds": 108.0
+  },
+  "futuristic": {
+   "file": "music_futuristic.m4a",
+   "gain": 1.0,
+   "title": "Net Infiltration (loop)",
+   "author": "vitalezzz",
+   "license": "CC0 1.0",
+   "source": "https://opengameart.org/content/net-infiltration",
+   "seconds": 181.6
+  }
+ }
 }

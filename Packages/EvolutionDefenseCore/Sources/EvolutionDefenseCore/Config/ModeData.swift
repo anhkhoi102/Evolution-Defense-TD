@@ -35,22 +35,27 @@ public struct MatchOptions: Codable, Sendable, Equatable {
     public var randomEvents: Bool
     /// Battlefield (map id). Saves from before battlefields existed are Grassland.
     public var battlefield: String
+    /// The hero taken into the match (summon ability id). Nil = the default hero.
+    public var hero: String?
 
     public static let defaultBattlefield = "meadow"
 
-    public init(difficulty: Difficulty = .normal, randomEvents: Bool = true, battlefield: String = MatchOptions.defaultBattlefield) {
+    public init(difficulty: Difficulty = .normal, randomEvents: Bool = true, battlefield: String = MatchOptions.defaultBattlefield,
+                hero: String? = nil) {
         self.difficulty = difficulty
         self.randomEvents = randomEvents
         self.battlefield = battlefield
+        self.hero = hero
     }
 
-    enum CodingKeys: String, CodingKey { case difficulty, randomEvents, battlefield }
+    enum CodingKeys: String, CodingKey { case difficulty, randomEvents, battlefield, hero }
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         difficulty = try c.decode(Difficulty.self, forKey: .difficulty)
         randomEvents = try c.decode(Bool.self, forKey: .randomEvents)
         battlefield = try c.decodeIfPresent(String.self, forKey: .battlefield) ?? MatchOptions.defaultBattlefield
+        hero = try c.decodeIfPresent(String.self, forKey: .hero)
     }
 }
 

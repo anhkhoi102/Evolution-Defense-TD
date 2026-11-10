@@ -41,10 +41,23 @@ extension GameWorld {
 
     // MARK: Queries
 
-    public var summonAbilities: [SummonAbilityDefinition] { config.summons.abilities }
+    /// The abilities of this match: every minion ability plus the one hero that was chosen.
+    public var summonAbilities: [SummonAbilityDefinition] {
+        let hero = matchHero?.id
+        return config.summons.abilities.filter { $0.kind != .hero || $0.id == hero }
+    }
+
+    /// The hero taken into this match.
+    public var matchHero: SummonAbilityDefinition? { config.summons.hero(options.hero) }
+
+    /// An ability usable in this match (nil for heroes that were not chosen).
+    func matchAbility(_ id: String) -> SummonAbilityDefinition? {
+        guard let a = config.summons.ability(id) else { return nil }
+        return a.kind != .hero || a.id == matchHero?.id ? a : nil
+    }
 
     public func summonStatus(_ id: String) -> SummonAbilityStatus? {
-        guard let a = config.summons.ability(id) else { return nil }
+        guard let a = matchAbility(id) else { return nil }
         let unlocked = isSummonUnlocked(a)
         let cooldown = max(0, (summonReadyAt[id] ?? 0) - time)
         let alive = summons.filter { $0.ability.id == id && $0.isAlive }
@@ -79,7 +92,7 @@ extension GameWorld {
     @discardableResult
     public func summon(_ id: String, at point: CGPoint) -> SummonResult {
         guard !phase.isOver else { return .matchOver }
-        guard let a = config.summons.ability(id) else { return .unknownAbility }
+        guard let a = matchAbility(id) else { return .unknownAbility }
         guard isSummonUnlocked(a) else { return .locked(unlockWave: a.unlockWave) }
         let cooldown = (summonReadyAt[id] ?? 0) - time
         guard cooldown <= 0 else { return .onCooldown(remaining: cooldown) }
@@ -161,14 +174,22 @@ extension GameWorld {
                 u.specialTimer = max(0, u.specialTimer - dt)
                 if u.specialTimer <= 0, u.state == .attacking {
                     let r2 = CGFloat(sp.radius * sp.radius)
-                    var hits = 0
-                    for e in enemies where e.isActive && (s.canTargetAir || !e.isFlying) && (detects || !e.isCloaked)
-                        && e.position.distanceSquared(to: u.position) <= r2 {
+                    var inReach = enemies.filter { e in
+                        e.isActive && (s.canTargetAir || !e.isFlying) && (detects || !e.isCloaked)
+                            && e.position.distanceSquared(to: u.position) <= r2
+                    }
+                    if let n = sp.maxTargets, inReach.count > n {
+                        // Focused special: the toughest few (ties broken by id so runs are repeatable).
+                        inReach.sort { $0.hp != $1.hp ? $0.hp > $1.hp : $0.id < $1.id }
+                        inReach.removeSubrange(n...)
+                    }
+                    let slow = HitEffects(slow: sp.slow ?? 0, slowDuration: sp.slowDuration ?? 0)
+                    for e in inReach {
                         strike(e, by: u, raw: sp.damage)
-                        hits += 1
+                        if e.isActive, slow.slow > 0 { applyStatus(slow, rawDamage: sp.damage, to: e) }
                     }
                     u.specialTimer = sp.interval
-                    events.append(.summonSpecial(u, name: sp.name, radius: sp.radius, hits: hits))
+                    events.append(.summonSpecial(u, name: sp.name, radius: sp.radius, hits: inReach.count, targets: inReach))
                 }
             }
 
@@ -182,6 +203,7 @@ extension GameWorld {
                     }
                 }
                 if dps > 0 {
+                    dps *= 1 - min(1, max(0, s.damageReduction ?? 0))
                     u.hp -= dps * dt
                     u.lastHitTakenTime = time
                     if u.hp <= 0 {
@@ -209,7 +231,7 @@ extension GameWorld {
     // MARK: Helpers
 
     private func announceReadySummons() {
-        for a in config.summons.abilities where !summonReadyAnnounced.contains(a.id) {
+        for a in summonAbilities where !summonReadyAnnounced.contains(a.id) {
             guard isSummonUnlocked(a), (summonReadyAt[a.id] ?? 0) <= time else { continue }
             summonReadyAnnounced.insert(a.id)
             events.append(.summonReady(a))

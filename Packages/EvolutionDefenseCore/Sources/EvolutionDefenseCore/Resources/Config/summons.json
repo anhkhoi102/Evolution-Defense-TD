@@ -4,20 +4,43 @@
   "abilities": [
     {
       "id": "militia", "name": "Call Militia", "kind": "minion", "hotkey": "Q",
-      "summary": "Four spear-and-shield militia hold a stretch of road for a few seconds. Good against packs of weaker enemies.",
+      "summary": "Four axe-and-shield militia hold a stretch of road for a few seconds. Good against packs of weaker enemies.",
       "unlockWave": 3, "cooldown": 40, "duration": 9, "count": 4, "formationRadius": 26,
       "visual": "militia",
       "unit": { "hp": 150, "damage": 22, "attacksPerSecond": 1.0, "range": 26, "aggroRange": 130, "leash": 150,
                 "moveSpeed": 95, "armorPenetration": 2, "damageType": "physical", "canTargetAir": false, "radius": 11 }
     },
     {
-      "id": "hero", "name": "Summon Hero", "kind": "hero", "archetype": "warrior", "hotkey": "E",
+      "id": "hero", "name": "Summon Knight", "kind": "hero", "archetype": "warrior", "hotkey": "E",
+      "heroName": "Knight Commander", "role": "All-round fighter",
       "summary": "The Knight Commander: lots of HP, heavy blows and a Whirlwind Cleave. Goes after bosses and elites first.",
       "unlockWave": 5, "cooldown": 60, "duration": 16, "count": 1, "formationRadius": 0,
       "visual": "knight",
       "unit": { "hp": 1800, "damage": 150, "attacksPerSecond": 0.8, "range": 30, "aggroRange": 230, "leash": 280,
                 "moveSpeed": 115, "armorPenetration": 8, "damageType": "physical", "canTargetAir": false, "radius": 16 },
       "special": { "name": "Whirlwind Cleave", "interval": 4.0, "damage": 220, "radius": 85 }
+    },
+    {
+      "id": "king", "name": "Summon King", "kind": "hero", "archetype": "paladin", "hotkey": "E",
+      "heroName": "Iron King", "role": "Tough guard who slows enemies", "unlockStage": 10,
+      "summary": "The Iron King: a wall of armour with a greatsword. Shrugs off most damage, stays longer, and his Royal Slam slows every enemy around him.",
+      "unlockWave": 5, "cooldown": 70, "duration": 22, "count": 1, "formationRadius": 0,
+      "visual": "king",
+      "unit": { "hp": 3600, "damage": 130, "attacksPerSecond": 0.7, "range": 34, "aggroRange": 220, "leash": 260,
+                "moveSpeed": 95, "armorPenetration": 10, "damageType": "physical", "canTargetAir": false, "radius": 18,
+                "damageReduction": 0.5 },
+      "special": { "name": "Royal Slam", "interval": 5.0, "damage": 170, "radius": 120, "slow": 0.5, "slowDuration": 3.0 }
+    },
+    {
+      "id": "queen", "name": "Summon Queen", "kind": "hero", "archetype": "mage", "hotkey": "E",
+      "heroName": "Star Queen", "role": "Long-range magic burst", "unlockStage": 20,
+      "summary": "The Star Queen: fragile, but her star bolts reach far and hit flyers. Starfall strikes the three toughest enemies in range.",
+      "unlockWave": 5, "cooldown": 65, "duration": 14, "count": 1, "formationRadius": 0,
+      "visual": "queen",
+      "unit": { "hp": 800, "damage": 240, "attacksPerSecond": 1.0, "range": 250, "aggroRange": 280, "leash": 300,
+                "moveSpeed": 100, "armorPenetration": 14, "damageType": "energy", "canTargetAir": true, "radius": 13,
+                "ranged": true },
+      "special": { "name": "Starfall", "interval": 5.0, "damage": 700, "radius": 280, "maxTargets": 3 }
     }
   ]
 }

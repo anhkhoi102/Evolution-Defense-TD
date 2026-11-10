@@ -1,9 +1,13 @@
-import AppKit
 import SwiftUI
+#if os(macOS)
+import AppKit
+#endif
 
 @main
 struct EvolutionDefenseApp: App {
+    #if os(macOS)
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    #endif
     @State private var router = AppRouter()
 
     init() {
@@ -14,18 +18,16 @@ struct EvolutionDefenseApp: App {
     var body: some Scene {
         WindowGroup("Evolution Defense") {
             ContentView(router: router)
+                #if os(macOS)
                 .frame(minWidth: 1100, minHeight: 700)
+                #endif
                 .preferredColorScheme(.dark)
-                .task { SnapshotTool.runIfRequested(router: router) }
-                .task { SnapshotTool.runBenchmarkIfRequested(router: router) }
-                .task { SnapshotTool.runAudioCheckIfRequested() }
-                .task { SnapshotTool.runAssetDemoIfRequested(router: router) }
-                .task { SnapshotTool.runDeathTestIfRequested(router: router) }
-                .task { SnapshotTool.runSummonTestIfRequested(router: router) }
-                .task { SnapshotTool.runBattlefieldTestIfRequested(router: router) }
+                .task { SnapshotTool.runAllIfRequested(router: router) }
         }
+        #if os(macOS)
         .defaultSize(width: 1440, height: 900)
         .windowResizability(.contentMinSize)
+        #endif
         .commands {
             CommandGroup(replacing: .newItem) {
                 Button("New Game") { router.newGame() }.keyboardShortcut("n", modifiers: .command)
@@ -34,6 +36,7 @@ struct EvolutionDefenseApp: App {
     }
 }
 
+#if os(macOS)
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Ensures a normal Dock app with focus even when the binary is launched
@@ -45,6 +48,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 }
+#endif
 
 struct ContentView: View {
     let router: AppRouter

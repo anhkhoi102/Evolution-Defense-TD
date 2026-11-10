@@ -21,6 +21,10 @@ final class GameScene: SKScene {
 
     private let rangeIndicator = SKShapeNode()
     private let aoeIndicator = SKShapeNode()
+    /// Name tag above the selected tower ("Sniper · Ballista").
+    private let nameTag = SKShapeNode()
+    private let nameTagLabel = SKLabelNode(fontNamed: Platform.fontExists("LilitaOne") ? "LilitaOne" : "AvenirNext-Heavy")
+    private var nameTagText = ""
     private let ghost = SKSpriteNode()
     private let ghostHead = SKSpriteNode()
     /// Summon deployment preview: footprint ellipse and ghost units in formation.
@@ -61,7 +65,7 @@ final class GameScene: SKScene {
         super.init(size: world.config.map.worldSize)
         scaleMode = .aspectFit
         anchorPoint = .zero
-        backgroundColor = NSColor(srgbRed: 0.08, green: 0.09, blue: 0.11, alpha: 1)
+        backgroundColor = PlatformColor(srgbRed: 0.08, green: 0.09, blue: 0.11, alpha: 1)
         setUpNodes()
     }
 
@@ -89,12 +93,21 @@ final class GameScene: SKScene {
             n.isAntialiased = true
             worldRoot.addChild(n)
         }
-        rangeIndicator.fillColor = NSColor(white: 1, alpha: 0.07)
-        rangeIndicator.strokeColor = NSColor(white: 1, alpha: 0.55)
+        rangeIndicator.fillColor = PlatformColor(white: 1, alpha: 0.07)
+        rangeIndicator.strokeColor = PlatformColor(white: 1, alpha: 0.55)
         rangeIndicator.lineWidth = 2
-        aoeIndicator.fillColor = NSColor(srgbRed: 1, green: 0.55, blue: 0.15, alpha: 0.12)
-        aoeIndicator.strokeColor = NSColor(srgbRed: 1, green: 0.6, blue: 0.2, alpha: 0.8)
+        aoeIndicator.fillColor = PlatformColor(srgbRed: 1, green: 0.55, blue: 0.15, alpha: 0.12)
+        aoeIndicator.strokeColor = PlatformColor(srgbRed: 1, green: 0.6, blue: 0.2, alpha: 0.8)
         aoeIndicator.lineWidth = 1.5
+        nameTag.zPosition = Layer.overlay + 1
+        nameTag.isHidden = true
+        nameTag.fillColor = PlatformColor(srgbRed: 0.09, green: 0.08, blue: 0.07, alpha: 0.88)
+        nameTag.lineWidth = 1.5
+        nameTagLabel.fontSize = 18
+        nameTagLabel.verticalAlignmentMode = .center
+        nameTagLabel.horizontalAlignmentMode = .center
+        nameTag.addChild(nameTagLabel)
+        worldRoot.addChild(nameTag)
 
         ghost.zPosition = Layer.overlay + 1
         ghost.alpha = 0.6
@@ -210,7 +223,7 @@ final class GameScene: SKScene {
         case .towerBuilt(let t):
             towerRenderer.add(t)
             mapRenderer.setSlotVisible(t.slotID, false)
-            if t.isTemporary { effects.summon(at: t.position, color: NSColor(srgbRed: 0.45, green: 0.95, blue: 0.5, alpha: 1)) }
+            if t.isTemporary { effects.summon(at: t.position, color: PlatformColor(srgbRed: 0.45, green: 0.95, blue: 0.5, alpha: 1)) }
             audio.play(.build)
         case .towerRemoved(let t):
             towerRenderer.remove(t)
@@ -272,11 +285,11 @@ final class GameScene: SKScene {
                 addShake(8, 0.7)
             }
         case .enemySplit(let enemy, _):
-            effects.summon(at: enemy.position, color: NSColor(srgbRed: 0.7, green: 1, blue: 0.2, alpha: 1))
+            effects.summon(at: enemy.position, color: PlatformColor(srgbRed: 0.7, green: 1, blue: 0.2, alpha: 1))
         case .enemiesSummoned(let enemy, _, _):
             effects.summon(at: enemy.position, color: enemy.definition.era == .futuristic
-                           ? NSColor(srgbRed: 1, green: 0.35, blue: 0.25, alpha: 1)
-                           : NSColor(srgbRed: 0.75, green: 0.45, blue: 1, alpha: 1))
+                           ? PlatformColor(srgbRed: 1, green: 0.35, blue: 0.25, alpha: 1)
+                           : PlatformColor(srgbRed: 0.75, green: 0.45, blue: 1, alpha: 1))
         case .towersDisabled(let towers, let enemy, _, _):
             let emp = enemy.definition.era == .futuristic
             let r = enemy.abilities.disableTowers.map { CGFloat($0.radius) } ?? 150
@@ -288,17 +301,37 @@ final class GameScene: SKScene {
             effects.missile(from: enemy.position, to: basePosition)
             mapRenderer.baseHit()
             audio.play(.missile)
+        case .statusApplied(let enemy, let status):
+            // First time an effect takes hold on an enemy: a short cue (bosses and elites only for Expose,
+            // so a crowded road stays quiet).
+            if status == .expose, enemy.isBoss || enemy.isElite { audio.play(.click, volume: 0.8) }
         case .summonDeployed(let ability, let units, let at):
             effects.summonArrive(at: units.map(\.position), centre: at, hero: ability.kind == .hero)
             audio.play(ability.kind == .hero ? .eventGood : .build)
             if ability.kind == .hero { addShake(3, 0.2) }
         case .summonAttacked(let u, let target):
-            effects.summonHit(at: target.position, hero: u.isHero)
-            audio.play(.hit, volume: u.isHero ? 0.6 : 0.35)
-        case .summonSpecial(let u, _, let radius, _):
-            effects.heroSpecial(at: u.position, radius: CGFloat(radius))
-            audio.play(.explosion, volume: 0.45)
-            addShake(2.5, 0.15)
+            if u.stats.isRanged {
+                effects.heroBolt(from: u.position, to: target.position)
+                audio.play(.shotLaser, volume: 0.5)
+            } else {
+                effects.summonHit(at: target.position, hero: u.isHero)
+                audio.play(.hit, volume: u.isHero ? 0.6 : 0.35)
+            }
+        case .summonSpecial(let u, _, let radius, _, let targets):
+            let sp = u.ability.special
+            if sp?.maxTargets != nil {
+                effects.starfall(on: targets.map(\.position), from: u.position)
+                audio.play(.shotPlasma, volume: 0.8)
+                addShake(2, 0.12)
+            } else if (sp?.slow ?? 0) > 0 {
+                effects.royalSlam(at: u.position, radius: CGFloat(radius))
+                audio.play(.explosion, volume: 0.6)
+                addShake(4, 0.22)
+            } else {
+                effects.heroSpecial(at: u.position, radius: CGFloat(radius))
+                audio.play(.explosion, volume: 0.45)
+                addShake(2.5, 0.15)
+            }
         case .summonDefeated(let u):
             let sprite = art.summon(u.ability)
             if let death = sprite.animations["death"] {
@@ -358,9 +391,9 @@ final class GameScene: SKScene {
             let ry = r * proj.groundScaleY
             deployIndicator.path = CGPath(ellipseIn: CGRect(x: -r, y: -ry, width: 2 * r, height: 2 * ry), transform: nil)
         }
-        let ok = a.kind == .hero ? NSColor(srgbRed: 1, green: 0.82, blue: 0.4, alpha: 1)
-                                 : NSColor(srgbRed: 0.45, green: 0.78, blue: 1, alpha: 1)
-        let bad = NSColor(srgbRed: 1, green: 0.3, blue: 0.3, alpha: 1)
+        let ok = a.kind == .hero ? PlatformColor(srgbRed: 1, green: 0.82, blue: 0.4, alpha: 1)
+                                 : PlatformColor(srgbRed: 0.45, green: 0.78, blue: 1, alpha: 1)
+        let bad = PlatformColor(srgbRed: 1, green: 0.3, blue: 0.3, alpha: 1)
         let color = valid ? ok : bad
         deployIndicator.strokeColor = color.withAlphaComponent(0.85)
         deployIndicator.fillColor = color.withAlphaComponent(0.1)
@@ -392,6 +425,7 @@ final class GameScene: SKScene {
         updateDeployPreview(c)
         var showRange = false
         var showAoe = false
+        var showName = false
         ghost.isHidden = true
 
         if let a = c.buildSelection, let slotID = hoverSlot, world.tower(atSlot: slotID) == nil,
@@ -415,14 +449,29 @@ final class GameScene: SKScene {
             ghost.position = proj.ground(pos)
             ghost.isHidden = false
             let affordable = world.gold >= stats.cost
-            rangeIndicator.strokeColor = affordable ? NSColor(white: 1, alpha: 0.6) : NSColor(srgbRed: 1, green: 0.3, blue: 0.3, alpha: 0.8)
+            rangeIndicator.strokeColor = affordable ? PlatformColor(white: 1, alpha: 0.6) : PlatformColor(srgbRed: 1, green: 0.3, blue: 0.3, alpha: 0.8)
             mapRenderer.setSlotHighlight(slotID)
         } else {
             mapRenderer.setSlotHighlight(nil)
             if let snap = c.selectedTower, let t = world.tower(withID: snap.id) {
-                rangeIndicator.strokeColor = NSColor(white: 1, alpha: 0.55)
+                rangeIndicator.strokeColor = PlatformColor(white: 1, alpha: 0.55)
                 setRange(CGFloat(t.stats.range), at: proj.ground(t.position))
                 showRange = true
+                // Its kind and current form, so the tower can be told apart at a glance.
+                let kind = t.definition.displayName.replacingOccurrences(of: " Tower", with: "")
+                let text = "\(kind) · \(t.stats.name)"
+                if text != nameTagText {
+                    nameTagText = text
+                    nameTagLabel.text = text
+                    let w = nameTagLabel.frame.width + 22
+                    nameTag.path = CGPath(roundedRect: CGRect(x: -w / 2, y: -14, width: w, height: 28), cornerWidth: 14, cornerHeight: 14, transform: nil)
+                    let accent = PlatformColor(Theme.accent(t.archetype))
+                    nameTag.strokeColor = accent
+                    nameTagLabel.fontColor = accent
+                }
+                let g = proj.ground(t.position)
+                nameTag.position = CGPoint(x: g.x, y: g.y + 90)
+                showName = true
                 if t.stats.aoeRadius > 0, let target = t.target, target.isActive {
                     setAoe(CGFloat(t.stats.aoeRadius), at: proj.ground(target.position))
                     showAoe = true
@@ -431,6 +480,7 @@ final class GameScene: SKScene {
         }
         rangeIndicator.isHidden = !showRange
         aoeIndicator.isHidden = !showAoe
+        nameTag.isHidden = !showName
     }
 
     private func setRange(_ r: CGFloat, at p: CGPoint) {
@@ -464,17 +514,24 @@ final class GameScene: SKScene {
         return best?.0
     }
 
-    func handleMouseMoved(_ event: NSEvent) {
-        let p = proj.world(fromScreen: event.location(in: worldRoot))
+    // MARK: Pointer input (mouse on the Mac, touch on iOS: see Input/GameSpriteView.swift)
+
+    /// The node whose coordinates pointer positions are given in.
+    var pointerSpace: SKNode { worldRoot }
+
+    /// The pointer is over `screen` (hovering, or a finger resting on the glass): previews only.
+    func pointerMoved(to screen: CGPoint) {
+        let p = proj.world(fromScreen: screen)
         hoverWorld = p
         hoverSlot = slot(at: p)
     }
 
-    func handleMouseExited() { hoverSlot = nil; hoverWorld = nil }
+    func pointerLeft() { hoverSlot = nil; hoverWorld = nil }
 
-    func handleMouseDown(_ event: NSEvent) {
+    /// The primary action at `screen` (click, or a finger lifted).
+    func pointerPressed(at screen: CGPoint) {
         guard let c = controller, !c.isPaused, !world.phase.isOver else { return }
-        let p = proj.world(fromScreen: event.location(in: worldRoot))
+        let p = proj.world(fromScreen: screen)
         if c.summonSelection != nil {
             // Deployment mode: the click places the summon (or explains why it can't go there).
             hoverWorld = p
@@ -485,7 +542,8 @@ final class GameScene: SKScene {
         if let s = hoverSlot { c.clickSlot(s) } else { c.clickEmpty() }
     }
 
-    func handleRightMouseDown(_ event: NSEvent) {
+    /// Cancel the current selection or placement (right click, or a two-finger tap).
+    func pointerCancelled() {
         controller?.cancelInteraction()
     }
 
@@ -499,6 +557,11 @@ final class GameScene: SKScene {
     /// Effect sprites drawn at the wrong size (should always be 0).
     var debugEffectSizeMismatches: Int { effects.sizeMismatches }
 
+    /// Test hook: where a world point sits in the window (to aim a real mouse event at it).
+    func debugWindowPoint(forWorld p: CGPoint) -> CGPoint? {
+        guard let v = view else { return nil }
+        return v.convert(convertPoint(toView: worldRoot.convert(proj.ground(p), to: self)), to: nil)
+    }
     /// Test hook used by the snapshot tool to emulate hovering a slot.
     func debugHover(slot: Int?) { hoverSlot = slot }
     /// Test hook: emulate the mouse at a world point (deployment preview).

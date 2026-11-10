@@ -1,4 +1,3 @@
-import AppKit
 import EvolutionDefenseCore
 import SwiftUI
 
@@ -6,7 +5,7 @@ import SwiftUI
 struct GameView: View {
     let controller: GameController
     let router: AppRouter
-    @State private var keyMonitor: Any?
+    @State private var keyMonitor = KeyboardMonitor()
 
     var body: some View {
         VStack(spacing: 0) {
@@ -57,6 +56,9 @@ struct GameView: View {
                     TechPanel(controller: controller)
                         .transition(.scale(scale: 0.96).combined(with: .opacity))
                 }
+                if let h = controller.heroUnlock, !controller.isOver {
+                    HeroUnlockCard(controller: controller, hero: h).transition(.opacity)
+                }
                 if let b = controller.banner {
                     BannerView(banner: b).transition(.scale(scale: 0.85).combined(with: .opacity)).id(b.id)
                 }
@@ -83,6 +85,7 @@ struct GameView: View {
             .animation(.spring(duration: 0.3), value: controller.eventCard)
             .animation(.spring(duration: 0.35), value: controller.achievementToast)
             .animation(.easeOut(duration: 0.2), value: controller.showSettings)
+            .animation(.easeOut(duration: 0.25), value: controller.heroUnlock?.id)
             .animation(.easeOut(duration: 0.3), value: controller.boss?.id)
             .clipped()
             BottomPanel(controller: controller)
@@ -92,20 +95,9 @@ struct GameView: View {
     }
 
     private func installKeyMonitor() {
-        removeKeyMonitor()
         let controller = self.controller
-        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-            // Leave command shortcuts (⌘Q, ⌘W, ⌃⌘F…) to the system.
-            if !event.modifierFlags.intersection([.command, .control, .option]).isEmpty { return event }
-            let code = event.keyCode
-            let chars = event.charactersIgnoringModifiers ?? ""
-            let handled = MainActor.assumeIsolated { controller.handleKey(keyCode: code, characters: chars) }
-            return handled ? nil : event
-        }
+        keyMonitor.start { code, chars in controller.handleKey(keyCode: code, characters: chars) }
     }
 
-    private func removeKeyMonitor() {
-        if let m = keyMonitor { NSEvent.removeMonitor(m) }
-        keyMonitor = nil
-    }
+    private func removeKeyMonitor() { keyMonitor.stop() }
 }

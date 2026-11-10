@@ -172,3 +172,32 @@ private struct CardButtonBody: View {
             .onHover { hovering = $0 }
     }
 }
+
+/// One to three stars for a match rating. With `animated`, earned stars pop in one after another.
+struct StarRow: View {
+    let stars: Int
+    var size: CGFloat = 16
+    var animated = false
+    @State private var shown = 0
+
+    var body: some View {
+        HStack(spacing: size * 0.12) {
+            ForEach(0..<StarRatingConfig.maxStars, id: \.self) { i in
+                let earned = i < stars
+                let visible = earned && (!animated || i < shown)
+                Image(systemName: visible ? "star.fill" : "star")
+                    .font(.system(size: size, weight: .bold))
+                    .foregroundStyle(visible ? Theme.gold : Theme.textDim.opacity(0.45))
+                    .shadow(color: visible ? Theme.gold.opacity(0.6) : .clear, radius: size * 0.25)
+                    .scaleEffect(visible || !animated || !earned ? 1 : 0.4)
+            }
+        }
+        .onAppear {
+            guard animated else { return }
+            for i in 0..<stars {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.45).delay(0.3 + Double(i) * 0.25)) { shown = i + 1 }
+            }
+        }
+        .accessibilityLabel("\(stars) of \(StarRatingConfig.maxStars) stars")
+    }
+}

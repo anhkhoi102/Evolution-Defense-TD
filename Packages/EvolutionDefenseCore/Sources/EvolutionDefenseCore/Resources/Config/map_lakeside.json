@@ -56,5 +56,6 @@
     {"kind": "tree", "x": 19.6, "y": 13.6, "scale": 1.1},
     {"kind": "tree", "x": 19.8, "y": 15.2, "scale": 1.0}
   ],
-  "scatter": {"seed": 20261111, "counts": {"tree": 22, "pine": 10, "rock": 16, "boulder": 4, "bush": 34, "flowers": 50}, "pathClearance": 1.35, "objectClearance": 1.3}
+  "scatter": {"seed": 20261111, "counts": {"tree": 22, "pine": 10, "rock": 16, "boulder": 4, "bush": 34, "flowers": 50}, "pathClearance": 1.35, "objectClearance": 1.3},
+  "roster": {"wolf": "marshHopper", "wildBoar": "sporecap", "bear": "reefBrute", "alphaBeast": "mushroomKing", "giantWolf": "heronRaider", "armoredBeast": "bogwood", "troll": "lakeWisp", "flyingMonster": "marshHornet", "ancientDragon": "lakeHorror", "mutantBeast": "bogLurker", "armoredMonster": "shellBrute", "giantMutant": "deepOne", "swarmCreature": "mudPiranha", "mutantTitan": "tideTyrant"}
 }

@@ -55,5 +55,6 @@
     {"kind": "boulder", "x": 30.9, "y": 5.6, "scale": 1.1},
     {"kind": "boulder", "x": 31.0, "y": 10.2, "scale": 1.0}
   ],
-  "scatter": {"seed": 20261110, "counts": {"cactus": 16, "palm": 5, "rock": 30, "boulder": 9, "bush": 24, "ruin": 0}, "pathClearance": 1.35, "objectClearance": 1.3}
+  "scatter": {"seed": 20261110, "counts": {"cactus": 16, "palm": 5, "rock": 30, "boulder": 9, "bush": 24, "ruin": 0}, "pathClearance": 1.35, "objectClearance": 1.3},
+  "roster": {"wolf": "boneRunner", "wildBoar": "cactling", "bear": "tombGuard", "alphaBeast": "cactoroChief", "giantWolf": "graveStalker", "armoredBeast": "skullOrc", "troll": "boneShaman", "flyingMonster": "vulture", "ancientDragon": "sandWyrm", "mutantBeast": "duneRaptor", "armoredMonster": "stoneSkull", "giantMutant": "orcWarlord", "swarmCreature": "sandImp", "mutantTitan": "duneTyrant"}
 }

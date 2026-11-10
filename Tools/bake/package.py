@@ -253,7 +253,9 @@ if os.path.exists(os.path.join(en_dir, "enemies.json")):
     fresh = set()
     for visual, e in sorted(spec.items()):
         era = game.get(visual, {}).get("era", 1)
-        atlas = f"Enemies{era}"
+        # Creatures of one battlefield get that battlefield's atlases, so other maps never load them.
+        home = game.get(visual, {}).get("battlefield")
+        atlas = f"Enemies{home.capitalize()}{era}" if home else f"Enemies{era}"
         atlas_dir = os.path.join(CATALOG, atlas + ".spriteatlas")
         if atlas not in fresh:
             new_atlas(atlas)
@@ -314,7 +316,7 @@ if os.path.exists(os.path.join(su_dir, "summons.json")):
                                       for d in range(e["directions"]) for f in range(n)],
                            "directions": e["directions"], "fps": fps, "loop": loops}
         sprites[f"summon.{visual}"] = sprite_entry(size, anchor, "directional", anims, {
-            "healthBarOffsetY": e["healthBarOffsetY"], "healthBarWidth": 34 if visual == "knight" else 22})
+            "healthBarOffsetY": e["healthBarOffsetY"], "healthBarWidth": {"knight": 34, "king": 42, "queen": 30}.get(visual, 22)})
 
 # ------------------------------------------------------------ combat: projectiles + effects
 PART = os.path.join(ROOT, "sources", "kenney-particle-pack", "PNG (Transparent)")

@@ -95,7 +95,7 @@ final class EffectsRenderer {
 
     /// Tower evolved: golden ring burst, sparks and a level label.
     func levelUp(at p: CGPoint, level: Int) {
-        let gold = NSColor(srgbRed: 1, green: 0.82, blue: 0.3, alpha: 1)
+        let gold = PlatformColor(srgbRed: 1, green: 0.82, blue: 0.3, alpha: 1)
         spawn(fx("ring"), at: p, layer: airLayer, life: 0.5, from: 0.35, to: 1.1, alpha: 0.95, tint: gold)
         spawn(fx("explosion"), at: p, layer: airLayer, life: 0.35, from: 0.4, to: 1.3, alpha: 0.6, blend: .add)
         for k in 0..<6 {
@@ -112,7 +112,7 @@ final class EffectsRenderer {
     }
 
     func heal(_ amount: Int, at p: CGPoint) {
-        let green = NSColor(srgbRed: 0.45, green: 0.95, blue: 0.45, alpha: 1)
+        let green = PlatformColor(srgbRed: 0.45, green: 0.95, blue: 0.45, alpha: 1)
         spawn(fx("ring"), at: p, layer: airLayer, life: 0.6, from: 0.5, to: 1.4, alpha: 0.9, tint: green)
         text("+\(amount) HP", at: CGPoint(x: p.x, y: p.y + 50), color: green, size: 17)
     }
@@ -121,14 +121,14 @@ final class EffectsRenderer {
 
     /// Boss changes phase: red shockwave and the phase name.
     func bossPhase(_ name: String, at p: CGPoint) {
-        let red = NSColor(srgbRed: 1, green: 0.25, blue: 0.2, alpha: 1)
+        let red = PlatformColor(srgbRed: 1, green: 0.25, blue: 0.2, alpha: 1)
         spawn(fx("ring"), at: p, layer: airLayer, life: 0.9, from: 0.4, to: 3.2, alpha: 1, tint: red)
         spawn(fx("explosion"), at: p, layer: airLayer, life: 0.5, from: 0.8, to: 2.4, alpha: 0.7, blend: .add)
         text(name.uppercased(), at: CGPoint(x: p.x, y: p.y + 60), color: red, size: 22, life: 1.6)
     }
 
     /// Reinforcements / brood: a coloured ring where they appear.
-    func summon(at p: CGPoint, color: NSColor) {
+    func summon(at p: CGPoint, color: PlatformColor) {
         spawn(fx("ring"), at: p, layer: groundLayer, life: 0.6, from: 0.3, to: 1.4, alpha: 0.9, tint: color, flat: true)
         spawn(fx("puff"), at: p, layer: airLayer, life: 0.5, from: 0.6, to: 1.5, alpha: 0.6, tint: color)
     }
@@ -136,19 +136,19 @@ final class EffectsRenderer {
     /// Fire breath / EMP hitting towers.
     func towerDisabled(at p: CGPoint, emp: Bool) {
         if emp {
-            let cyan = NSColor(srgbRed: 0.45, green: 0.88, blue: 1, alpha: 1)
+            let cyan = PlatformColor(srgbRed: 0.45, green: 0.88, blue: 1, alpha: 1)
             spawn(fx("ring"), at: p, layer: airLayer, life: 0.45, from: 0.2, to: 0.8, alpha: 1, tint: cyan)
             spawn(fx("spark"), at: p, layer: airLayer, life: 0.3, from: 1.5, to: 2.5, alpha: 1, blend: .add, tint: cyan)
         } else {
             spawn(fx("explosion"), at: p, layer: airLayer, life: 0.6, from: 0.5, to: 1.2, alpha: 0.9, blend: .add)
             spawn(fx("puff"), at: p, layer: airLayer, life: 0.9, from: 0.6, to: 1.4, alpha: 0.7, rise: 18,
-                  tint: NSColor(srgbRed: 0.25, green: 0.22, blue: 0.2, alpha: 1))
+                  tint: PlatformColor(srgbRed: 0.25, green: 0.22, blue: 0.2, alpha: 1))
         }
     }
 
     /// Big pulse from the boss when it uses a tower-disabling ability.
     func shockwave(at p: CGPoint, radius: CGFloat, emp: Bool) {
-        let color = emp ? NSColor(srgbRed: 0.45, green: 0.88, blue: 1, alpha: 1) : NSColor(srgbRed: 1, green: 0.5, blue: 0.15, alpha: 1)
+        let color = emp ? PlatformColor(srgbRed: 0.45, green: 0.88, blue: 1, alpha: 1) : PlatformColor(srgbRed: 1, green: 0.5, blue: 0.15, alpha: 1)
         spawn(fx("ring"), at: p, layer: groundLayer, life: 0.55, from: 0.3, to: radius * 2 / fxWidth("ring"), alpha: 0.85, tint: color, flat: true)
     }
 
@@ -161,8 +161,8 @@ final class EffectsRenderer {
 
     // MARK: Summons
 
-    private static let allyBlue = NSColor(srgbRed: 0.45, green: 0.78, blue: 1, alpha: 1)
-    private static let heroGold = NSColor(srgbRed: 1, green: 0.82, blue: 0.4, alpha: 1)
+    private static let allyBlue = PlatformColor(srgbRed: 0.45, green: 0.78, blue: 1, alpha: 1)
+    private static let heroGold = PlatformColor(srgbRed: 1, green: 0.82, blue: 0.4, alpha: 1)
 
     /// Units arriving: a burst of light where the squad / hero appears.
     func summonArrive(at units: [CGPoint], centre: CGPoint, hero: Bool) {
@@ -194,6 +194,41 @@ final class EffectsRenderer {
         if !lightweight { emit(0, at: p, count: 14, spread: radius) }
     }
 
+    private static let starViolet = PlatformColor(srgbRed: 0.72, green: 0.62, blue: 1, alpha: 1)
+
+    /// A ranged hero's bolt: a streak of light from the caster to the target, then a flash.
+    func heroBolt(from a: CGPoint, to b: CGPoint) {
+        spawn(fx("spark"), at: a, layer: airLayer, life: 0.12, from: 1.5, to: 1.0, alpha: 1, blend: .add,
+              tint: Self.starViolet, target: b, rotation: (b - a).angle, lift: 22)
+        spawn(fx("spark"), at: b, layer: airLayer, life: 0.2, from: 0.8, to: 1.9, alpha: 0.9, blend: .add,
+              tint: Self.starViolet, lift: 14)
+    }
+
+    /// Starfall: a star drops on each chosen enemy.
+    func starfall(on targets: [CGPoint], from caster: CGPoint) {
+        spawn(fx("ring"), at: caster, layer: groundLayer, life: 0.4, from: 0.2, to: 110 / fxWidth("ring"), alpha: 0.9,
+              blend: .add, tint: Self.starViolet, flat: true)
+        for p in targets {
+            spawn(fx("spark"), at: CGPoint(x: p.x - 30, y: p.y + 170), layer: airLayer, life: 0.2, from: 3.0, to: 2.2, alpha: 1,
+                  blend: .add, tint: Self.starViolet, target: p)
+            spawn(fx("explosion"), at: p, layer: airLayer, life: 0.45, from: 0.4, to: 1.5, alpha: 0.85, blend: .add,
+                  tint: Self.starViolet, lift: 10)
+            spawn(fx("ring"), at: p, layer: groundLayer, life: 0.4, from: 0.2, to: 70 / fxWidth("ring"), alpha: 0.9,
+                  blend: .add, tint: Self.starViolet, flat: true)
+        }
+        if !lightweight { for p in targets { emit(0, at: p, count: 8, spread: 30) } }
+    }
+
+    /// Royal Slam: a heavy shockwave with dust, in icy blue to show the slow.
+    func royalSlam(at p: CGPoint, radius: CGFloat) {
+        let d = radius * 2 / fxWidth("ring")
+        let ice = PlatformColor(srgbRed: 0.6, green: 0.85, blue: 1, alpha: 1)
+        spawn(fx("ring"), at: p, layer: groundLayer, life: 0.55, from: d * 0.2, to: d, alpha: 1, blend: .add, tint: Self.heroGold, flat: true)
+        spawn(fx("ring"), at: p, layer: groundLayer, life: 0.8, from: d * 0.1, to: d * 0.9, alpha: 0.8, blend: .add, tint: ice, flat: true)
+        spawn(fx("puff"), at: p, layer: airLayer, life: 0.7, from: 1.0, to: 3.0, alpha: 0.6, rise: 8)
+        if !lightweight { emit(0, at: p, count: 20, spread: radius) }
+    }
+
     /// Time's up: the unit fades upwards in a shimmer.
     func summonVanish(_ a: Art, at p: CGPoint, size: CGSize, anchor: CGPoint, hero: Bool) {
         let c = hero ? Self.heroGold : Self.allyBlue
@@ -211,7 +246,7 @@ final class EffectsRenderer {
 
     /// A healer's chant: a green ring sweeping out to its healing radius.
     func healPulse(at p: CGPoint, radius: CGFloat, healed: Int) {
-        let green = NSColor(srgbRed: 0.45, green: 1, blue: 0.5, alpha: 1)
+        let green = PlatformColor(srgbRed: 0.45, green: 1, blue: 0.5, alpha: 1)
         let d = radius * 2 / fxWidth("ring")
         spawn(fx("ring"), at: p, layer: groundLayer, life: 0.7, from: d * 0.25, to: d, alpha: healed > 0 ? 0.9 : 0.45,
               blend: .add, tint: green, flat: true)
@@ -222,20 +257,20 @@ final class EffectsRenderer {
     }
 
     func shieldAbsorbed(at p: CGPoint) {
-        let cyan = NSColor(srgbRed: 0.45, green: 0.88, blue: 1, alpha: 1)
+        let cyan = PlatformColor(srgbRed: 0.45, green: 0.88, blue: 1, alpha: 1)
         spawn(fx("ring"), at: p, layer: airLayer, life: 0.5, from: 0.9, to: 1.3, alpha: 0.9, tint: cyan)
     }
 
     func critical(at p: CGPoint) {
         guard !lightweight, texts.count < 24 else { return }
-        text("CRIT", at: CGPoint(x: p.x + 10, y: p.y + 14), color: NSColor(srgbRed: 1, green: 0.55, blue: 0.2, alpha: 1), size: 12, life: 0.5)
+        text("CRIT", at: CGPoint(x: p.x + 10, y: p.y + 14), color: PlatformColor(srgbRed: 1, green: 0.55, blue: 0.2, alpha: 1), size: 12, life: 0.5)
     }
 
     /// Short flash at the muzzle when a tower fires.
     /// Muzzle flash; the colour comes from the projectile sprite's `tint` (none = no flash)
     /// and the distance from the tower head's `muzzleDistance` metric.
     /// `lift` is the weapon's height above the ground on screen (the head's `mountY`).
-    func muzzleFlash(at towerPos: CGPoint, angle: CGFloat, tint: NSColor?, distance: CGFloat, lift: CGFloat = 0) {
+    func muzzleFlash(at towerPos: CGPoint, angle: CGFloat, tint: PlatformColor?, distance: CGFloat, lift: CGFloat = 0) {
         guard let tint, effects.count < maxEffects - 40 else { return }    // never crowd out impacts
         // Offset along the aim as seen on screen (depth is squashed by the view).
         let dx = cos(angle) * distance, dy = sin(angle) * distance * view.groundScaleY
@@ -282,19 +317,19 @@ final class EffectsRenderer {
     }
 
     func researched(at p: CGPoint) {
-        let blue = NSColor(srgbRed: 0.36, green: 0.82, blue: 0.95, alpha: 1)
+        let blue = PlatformColor(srgbRed: 0.36, green: 0.82, blue: 0.95, alpha: 1)
         spawn(fx("ring"), at: p, layer: airLayer, life: 0.5, from: 0.3, to: 0.9, alpha: 0.9, tint: blue)
     }
 
     func gold(_ amount: Int, at p: CGPoint) {
-        text("+\(amount)", at: p, color: NSColor(srgbRed: 1, green: 0.86, blue: 0.3, alpha: 1), size: 15)
+        text("+\(amount)", at: p, color: PlatformColor(srgbRed: 1, green: 0.86, blue: 0.3, alpha: 1), size: 15)
     }
 
-    private func text(_ string: String, at p: CGPoint, color: NSColor, size: CGFloat, life: Double = 0.9) {
+    private func text(_ string: String, at p: CGPoint, color: PlatformColor, size: CGFloat, life: Double = 0.9) {
         guard texts.count < (lightweight ? 12 : 40) else { return }
         let l = labelPool.popLast() ?? {
             // Display face registered by Theme.registerFonts(); system heavy font otherwise.
-            let n = SKLabelNode(fontNamed: NSFont(name: "LilitaOne", size: 12) != nil ? "LilitaOne" : "AvenirNext-Heavy")
+            let n = SKLabelNode(fontNamed: Platform.fontExists("LilitaOne") ? "LilitaOne" : "AvenirNext-Heavy")
             n.verticalAlignmentMode = .center
             return n
         }()
@@ -317,7 +352,7 @@ final class EffectsRenderer {
     private func fxWidth(_ name: String) -> CGFloat { max(1, art.fx(name).size.width) }
 
     private func spawn(_ a: Art, at p: CGPoint, layer: SKNode, life: Double, from: CGFloat, to: CGFloat,
-                       alpha: CGFloat, rise: CGFloat = 0, blend: SKBlendMode = .alpha, tint: NSColor? = nil,
+                       alpha: CGFloat, rise: CGFloat = 0, blend: SKBlendMode = .alpha, tint: PlatformColor? = nil,
                        target: CGPoint? = nil, rotation: CGFloat? = nil, frames clip: AnimationClip? = nil,
                        lift: CGFloat = 0, flat: Bool = false) {
         guard effects.count < maxEffects else { return }
@@ -344,7 +379,7 @@ final class EffectsRenderer {
 
     /// Spawns at a screen position (already projected), in the air layer.
     private func spawnScreen(_ a: Art, at p: CGPoint, life: Double, from: CGFloat, to: CGFloat, alpha: CGFloat,
-                             blend: SKBlendMode, tint: NSColor?, rotation: CGFloat?) {
+                             blend: SKBlendMode, tint: PlatformColor?, rotation: CGFloat?) {
         guard effects.count < maxEffects else { return }
         let n = spritePool.popLast() ?? SKSpriteNode()
         n.apply(a)
@@ -399,9 +434,9 @@ final class EffectsRenderer {
             e.particleAlpha = 1; e.particleAlphaSpeed = -1.4
             e.particleColorBlendFactor = 1
             e.particleColorSequence = SKKeyframeSequence(
-                keyframeValues: [NSColor(srgbRed: 1, green: 0.95, blue: 0.7, alpha: 1),
-                                 NSColor(srgbRed: 1, green: 0.55, blue: 0.15, alpha: 1),
-                                 NSColor(srgbRed: 0.7, green: 0.15, blue: 0.05, alpha: 1)],
+                keyframeValues: [PlatformColor(srgbRed: 1, green: 0.95, blue: 0.7, alpha: 1),
+                                 PlatformColor(srgbRed: 1, green: 0.55, blue: 0.15, alpha: 1),
+                                 PlatformColor(srgbRed: 0.7, green: 0.15, blue: 0.05, alpha: 1)],
                 times: [0, 0.4, 1])
         } else {
             e.particleTexture = fx("smoke").texture

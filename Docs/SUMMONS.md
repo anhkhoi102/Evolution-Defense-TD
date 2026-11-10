@@ -1,5 +1,7 @@
 # Evolution Defense: Summon Abilities (Militia & Hero)
 
+> The hero slot now has three heroes to choose from (Knight Commander, Iron King, Star Queen): see [HEROES.md](HEROES.md).
+
 Two temporary tactical abilities: **Call Militia** (a squad of minions) and
 **Summon Hero** (one powerful Knight Commander). Both use the existing
 simulation, combat, targeting, art pipeline and UI.

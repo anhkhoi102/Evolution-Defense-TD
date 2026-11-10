@@ -12,7 +12,7 @@ final class SummonVisual {
     let body = SKSpriteNode()
     /// Blue ring on the ground: "this one is on your side".
     let ring = SKSpriteNode()
-    let barBack = SKSpriteNode(color: NSColor(white: 0, alpha: 0.65), size: CGSize(width: 24, height: 4))
+    let barBack = SKSpriteNode(color: PlatformColor(white: 0, alpha: 0.65), size: CGSize(width: 24, height: 4))
     let barFill = SKSpriteNode(color: .cyan, size: CGSize(width: 22, height: 2))
     var sprite: SpriteAsset?
     var stamp = 0
@@ -37,8 +37,8 @@ final class SummonRenderer {
     private var stamp = 0
     private let art: ArtLibrary
     private lazy var view = art.view
-    private static let allyBlue = NSColor(srgbRed: 0.35, green: 0.7, blue: 1, alpha: 1)
-    private static let heroGold = NSColor(srgbRed: 1, green: 0.8, blue: 0.35, alpha: 1)
+    private static let allyBlue = PlatformColor(srgbRed: 0.35, green: 0.7, blue: 1, alpha: 1)
+    private static let heroGold = PlatformColor(srgbRed: 1, green: 0.8, blue: 0.35, alpha: 1)
 
     init(art: ArtLibrary) {
         self.art = art

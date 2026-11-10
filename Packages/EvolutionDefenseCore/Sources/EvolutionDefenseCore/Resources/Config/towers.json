@@ -33,9 +33,9 @@
     "levels": [
       { "level": 1, "name": "Spear Thrower",          "cost": 90,  "damage": 60,  "attacksPerSecond": 0.45, "range": 170, "projectileSpeed": 520,  "aoeRadius": 0, "armorPenetration": 4,  "canTargetAir": false, "projectile": "spear", "damageType": "physical" },
       { "level": 2, "name": "Heavy Ballista",         "cost": 100, "damage": 110, "attacksPerSecond": 0.45, "range": 185, "projectileSpeed": 600,  "aoeRadius": 0, "armorPenetration": 6,  "canTargetAir": false, "projectile": "ballistaBolt", "damageType": "physical" },
-      { "level": 3, "name": "Heavy Cannon",           "cost": 160, "damage": 190, "attacksPerSecond": 0.45, "range": 195, "projectileSpeed": 650,  "aoeRadius": 0, "armorPenetration": 9,  "canTargetAir": false, "projectile": "heavyShell", "damageType": "explosive" },
-      { "level": 4, "name": "Rocket Launcher",        "cost": 320, "damage": 320, "attacksPerSecond": 0.50, "range": 210, "projectileSpeed": 560,  "aoeRadius": 0, "armorPenetration": 13, "canTargetAir": true,  "projectile": "rocket", "damageType": "explosive", "special": { "stun": 0.2 } },
-      { "level": 5, "name": "Orbital Strike Platform", "cost": 560, "damage": 560, "attacksPerSecond": 0.50, "range": 230, "projectileSpeed": 1800, "aoeRadius": 0, "armorPenetration": 20, "canTargetAir": true,  "projectile": "orbitalBeam", "damageType": "energy", "special": { "stun": 0.4 }, "detectsStealth": true }
+      { "level": 3, "name": "Heavy Cannon",           "cost": 160, "damage": 190, "attacksPerSecond": 0.45, "range": 195, "projectileSpeed": 650,  "aoeRadius": 0, "armorPenetration": 9,  "canTargetAir": false, "projectile": "heavyShell", "damageType": "explosive", "special": { "expose": 0.15, "exposeDuration": 4 } },
+      { "level": 4, "name": "Rocket Launcher",        "cost": 290, "damage": 320, "attacksPerSecond": 0.50, "range": 210, "projectileSpeed": 560,  "aoeRadius": 0, "armorPenetration": 13, "canTargetAir": true,  "projectile": "rocket", "damageType": "explosive", "special": { "expose": 0.2, "exposeDuration": 4, "stun": 0.2 } },
+      { "level": 5, "name": "Orbital Strike Platform", "cost": 500, "damage": 560, "attacksPerSecond": 0.50, "range": 230, "projectileSpeed": 1800, "aoeRadius": 0, "armorPenetration": 20, "canTargetAir": true,  "projectile": "orbitalBeam", "damageType": "energy", "special": { "expose": 0.25, "exposeDuration": 4, "stun": 0.4 }, "detectsStealth": true }
     ]
   },
   {
@@ -44,11 +44,11 @@
     "role": "Very fast, low damage shots. Shreds fast, low-HP enemies; weak against heavy armor.",
     "defaultTargeting": "first",
     "levels": [
-      { "level": 1, "name": "Sling Tower",        "cost": 65,  "damage": 4.5, "attacksPerSecond": 4.0,  "range": 150, "projectileSpeed": 650,  "aoeRadius": 0, "armorPenetration": 0, "canTargetAir": true, "projectile": "pellet", "damageType": "physical" },
-      { "level": 2, "name": "Multi-Archer",       "cost": 70, "damage": 6.5, "attacksPerSecond": 5.0,  "range": 160, "projectileSpeed": 800,  "aoeRadius": 0, "armorPenetration": 0, "canTargetAir": true, "projectile": "arrow", "damageType": "physical" },
-      { "level": 3, "name": "Repeating Crossbow", "cost": 120, "damage": 9,   "attacksPerSecond": 6.5,  "range": 170, "projectileSpeed": 900,  "aoeRadius": 0, "armorPenetration": 1, "canTargetAir": true, "projectile": "bolt", "damageType": "physical" },
-      { "level": 4, "name": "Machine Gun Turret", "cost": 250, "damage": 13,  "attacksPerSecond": 9.0,  "range": 180, "projectileSpeed": 1400, "aoeRadius": 0, "armorPenetration": 2, "canTargetAir": true, "projectile": "bullet", "damageType": "physical", "special": { "critChance": 0.08, "critMultiplier": 2.0 } },
-      { "level": 5, "name": "Laser Gatling",      "cost": 460, "damage": 18,  "attacksPerSecond": 12.0, "range": 190, "projectileSpeed": 2200, "aoeRadius": 0, "armorPenetration": 4, "canTargetAir": true, "projectile": "laser", "damageType": "energy", "special": { "critChance": 0.12, "critMultiplier": 2.5 } }
+      { "level": 1, "name": "Sling Tower",        "cost": 65,  "damage": 4.5, "attacksPerSecond": 4.0,  "range": 150, "projectileSpeed": 650,  "aoeRadius": 0, "armorPenetration": 1, "canTargetAir": true, "projectile": "pellet", "damageType": "physical" },
+      { "level": 2, "name": "Multi-Archer",       "cost": 70, "damage": 6.5, "attacksPerSecond": 5.0,  "range": 160, "projectileSpeed": 800,  "aoeRadius": 0, "armorPenetration": 2, "canTargetAir": true, "projectile": "arrow", "damageType": "physical" },
+      { "level": 3, "name": "Repeating Crossbow", "cost": 120, "damage": 11,   "attacksPerSecond": 6.5,  "range": 180, "projectileSpeed": 900,  "aoeRadius": 0, "armorPenetration": 1, "canTargetAir": true, "projectile": "bolt", "damageType": "physical", "special": { "shred": 1, "shredCap": 6, "shredDuration": 3 } },
+      { "level": 4, "name": "Machine Gun Turret", "cost": 250, "damage": 16,  "attacksPerSecond": 9.0,  "range": 195, "projectileSpeed": 1400, "aoeRadius": 0, "armorPenetration": 2, "canTargetAir": true, "projectile": "bullet", "damageType": "physical", "special": { "shred": 1, "shredCap": 10, "shredDuration": 3, "critChance": 0.08, "critMultiplier": 2.0 } },
+      { "level": 5, "name": "Laser Gatling",      "cost": 460, "damage": 22,  "attacksPerSecond": 12.0, "range": 205, "projectileSpeed": 2200, "aoeRadius": 0, "armorPenetration": 4, "canTargetAir": true, "projectile": "laser", "damageType": "energy", "special": { "shred": 1, "shredCap": 14, "shredDuration": 3, "critChance": 0.12, "critMultiplier": 2.5 } }
     ]
   }
 ]

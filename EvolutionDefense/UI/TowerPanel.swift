@@ -43,8 +43,7 @@ private struct TowerCard: View {
         Button { controller.selectBuild(archetype) } label: {
             VStack(spacing: 4) {
                 ZStack(alignment: .topTrailing) {
-                    Image(nsImage: NSImage(cgImage: ArtLibrary.shared.towerIcon(controller.config.tower(archetype), level: 1),
-                                           size: NSSize(width: 68, height: 68)))
+                    Image(decorative: ArtLibrary.shared.towerIcon(controller.config.tower(archetype), level: 1), scale: 1)
                         .resizable().interpolation(.high)
                         .frame(width: 54, height: 54)
                         .saturation(affordable ? 1 : 0.2)
@@ -116,10 +115,10 @@ private struct HintInfo: View {
                 .font(.system(size: 12, design: .rounded)).foregroundStyle(Theme.textDim)
                 .fixedSize(horizontal: false, vertical: true)
             HStack(spacing: 10) {
-                shortcut("N", "Next wave"); shortcut("U", "Upgrade"); shortcut("R", "Repair"); shortcut("T", "Tech")
+                shortcut("N", "Next stage"); shortcut("U", "Upgrade"); shortcut("R", "Repair"); shortcut("T", "Tech")
                 shortcut("Space", "Pause"); shortcut("F", "Speed"); shortcut("Esc", "Cancel")
             }
-            IntelStrip(intel: controller.waveIntel, label: "Wave 1:")
+            IntelStrip(intel: controller.waveIntel, label: "Stage 1:")
         }
     }
 
@@ -211,7 +210,7 @@ private struct SelectedTowerInfo: View {
                     .pickerStyle(.menu)
                     .frame(width: 118)
                 }
-                Text("Kills \(tower.kills) · Damage \(tower.damageDealt)")
+                Text("Kills \(tower.kills) · Damage \(tower.damageDealt)" + (tower.assistDamage > 0 ? " · Enabled \(tower.assistDamage)" : ""))
                     .font(.system(size: 11, design: .rounded)).foregroundStyle(Theme.textDim).monospacedDigit()
                 Spacer(minLength: 0)
                 if tower.isTemporary {
@@ -303,19 +302,14 @@ private struct WaveSummaryInfo: View {
     let controller: GameController
 
     var body: some View {
-        HStack(alignment: .center, spacing: 18) {
+        HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
-                    Image(systemName: summary.isPerfect ? "star.circle.fill" : "checkmark.circle.fill")
-                        .foregroundStyle(summary.isPerfect ? Theme.gold : Theme.good)
-                    Text("WAVE \(summary.number) CLEARED")
+                    Text("STAGE \(summary.number) CLEARED")
                         .font(Theme.display(17)).foregroundStyle(Theme.text)
-                    if summary.isPerfect {
-                        Text("PERFECT").font(.system(size: 9, weight: .heavy, design: .rounded))
-                            .padding(.horizontal, 5).padding(.vertical, 1)
-                            .background(Capsule().fill(Theme.gold.opacity(0.25))).foregroundStyle(Theme.gold)
-                    }
+                        .lineLimit(1).fixedSize()
                 }
+                .layoutPriority(1)
                 Text(defeatedLine).font(.system(size: 12, design: .rounded))
                     .foregroundStyle(summary.enemiesLeaked > 0 ? Theme.danger : Theme.textDim)
                 IntelStrip(intel: controller.waveIntel,
@@ -324,16 +318,16 @@ private struct WaveSummaryInfo: View {
             Spacer(minLength: 0)
             HStack(spacing: 8) {
                 chip("Kills", summary.killGold)
-                chip("Wave clear", summary.clearBonus)
+                chip("Clear", summary.clearBonus)
                 if summary.perfectBonus > 0 { chip("Perfect", summary.perfectBonus) }
-                if summary.earlyStartBonus > 0 { chip("Early start", summary.earlyStartBonus) }
+                if summary.earlyStartBonus > 0 { chip("Early", summary.earlyStartBonus) }
                 if summary.researchEarned > 0 {
                     VStack(spacing: 1) {
                         Text("+\(summary.researchEarned)").font(Theme.display(15)).monospacedDigit()
                             .foregroundStyle(Theme.research)
                         Text("RESEARCH").font(.system(size: 8, weight: .bold, design: .rounded)).foregroundStyle(Theme.textDim)
                     }
-                    .frame(minWidth: 58).padding(.vertical, 5)
+                    .frame(minWidth: 50).padding(.vertical, 5)
                     .background(RoundedRectangle(cornerRadius: 7).fill(Theme.research.opacity(0.1)))
                 }
             }
@@ -342,6 +336,7 @@ private struct WaveSummaryInfo: View {
                 Text("+\(summary.totalGold)").font(Theme.display(26)).monospacedDigit()
                     .foregroundStyle(Theme.gold)
             }
+            .fixedSize().layoutPriority(2)
         }
     }
 
@@ -356,7 +351,7 @@ private struct WaveSummaryInfo: View {
             Text("+\(value)").font(Theme.display(15)).monospacedDigit().foregroundStyle(Theme.text)
             Text(label.uppercased()).font(.system(size: 8, weight: .bold, design: .rounded)).foregroundStyle(Theme.textDim)
         }
-        .frame(minWidth: 58)
+        .frame(minWidth: 50)
         .padding(.vertical, 5)
         .background(RoundedRectangle(cornerRadius: 7).fill(Color.white.opacity(0.05)))
     }
@@ -403,7 +398,7 @@ private struct NextWaveButton: View {
             VStack(spacing: 3) {
                 Image(systemName: ready ? (isBoss ? "crown.fill" : "play.fill") : "hourglass")
                     .font(.system(size: 17, weight: .bold))
-                Text(ready ? "START WAVE \(next)" : (controller.isOver ? "MATCH OVER" : "WAVE \(controller.waveNumber)"))
+                Text(ready ? "START STAGE \(next)" : (controller.isOver ? "MATCH OVER" : "STAGE \(controller.waveNumber)"))
                     .font(Theme.display(16))
                 Text(subtitle(ready: ready, isBoss: isBoss))
                     .font(.system(size: 10, weight: .semibold, design: .rounded)).opacity(0.8).monospacedDigit()
@@ -456,7 +451,7 @@ private struct IntelStrip: View {
             Text(label).font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(Theme.textDim)
             ForEach(intel) { e in
                 HStack(spacing: 3) {
-                    Image(nsImage: NSImage(cgImage: ArtLibrary.shared.enemyIcon(e.definition), size: .zero))
+                    Image(decorative: ArtLibrary.shared.enemyIcon(e.definition), scale: 1)
                         .resizable().interpolation(.high).aspectRatio(contentMode: .fit)
                         .frame(width: compact ? 22 : 26, height: compact ? 18 : 22)
                     Text(e.isBoss ? "BOSS" : "×\(e.count)")
@@ -493,7 +488,7 @@ private struct WaveIntelInfo: View {
         let number = inWave ? controller.waveNumber : controller.waveNumber + 1
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
-                Text(inWave ? "WAVE \(number)" : "NEXT · WAVE \(number)")
+                Text(inWave ? "STAGE \(number)" : "NEXT · STAGE \(number)")
                     .font(Theme.display(15)).foregroundStyle(Theme.text)
                 if let era = controller.config.waves[safe: number - 1]?.era {
                     Text(era.displayName).font(.system(size: 11, weight: .semibold, design: .rounded))
@@ -513,7 +508,7 @@ private struct WaveIntelInfo: View {
             HStack(alignment: .top, spacing: 10) {
                 ForEach(intel.prefix(5)) { e in
                     HStack(alignment: .top, spacing: 6) {
-                        Image(nsImage: NSImage(cgImage: ArtLibrary.shared.enemyIcon(e.definition), size: .zero))
+                        Image(decorative: ArtLibrary.shared.enemyIcon(e.definition), scale: 1)
                             .resizable().interpolation(.high).aspectRatio(contentMode: .fit)
                             .frame(width: 34, height: 30)
                         VStack(alignment: .leading, spacing: 1) {
@@ -547,7 +542,7 @@ private struct AbilityButton: View {
         Button(action: action) {
             VStack(spacing: 3) {
                 ZStack {
-                    Image(nsImage: NSImage(cgImage: ArtLibrary.shared.summonIcon(ability.ability), size: .zero))
+                    Image(decorative: ArtLibrary.shared.summonIcon(ability.ability), scale: 1)
                         .resizable().interpolation(.high).aspectRatio(contentMode: .fit)
                         .frame(width: 44, height: 44)
                         .saturation(ability.isUnlocked ? 1 : 0)
@@ -566,11 +561,12 @@ private struct AbilityButton: View {
                     }
                 }
                 .frame(width: 48, height: 46)
-                Text(ability.kind == .hero ? "Hero" : "Militia")
+                Text(ability.kind == .hero ? (ability.ability.heroName?.split(separator: " ").last.map(String.init) ?? "Hero") : "Militia")
                     .font(.system(size: 12, weight: .bold, design: .rounded)).foregroundStyle(Theme.text)
+                    .lineLimit(1).minimumScaleFactor(0.7)
                 Group {
                     if !ability.isUnlocked {
-                        Text("Wave \(ability.unlockWave)").foregroundStyle(Theme.textDim)
+                        Text("Stage \(ability.unlockWave)").foregroundStyle(Theme.textDim)
                     } else if ability.aliveUnits > 0 {
                         Text("\(Int(ability.activeRemaining.rounded(.up)))s left").foregroundStyle(accent)
                     } else if ability.cooldown > 0 {

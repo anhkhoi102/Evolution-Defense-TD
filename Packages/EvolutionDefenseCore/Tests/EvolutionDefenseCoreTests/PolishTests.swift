@@ -181,7 +181,7 @@ struct AchievementTests {
 
     @Test func winAchievementsRespectDifficulty() {
         let w = world(MatchOptions(difficulty: .easy, randomEvents: false))
-        w.debugSkipToWave(20)
+        w.debugSkipToWave(w.totalWaves)
         w.startNextWave(); clearWave(w)
         #expect(w.phase == .victory)
         let met = Set(AchievementEvaluator.newlyMet(in: w, unlocked: []).map(\.id))
@@ -309,7 +309,7 @@ struct SaveTests {
     @Test func recordsTrackBestResults() {
         var p = PlayerProfile()
         let w = world(MatchOptions(difficulty: .hard, randomEvents: false))
-        w.debugSkipToWave(20)
+        w.debugSkipToWave(w.totalWaves)
         w.startNextWave(); clearWave(w)
         p.recordMatchEnd(w)
         let r = p.record(.hard)

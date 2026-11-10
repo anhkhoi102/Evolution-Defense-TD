@@ -4,8 +4,8 @@
 // CoreGraphics at launch. It is deliberately isolated: production PNG assets
 // can replace it by changing ArtLibrary only, with no gameplay changes.
 
-import AppKit
 import CoreGraphics
+import Foundation
 
 @inline(__always)
 func rgb(_ hex: UInt32, _ alpha: CGFloat = 1) -> CGColor {

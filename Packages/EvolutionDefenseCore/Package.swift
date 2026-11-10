@@ -15,7 +15,7 @@ import PackageDescription
 let package = Package(
     name: "EvolutionDefenseCore",
     platforms: [
-        .macOS(.v14)
+        .macOS(.v14), .iOS(.v17)
     ],
     products: [
         .library(name: "EvolutionDefenseCore", targets: ["EvolutionDefenseCore"]),

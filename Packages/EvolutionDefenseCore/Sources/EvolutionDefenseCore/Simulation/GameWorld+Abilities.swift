@@ -15,6 +15,8 @@ extension GameWorld {
 
             // Status effects
             if e.slowAmount > 0 && time >= e.slowUntil { e.slowAmount = 0 }
+            if e.shredAmount > 0 && time >= e.shredUntil { e.shredAmount = 0; e.shredCap = 0 }
+            if e.exposeAmount > 0 && time >= e.exposeUntil { e.exposeAmount = 0 }
             if e.burnDPS > 0 {
                 if time >= e.burnUntil {
                     e.burnDPS = 0
