@@ -113,15 +113,62 @@ struct GameButtonStyle: ButtonStyle {
     var prominent = true
 
     func makeBody(configuration: Configuration) -> some View {
+        GameButtonBody(configuration: configuration, tint: tint, prominent: prominent)
+    }
+}
+
+/// The button's look and feedback: lifts and brightens on hover, sinks when
+/// pressed, and greys out when disabled.
+private struct GameButtonBody: View {
+    let configuration: ButtonStyle.Configuration
+    let tint: Color
+    let prominent: Bool
+    @Environment(\.isEnabled) private var isEnabled
+    @State private var hovering = false
+
+    var body: some View {
         // Skin: parchment button (primary), stone-grey (secondary), red (danger).
         let skin = !prominent ? "ui_button_secondary" : (tint == Theme.danger ? "ui_button_danger" : "ui_button_primary")
+        let pressed = configuration.isPressed
+        let lifted = hovering && isEnabled && !pressed
         configuration.label
             .font(Theme.display(17))
             .foregroundStyle(prominent && tint != Theme.danger ? Color(red: 0.24, green: 0.15, blue: 0.08) : Color.white)
             .shadow(color: .black.opacity(prominent && tint != Theme.danger ? 0 : 0.35), radius: 0, y: 1)
             .padding(.horizontal, 20).padding(.vertical, 11)
             .background(SkinImage(name: skin, inset: 14))
-            .scaleEffect(configuration.isPressed ? 0.96 : 1)
-            .brightness(configuration.isPressed ? -0.06 : 0)
+            .brightness(pressed ? -0.08 : lifted ? 0.07 : 0)
+            .scaleEffect(pressed ? 0.96 : lifted ? 1.03 : 1)
+            .shadow(color: .black.opacity(lifted ? 0.45 : 0.25), radius: lifted ? 8 : 3, y: lifted ? 4 : 2)
+            .saturation(isEnabled ? 1 : 0.1)
+            .opacity(isEnabled ? 1 : 0.5)
+            .animation(.easeOut(duration: 0.12), value: hovering)
+            .animation(.easeOut(duration: 0.08), value: pressed)
+            .onHover { hovering = $0 }
+    }
+}
+
+/// Hover and press feedback for custom (card-like) buttons: a slight lift on
+/// hover and a dip when pressed. Use with `.buttonStyle(CardButtonStyle())`.
+struct CardButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View { CardButtonBody(configuration: configuration) }
+}
+
+private struct CardButtonBody: View {
+    let configuration: ButtonStyle.Configuration
+    @Environment(\.isEnabled) private var isEnabled
+    @State private var hovering = false
+
+    var body: some View {
+        let pressed = configuration.isPressed
+        let lifted = hovering && isEnabled && !pressed
+        configuration.label
+            .brightness(pressed ? -0.05 : lifted ? 0.05 : 0)
+            .scaleEffect(pressed ? 0.98 : lifted ? 1.02 : 1)
+            .shadow(color: .black.opacity(lifted ? 0.5 : 0), radius: 10, y: 5)
+            .opacity(isEnabled ? 1 : 0.5)
+            .animation(.easeOut(duration: 0.14), value: hovering)
+            .animation(.easeOut(duration: 0.08), value: pressed)
+            .onHover { hovering = $0 }
     }
 }

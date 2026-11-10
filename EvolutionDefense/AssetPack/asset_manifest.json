@@ -95,6 +95,74 @@
     }
    }
   },
+  "deco.cactus": {
+   "size": {
+    "width": 80,
+    "height": 100
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.18
+   },
+   "facing": "fixed",
+   "animations": {
+    "variants": {
+     "frames": [
+      {
+       "atlas": "EnvDesert",
+       "name": "env_desert_deco_cactus_0"
+      },
+      {
+       "atlas": "EnvDesert",
+       "name": "env_desert_deco_cactus_1"
+      },
+      {
+       "atlas": "EnvDesert",
+       "name": "env_desert_deco_cactus_2"
+      }
+     ]
+    }
+   },
+   "metrics": {
+    "scale": 0.95
+   }
+  },
+  "deco.palm": {
+   "size": {
+    "width": 110,
+    "height": 150
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.18
+   },
+   "facing": "fixed",
+   "animations": {
+    "variants": {
+     "frames": [
+      {
+       "atlas": "EnvDesert",
+       "name": "env_desert_deco_palm_0"
+      },
+      {
+       "atlas": "EnvDesert",
+       "name": "env_desert_deco_palm_1"
+      },
+      {
+       "atlas": "EnvDesert",
+       "name": "env_desert_deco_palm_2"
+      },
+      {
+       "atlas": "EnvDesert",
+       "name": "env_desert_deco_palm_3"
+      }
+     ]
+    }
+   },
+   "metrics": {
+    "scale": 0.95
+   }
+  },
   "deco.pine": {
    "size": {
     "width": 90,
@@ -127,6 +195,42 @@
       {
        "atlas": "Environment",
        "name": "env_deco_pine_4"
+      }
+     ]
+    }
+   },
+   "metrics": {
+    "scale": 0.95
+   }
+  },
+  "deco.ruin": {
+   "size": {
+    "width": 80,
+    "height": 110
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.18
+   },
+   "facing": "fixed",
+   "animations": {
+    "variants": {
+     "frames": [
+      {
+       "atlas": "EnvDesert",
+       "name": "env_desert_deco_ruin_0"
+      },
+      {
+       "atlas": "EnvDesert",
+       "name": "env_desert_deco_ruin_1"
+      },
+      {
+       "atlas": "EnvDesert",
+       "name": "env_desert_deco_ruin_2"
+      },
+      {
+       "atlas": "EnvDesert",
+       "name": "env_desert_deco_ruin_3"
       }
      ]
     }
@@ -9306,6 +9410,105 @@
        "atlas": "Combat",
        "name": "fx_spark"
       }
+     ]
+    }
+   }
+  },
+  "map.desert.background": {
+   "anchor": {
+    "x": 0,
+    "y": 0
+   },
+   "facing": "fixed",
+   "size": {
+    "width": 1600,
+    "height": 800
+   },
+   "animations": {
+    "default": {
+     "frames": [
+      "env_desert_background"
+     ]
+    }
+   }
+  },
+  "map.desert.slot": {
+   "size": {
+    "width": 74.0,
+    "height": 63.0
+   },
+   "anchor": {
+    "x": 0.4797,
+    "y": 0.48
+   },
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "atlas": "EnvDesert",
+       "name": "env_desert_slot"
+      }
+     ]
+    }
+   }
+  },
+  "map.desert.slot.highlighted": {
+   "size": {
+    "width": 78.0,
+    "height": 65.0
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.4652
+   },
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "atlas": "EnvDesert",
+       "name": "env_desert_slot_highlighted"
+      }
+     ]
+    }
+   }
+  },
+  "map.desert.spawn": {
+   "size": {
+    "width": 94.0,
+    "height": 111.0
+   },
+   "anchor": {
+    "x": 0.5638,
+    "y": 0.4324
+   },
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "atlas": "EnvDesert",
+       "name": "env_desert_spawn"
+      }
+     ]
+    }
+   }
+  },
+  "map.lakeside.background": {
+   "anchor": {
+    "x": 0,
+    "y": 0
+   },
+   "facing": "fixed",
+   "size": {
+    "width": 1600,
+    "height": 800
+   },
+   "animations": {
+    "default": {
+     "frames": [
+      "env_lakeside_background"
      ]
     }
    }

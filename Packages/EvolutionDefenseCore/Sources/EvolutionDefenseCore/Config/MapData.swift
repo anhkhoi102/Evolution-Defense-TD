@@ -22,6 +22,41 @@ public struct BuildSlotDefinition: Codable, Sendable, Identifiable {
 
 public enum DecorationKind: String, Codable, Sendable, CaseIterable {
     case tree, pine, rock, boulder, bush, flowers
+    // Added after the first six: the seeded scatter visits kinds in this order,
+    // so appending keeps existing battlefields identical.
+    case cactus, palm, ruin
+
+    /// Tall objects that are drawn as depth-sorted sprites and kept apart from each other.
+    var isTall: Bool { self == .tree || self == .pine || self == .boulder || self == .cactus || self == .palm || self == .ruin }
+}
+
+/// Colours and look of a battlefield (hex "#RRGGBB"). Used by the art bake,
+/// the code-drawn fallback art and the menu.
+public struct BattlefieldTheme: Codable, Sendable, Equatable {
+    /// Which environment builder the art pipeline uses: "grassland", "desert" or "lakeside".
+    public var environment: String
+    public var ground: String
+    public var groundAlt: String
+    public var road: String
+    public var roadEdge: String
+    public var water: String?
+    /// Accent colour for menu cards.
+    public var accent: String
+}
+
+/// A body of water (visual only): a closed outline in tile units. Nothing can
+/// be built or deployed in it, and decorations are kept out of it.
+public struct WaterArea: Codable, Sendable, Equatable {
+    public var points: [GridPoint]
+}
+
+/// A bridge carrying the road over water (visual; lets the path cross a water area).
+public struct BridgeDefinition: Codable, Sendable, Equatable {
+    public var x: Double
+    public var y: Double
+    /// Direction of travel in degrees (0 = along +x).
+    public var rotation: Double
+    public var length: Double
 }
 
 public struct DecorationDefinition: Codable, Sendable {
@@ -58,6 +93,44 @@ public struct MapDefinition: Codable, Sendable {
     public var buildSlots: [BuildSlotDefinition]
     public var decorations: [DecorationDefinition]
     public var scatter: ScatterDefinition
+    /// One-line description for the battlefield selection screen.
+    public var summary: String?
+    public var theme: BattlefieldTheme?
+    public var water: [WaterArea]?
+    public var bridges: [BridgeDefinition]?
+    /// Ambient visual effects, e.g. "dust", "waterSparkle" (see MapRenderer).
+    public var ambient: [String]?
+
+    /// Whether `p` (tile units) is in water, or within `margin` tiles of its shore.
+    public func isInWater(_ p: GridPoint, margin: Double = 0) -> Bool {
+        for area in water ?? [] where area.points.count >= 3 {
+            let pts = area.points
+            var inside = false
+            var j = pts.count - 1
+            var nearest = Double.greatestFiniteMagnitude
+            for i in 0..<pts.count {
+                let a = pts[i], b = pts[j]
+                if (a.y > p.y) != (b.y > p.y), p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x { inside.toggle() }
+                let dx = b.x - a.x, dy = b.y - a.y
+                let t = max(0, min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / max(dx * dx + dy * dy, 1e-9)))
+                let qx = a.x + dx * t - p.x, qy = a.y + dy * t - p.y
+                nearest = min(nearest, (qx * qx + qy * qy).squareRoot())
+                j = i
+            }
+            if inside || nearest < margin { return true }
+        }
+        return false
+    }
+
+    /// Whether `p` (tile units) is on a bridge deck (where the road may cross water).
+    public func isOnBridge(_ p: GridPoint, margin: Double = 0.6) -> Bool {
+        (bridges ?? []).contains { b in
+            let a = b.rotation * .pi / 180
+            let dx = p.x - b.x, dy = p.y - b.y
+            let along = dx * cos(a) + dy * sin(a), across = -dx * sin(a) + dy * cos(a)
+            return abs(along) <= b.length / 2 + margin && abs(across) <= pathWidth / 2 + margin
+        }
+    }
 
     public var worldSize: CGSize { CGSize(width: Double(columns) * tileSize, height: Double(rows) * tileSize) }
 
@@ -90,9 +163,10 @@ public struct MapDefinition: Codable, Sendable {
                 let p = world(x: x, y: y)
                 if pathGeo.distanceToPath(from: p) < pathClear { continue }
                 if keepOut.contains(where: { $0.distance(to: p) < objClear }) { continue }
+                if water != nil, isInWater(GridPoint(x: x, y: y), margin: 0.45) { continue }
                 // Avoid stacking large decorations on top of each other.
-                if kind == .tree || kind == .pine || kind == .boulder,
-                   result.contains(where: { ($0.kind == .tree || $0.kind == .pine || $0.kind == .boulder)
+                if kind.isTall,
+                   result.contains(where: { $0.kind.isTall
                        && world(x: $0.x, y: $0.y).distance(to: p) < tileSize * 0.9 }) { continue }
                 let scale = Double.random(in: 0.8...1.25, using: &rng)
                 result.append(DecorationDefinition(kind: kind, x: x, y: y, scale: scale))

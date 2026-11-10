@@ -189,8 +189,38 @@ public struct BalancePlayer: Sendable {
 }
 
 extension BalancePlayer {
-    /// The reference strategies the balance report and tests use.
-    public static let profiles: [BalancePlayer] = [
+    /// The reference strategies on the default battlefield (Grassland).
+    public static let profiles: [BalancePlayer] = profiles(plan: goodPlan,
+        extra: [Slot(1, .sniper), Slot(6, .heavy), Slot(13, .splash), Slot(15, .rapid)])
+
+    /// The same strategies on any battlefield. Grassland keeps its hand-made
+    /// plan; other maps get one built the same way: the pads that cover the
+    /// most road first, with the same order of tower types.
+    public static func profiles(for map: MapDefinition, automaticPlan: Bool = false) -> [BalancePlayer] {
+        if map.id == MatchOptions.defaultBattlefield && !automaticPlan { return profiles }
+        let path = map.makePath()
+        let reach: CGFloat = 170
+        func coverage(_ s: BuildSlotDefinition) -> Int {
+            let p = map.slotPosition(s)
+            var n = 0
+            var d: CGFloat = 0
+            while d <= path.totalLength {
+                if path.position(at: d).distance(to: p) <= reach { n += 1 }
+                d += 10
+            }
+            return n
+        }
+        let ranked = map.buildSlots.map { ($0, coverage($0)) }.sorted { $0.1 != $1.1 ? $0.1 > $1.1 : $0.0.id < $1.0.id }.map(\.0)
+        let types = goodPlan.map(\.type)
+        let plan = zip(ranked, types).map { Slot($0.id, $1) }
+        let rest = ranked.dropFirst(types.count)
+        let extra = zip(rest, [TowerArchetype.sniper, .heavy, .splash, .rapid]).map { Slot($0.id, $1) }
+        return profiles(plan: plan, extra: extra)
+    }
+
+    static func profiles(plan goodPlan: [Slot], extra: [Slot]) -> [BalancePlayer] {
+        func monoPlan(_ t: TowerArchetype) -> [Slot] { goodPlan.map { Slot($0.slot, t) } }
+        return [
         BalancePlayer(name: "expert (8 mixed, tech)", plan: goodPlan, maxTowers: 8),
         BalancePlayer(name: "spread (12 mixed, tech)", plan: goodPlan, maxTowers: 12),
         BalancePlayer(name: "focused, no tech", plan: goodPlan, maxTowers: 8, research: false),
@@ -200,9 +230,10 @@ extension BalancePlayer {
         BalancePlayer(name: "only sniper", plan: monoPlan(.sniper), maxTowers: 8),
         BalancePlayer(name: "only heavy", plan: monoPlan(.heavy), maxTowers: 8),
         BalancePlayer(name: "only rapid", plan: monoPlan(.rapid), maxTowers: 8),
-        BalancePlayer(name: "L1 spam (16 towers, no upgrades)", plan: goodPlan + [Slot(1, .sniper), Slot(6, .heavy), Slot(13, .splash), Slot(15, .rapid)],
+        BalancePlayer(name: "L1 spam (16 towers, no upgrades)", plan: goodPlan + extra,
                       maxTowers: 16, upgrades: false),
         BalancePlayer(name: "passive (2 towers)", plan: Array(goodPlan.prefix(2)), maxTowers: 2, upgrades: false,
                       repairs: false, research: false),
-    ]
+        ]
+    }
 }

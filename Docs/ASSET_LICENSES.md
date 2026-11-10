@@ -26,7 +26,7 @@ All downloads: **9 November 2026**.
 |---|---|---|---|---|
 | Tower Defense Kit 2.1 | Kenney | CC0 1.0 | <https://kenney.nl/assets/tower-defense-kit> | Tower bases (levels 2–5), weapons, projectiles (bolt, boulder, cannonball, shells) |
 | Castle Kit | Kenney | CC0 1.0 | <https://kenney.nl/assets/castle-kit> | Tower level 1 base, medieval and industrial bases, siege ballista, environment props |
-| Nature Kit | Kenney | CC0 1.0 | <https://kenney.nl/assets/nature-kit> | Map background props, trees, rocks, spawn cave, primitive base (tents, fence) |
+| Nature Kit | Kenney | CC0 1.0 | <https://kenney.nl/assets/nature-kit> | Map background props, trees, rocks, spawn cave, primitive base (tents, fence); Desert (cacti, palms, statues and columns, stones) and Lakeside (lilies, reeds, canoe) battlefields |
 | Space Kit | Kenney | CC0 1.0 | <https://kenney.nl/assets/space-kit> | Futuristic base, level 5 tower weapons |
 | Blaster Kit | Kenney | CC0 1.0 | <https://kenney.nl/assets/blaster-kit> | Sniper level 4 weapon |
 | Mini Characters | Kenney | CC0 1.0 | <https://kenney.nl/assets/mini-characters> | Tower crews, arrows, spears; the summoned Militia (soldier, spear, round shield) and Hero (knight, sword, rectangular shield) with their animations |

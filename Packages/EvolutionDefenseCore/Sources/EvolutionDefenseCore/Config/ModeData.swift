@@ -33,10 +33,24 @@ public struct MatchOptions: Codable, Sendable, Equatable {
     public var difficulty: Difficulty
     /// Optional random events every 3–4 waves.
     public var randomEvents: Bool
+    /// Battlefield (map id). Saves from before battlefields existed are Grassland.
+    public var battlefield: String
 
-    public init(difficulty: Difficulty = .normal, randomEvents: Bool = true) {
+    public static let defaultBattlefield = "meadow"
+
+    public init(difficulty: Difficulty = .normal, randomEvents: Bool = true, battlefield: String = MatchOptions.defaultBattlefield) {
         self.difficulty = difficulty
         self.randomEvents = randomEvents
+        self.battlefield = battlefield
+    }
+
+    enum CodingKeys: String, CodingKey { case difficulty, randomEvents, battlefield }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        difficulty = try c.decode(Difficulty.self, forKey: .difficulty)
+        randomEvents = try c.decode(Bool.self, forKey: .randomEvents)
+        battlefield = try c.decodeIfPresent(String.self, forKey: .battlefield) ?? MatchOptions.defaultBattlefield
     }
 }
 

@@ -42,7 +42,7 @@ final class MapRenderer {
 
         let view = art.view
         let spawn = SKSpriteNode()
-        spawn.apply(art.spawn())
+        spawn.apply(art.spawn(map: map))
         spawn.position = view.ground(map.world(map.spawn))
         spawn.zPosition = view.isFlat ? Layer.spawnAndBase : Layer.units + view.depth(map.world(map.spawn))
         root.addChild(spawn)
@@ -59,7 +59,7 @@ final class MapRenderer {
         oldBaseNode.isHidden = true
         root.addChild(oldBaseNode)
 
-        let slotArt = art.slot(highlighted: false)
+        let slotArt = art.slot(highlighted: false, map: map)
         for slot in map.buildSlots {
             let n = SKSpriteNode()
             n.apply(slotArt)
@@ -73,7 +73,7 @@ final class MapRenderer {
         // so units walking behind a tree are hidden by it. Placement comes from the
         // map's seeded decoration list — the same one the gameplay keep-out uses.
         for (i, d) in map.resolvedDecorations().enumerated() {
-            let id = "deco.\(d.kind.rawValue)"
+            let id = AssetID.decoration(d.kind.rawValue)
             guard art.has(id) else { continue }
             let s = art.sprite(id)
             let variants = s.clip("variants")
@@ -86,12 +86,115 @@ final class MapRenderer {
             n.zPosition = Layer.units + view.depth(p) - 0.001
             root.addChild(n)
         }
+        setUpAmbient()
+    }
+
+    // MARK: Ambient effects (map.ambient): purely visual, off in performance mode
+
+    private struct Sparkle {
+        var node: SKSpriteNode
+        var age: Double
+        var life: Double
+    }
+    private var sparkles: [Sparkle] = []
+    private var dust: SKEmitterNode?
+    /// Performance mode hides ambient effects.
+    var ambientEnabled = true {
+        didSet {
+            guard ambientEnabled != oldValue else { return }
+            dust?.isHidden = !ambientEnabled
+            dust?.particleBirthRate = ambientEnabled ? dustRate : 0
+            for s in sparkles { s.node.isHidden = !ambientEnabled }
+        }
+    }
+    private let dustRate: CGFloat = 5
+
+    private func setUpAmbient() {
+        let view = art.view
+        guard !view.isFlat else { return }          // made for the 2.5D pack
+        for kind in map.ambient ?? [] {
+            switch kind {
+            case "dust" where art.has("fx.smoke"):
+                // Wind-blown sand drifting across the whole battlefield.
+                let e = SKEmitterNode()
+                e.particleTexture = art.fx("smoke").first.texture
+                e.particleBirthRate = dustRate
+                e.particleLifetime = 9; e.particleLifetimeRange = 3
+                e.particlePositionRange = CGVector(dx: 80, dy: map.worldSize.height)
+                e.position = CGPoint(x: -40, y: map.worldSize.height * 0.5)
+                e.emissionAngle = 0.06; e.emissionAngleRange = 0.25
+                e.particleSpeed = 150; e.particleSpeedRange = 60
+                e.particleAlpha = 0; e.particleAlphaSpeed = 0
+                e.particleAlphaSequence = SKKeyframeSequence(keyframeValues: [0, 0.16, 0.12, 0], times: [0, 0.15, 0.8, 1])
+                e.particleScale = 1.6; e.particleScaleRange = 0.9; e.particleScaleSpeed = 0.12
+                e.particleRotationRange = 2 * .pi; e.particleRotationSpeed = 0.2
+                e.particleColor = NSColor(srgbRed: 0.95, green: 0.84, blue: 0.62, alpha: 1)
+                e.particleColorBlendFactor = 1
+                e.zPosition = Layer.projectiles - 1
+                e.advanceSimulationTime(10)          // already drifting when the match opens
+                root.addChild(e)
+                dust = e
+            case "waterSparkle" where art.has("fx.spark") && !(map.water ?? []).isEmpty:
+                // Glints of sunlight on the water.
+                for i in 0..<14 {
+                    let n = SKSpriteNode()
+                    n.apply(art.fx("spark").first)
+                    n.blendMode = .add
+                    n.alpha = 0
+                    n.zPosition = Layer.terrain + 2
+                    root.addChild(n)
+                    sparkles.append(Sparkle(node: n, age: 0, life: 0.2 + Double(i) * 0.19))   // staggered start
+                }
+            default:
+                break
+            }
+        }
+    }
+
+    /// A random on-screen point in the map's water, in world coordinates.
+    private func randomWaterPoint() -> CGPoint? {
+        for _ in 0..<40 {
+            let g = GridPoint(x: Double.random(in: 0.5...(Double(map.columns) - 0.5)),
+                              y: Double.random(in: 0.5...(Double(map.rows) - 0.5)))
+            if map.isInWater(g), !isNearShore(g) { return map.world(g) }
+        }
+        return nil
+    }
+
+    /// Keeps sparkles off the shoreline and bridges.
+    private func isNearShore(_ g: GridPoint) -> Bool {
+        if map.isOnBridge(g, margin: 0.4) { return true }
+        for (dx, dy) in [(0.45, 0.0), (-0.45, 0.0), (0.0, 0.45), (0.0, -0.45)] where !map.isInWater(GridPoint(x: g.x + dx, y: g.y + dy)) {
+            return true
+        }
+        return false
+    }
+
+    private func updateAmbient(dt: Double) {
+        guard ambientEnabled, !sparkles.isEmpty else { return }
+        for i in sparkles.indices {
+            sparkles[i].age += dt
+            let s = sparkles[i]
+            if s.age >= s.life {
+                sparkles[i].age = 0
+                sparkles[i].life = Double.random(in: 1.0...2.2)
+                if let p = randomWaterPoint() {
+                    s.node.position = art.view.ground(p)
+                    s.node.setScale(CGFloat.random(in: 0.45...0.95))
+                    s.node.zRotation = CGFloat.random(in: 0...(.pi / 2))
+                }
+                s.node.alpha = 0
+            } else {
+                let t = s.age / s.life
+                s.node.alpha = CGFloat(sin(t * .pi)) * 0.75        // fade in and out
+            }
+        }
     }
 
     func setSlotHighlight(_ id: Int?) {
         guard id != highlightedSlot else { return }
-        if let old = highlightedSlot { slotNodes[old]?.apply(art.slot(highlighted: false)) }
-        if let id { slotNodes[id]?.apply(art.slot(highlighted: true)) }
+        if let old = highlightedSlot { slotNodes[old]?.apply(art.slot(highlighted: false, map: map)) }
+        if let id { slotNodes[id]?.apply(art.slot(highlighted: true, map: map)) }
         highlightedSlot = id
     }
 
@@ -136,6 +239,7 @@ final class MapRenderer {
     }
 
     func update(dt: Double) {
+        updateAmbient(dt: dt)
         guard baseShake > 0 else { return }
         baseShake = max(0, baseShake - dt)
         let k = CGFloat(baseShake / 0.35)

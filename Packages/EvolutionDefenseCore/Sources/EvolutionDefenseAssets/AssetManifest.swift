@@ -205,6 +205,11 @@ public enum AssetID {
     public static let slot = "map.slot"
     public static let slotHighlighted = "map.slot.highlighted"
     public static let spawn = "map.spawn"
+    /// Per-battlefield overrides (optional): a map may bring its own pads and spawn.
+    public static func slot(map: String, highlighted: Bool) -> String { "map.\(map).slot" + (highlighted ? ".highlighted" : "") }
+    public static func spawn(map: String) -> String { "map.\(map).spawn" }
+    /// Decoration sprite for a kind (`deco.tree`, `deco.cactus`…): frames are variants.
+    public static func decoration(_ kind: String) -> String { "deco.\(kind)" }
     public static func fx(_ name: String) -> String { "fx.\(name)" }
     public static func ui(_ name: String) -> String { "ui.\(name)" }
 

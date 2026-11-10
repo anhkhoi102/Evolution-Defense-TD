@@ -39,7 +39,9 @@ public enum AssetValidator {
         if m.version != AssetManifest.currentVersion {
             issues.append(Issue(id: "manifest", message: "version \(m.version), expected \(AssetManifest.currentVersion)"))
         }
-        for id in requiredIDs(for: config) where m.sprites[id] == nil {
+        // The battlefield in play plus every other battlefield's background.
+        let ids = requiredIDs(for: config) + config.maps.map { AssetID.mapBackground($0.id) }
+        for id in Set(ids).sorted() where m.sprites[id] == nil {
             issues.append(Issue(id: id, message: "missing sprite"))
         }
         for (id, s) in m.sprites { issues += check(s, id: id) }

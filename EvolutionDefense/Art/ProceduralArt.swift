@@ -40,7 +40,7 @@ enum ProceduralArt {
             let spec = ProjectileArt.spec(k)
             return draw(ProjectileArt.canvas(spec)) { ProjectileArt.draw($0, spec) }
         case "mapBackground":
-            guard let map = config?.map, map.id == key else { return nil }
+            guard let map = config?.battlefield(key) else { return nil }
             return draw(map.worldSize) { MapArt.drawBackground($0, map: map) }
         case "slot":
             return draw(MapArt.slotSize) { MapArt.drawSlot($0, highlighted: key == "highlighted") }

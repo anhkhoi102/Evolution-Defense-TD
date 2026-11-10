@@ -13,6 +13,8 @@ public struct GameSettings: Codable, Sendable, Equatable {
     public var screenShake = true
     public var difficulty: Difficulty = .normal
     public var randomEvents = true
+    /// Battlefield chosen in the menu (map id).
+    public var battlefield = MatchOptions.defaultBattlefield
 
     public init() {}
 
@@ -29,6 +31,7 @@ public struct GameSettings: Codable, Sendable, Equatable {
         screenShake = try c.decodeIfPresent(Bool.self, forKey: .screenShake) ?? d.screenShake
         difficulty = (try? c.decodeIfPresent(Difficulty.self, forKey: .difficulty)) ?? nil ?? d.difficulty
         randomEvents = try c.decodeIfPresent(Bool.self, forKey: .randomEvents) ?? d.randomEvents
+        battlefield = try c.decodeIfPresent(String.self, forKey: .battlefield) ?? d.battlefield
     }
 }
 

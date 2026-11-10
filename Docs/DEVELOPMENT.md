@@ -17,7 +17,7 @@ macOS 14+.
 | 4 | Polish: audio, animations, random events, difficulty, achievements, saves, perf mode | ✅ |
 | — | Visual overhaul: 2.5D tabletop art baked from CC0 3D kits, particle effects, shaders, UI skin, recorded sound effects | ✅ |
 
-Version **1.2.0**. See *Art & audio* below, [ASSETS.md](ASSETS.md) § 7 and [BALANCE.md](BALANCE.md).
+Version **1.3.0**. See *Art & audio* below, [ASSETS.md](ASSETS.md) § 7 and [BALANCE.md](BALANCE.md).
 
 ### Polish (Phase 4)
 
@@ -146,6 +146,7 @@ Scripts/snapshot.sh                # scripted match → PNGs in ./snapshots, the
 Scripts/benchmark.sh               # frame-rate benchmark under maximum load (use a Release build)
 Scripts/death-test.sh              # many big enemies dying at once: fails if any effect sprite is mis-sized
 Scripts/summon-test.sh             # both summon abilities in a boss wave: deploy, fight, expire, no leaks
+Scripts/battlefield-test.sh        # menu, battlefield selection and a fight on each battlefield ([BATTLEFIELDS.md](BATTLEFIELDS.md))
 Scripts/asset-demo.sh [pack]       # same scene with the placeholder pack and an override pack
 Scripts/generate-placeholder-manifest.py   # rebuild asset_manifest.placeholder.json after adding entities
 EVO_AUDIO_CHECK=1 build/EvolutionDefense.app/Contents/MacOS/EvolutionDefense   # muted audio self-test

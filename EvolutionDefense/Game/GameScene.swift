@@ -128,6 +128,7 @@ final class GameScene: SKScene {
         projectileRenderer.drawsShadows = !performanceMode
         enemyRenderer.lightweight = performanceMode
         summonRenderer.lightweight = performanceMode
+        mapRenderer.ambientEnabled = !performanceMode
     }
 
     private func addShake(_ strength: CGFloat, _ duration: Double) {

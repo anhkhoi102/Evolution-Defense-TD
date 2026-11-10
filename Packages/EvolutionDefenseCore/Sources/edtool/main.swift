@@ -1,6 +1,6 @@
 // Developer tool for the asset pipeline and balance work.
 //
-//   swift run --package-path Packages/EvolutionDefenseCore edtool export-map <out.json>
+//   swift run --package-path Packages/EvolutionDefenseCore edtool export-map <out.json> [battlefield id]
 //   swift run -c release --package-path Packages/EvolutionDefenseCore edtool balance [easy|normal|hard] [seed…]
 //   swift run -c release --package-path Packages/EvolutionDefenseCore edtool balance-summary [seed…]
 //
@@ -32,7 +32,7 @@ guard args.count >= 3, args[1] == "export-map" else {
     exit(2)
 }
 let config = try GameConfiguration.loadDefault()
-let map = config.map
+let map = config.battlefield(args.count >= 4 ? args[3] : MatchOptions.defaultBattlefield) ?? config.map
 let path = map.makePath()
 var out: [String: Any] = [
     "id": map.id,
@@ -48,27 +48,44 @@ out["decorations"] = map.resolvedDecorations().map { d -> [String: Any] in
     let p = map.world(x: d.x, y: d.y)
     return ["kind": d.kind.rawValue, "x": Double(p.x), "y": Double(p.y), "scale": d.scale]
 }
+if let t = map.theme {
+    var theme: [String: Any] = ["environment": t.environment, "ground": t.ground, "groundAlt": t.groundAlt, "road": t.road,
+                                "roadEdge": t.roadEdge, "accent": t.accent]
+    if let w = t.water { theme["water"] = w }
+    out["theme"] = theme
+}
+out["water"] = (map.water ?? []).map { $0.points.map { pt(map.world($0)) } }
+out["bridges"] = (map.bridges ?? []).map { b -> [String: Any] in
+    ["x": b.x * map.tileSize, "y": b.y * map.tileSize, "rotation": b.rotation, "length": b.length * map.tileSize]
+}
 let data = try JSONSerialization.data(withJSONObject: out, options: [.prettyPrinted, .sortedKeys])
 try data.write(to: URL(fileURLWithPath: args[2]))
 print("wrote \(args[2]): \(path.points.count) path points, \(map.buildSlots.count) pads, \((out["decorations"] as! [Any]).count) decorations")
 
+
+/// `map=<id>` argument (default: Grassland).
+func battlefieldArg(_ args: [String]) -> String {
+    args.first { $0.hasPrefix("map=") }.map { String($0.dropFirst(4)) } ?? MatchOptions.defaultBattlefield
+}
 
 // MARK: - balance
 
 func runBalance(_ args: [String]) {
     let config = try! GameConfiguration.loadDefault()
     let difficulty = args.compactMap(Difficulty.init(rawValue:)).first ?? .normal
+    let mapID = battlefieldArg(args)
+    let profiles = BalancePlayer.profiles(for: config.battlefield(mapID) ?? config.map, automaticPlan: args.contains("autoplan"))
     let seeds = args.compactMap { UInt64($0) }
     let seedList = seeds.isEmpty ? [3, 7, 11] as [UInt64] : seeds
     let waves = config.waves.count
-    print("Balance report — difficulty \(difficulty.rawValue), seeds \(seedList.map(String.init).joined(separator: ","))")
+    print("Balance report — battlefield \(mapID), difficulty \(difficulty.rawValue), seeds \(seedList.map(String.init).joined(separator: ","))")
     print("Cells: deepest enemy progress along the path in %; XX = HP lost that wave; -- = wave not reached\n")
     var header = String(repeating: " ", count: 36)
     for n in 1...waves { header += String(format: "%3d", n) }
     print(header + "   result")
-    for p in BalancePlayer.profiles {
+    for p in profiles {
         for seed in seedList {
-            let r = p.play(config: config, seed: seed, options: MatchOptions(difficulty: difficulty, randomEvents: false))
+            let r = p.play(config: config, seed: seed, options: MatchOptions(difficulty: difficulty, randomEvents: false, battlefield: mapID))
             var line = (p.name + " s\(seed)").padding(toLength: 36, withPad: " ", startingAt: 0)
             for n in 1...waves {
                 if let w = r.waves.first(where: { $0.number == n }) {
@@ -80,8 +97,8 @@ func runBalance(_ args: [String]) {
     }
     // Detail for one profile (default: the expert): where it hurts, what leaks, how much slack the economy leaves.
     let pick = args.compactMap { $0.hasPrefix("profile=") ? Int($0.dropFirst(8)) : nil }.first ?? 0
-    let p = BalancePlayer.profiles[min(max(0, pick), BalancePlayer.profiles.count - 1)]
-    let r = p.play(config: config, seed: seedList[0], options: MatchOptions(difficulty: difficulty, randomEvents: false))
+    let p = profiles[min(max(0, pick), profiles.count - 1)]
+    let r = p.play(config: config, seed: seedList[0], options: MatchOptions(difficulty: difficulty, randomEvents: false, battlefield: mapID))
     print("\nDetail: \(p.name), seed \(seedList[0])")
     print("  wave  deepest  hpLost  leaks  enemies  goldAtStart  towers  levels  duration  leaked")
     for w in r.waves {
@@ -101,17 +118,19 @@ func runSummary(_ args: [String]) {
     let seeds = args.compactMap { UInt64($0) }
     let seedList = seeds.isEmpty ? [3, 7, 11, 23, 42] as [UInt64] : seeds
     let events = args.contains("events")
+    let mapID = battlefieldArg(args)
+    print("Battlefield: \(mapID)")
     let withSummons = args.contains("summons")
     let only = args.first { $0.hasPrefix("only=") }.map { String($0.dropFirst(5)) }
     if events { print("(random events ON)") }
     if withSummons { print("(players use summon abilities)") }
     print("Strategy                             " + Difficulty.allCases.map { $0.rawValue.padding(toLength: 24, withPad: " ", startingAt: 0) }.joined())
     print("                                     " + Difficulty.allCases.map { _ in "wins  furthest  HP left   " }.joined())
-    for var p in BalancePlayer.profiles where only.map({ p.name.hasPrefix($0) }) ?? true {
+    for var p in BalancePlayer.profiles(for: config.battlefield(mapID) ?? config.map, automaticPlan: args.contains("autoplan")) where only.map({ p.name.hasPrefix($0) }) ?? true {
         p.summons = withSummons
         var line = p.name.padding(toLength: 37, withPad: " ", startingAt: 0)
         for d in Difficulty.allCases {
-            let rs = seedList.map { p.play(config: config, seed: $0, options: MatchOptions(difficulty: d, randomEvents: events)) }
+            let rs = seedList.map { p.play(config: config, seed: $0, options: MatchOptions(difficulty: d, randomEvents: events, battlefield: mapID)) }
             let wins = rs.filter { $0.phase == .victory }.count
             let furthest = Double(rs.map { $0.phase == .victory ? config.waves.count : $0.wavesCleared + 1 }.reduce(0, +)) / Double(rs.count)
             let hp = Double(rs.map(\.baseHP).reduce(0, +)) / Double(rs.count)

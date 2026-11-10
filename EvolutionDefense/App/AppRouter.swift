@@ -10,7 +10,7 @@ import SwiftUI
 @Observable
 final class AppRouter {
     enum Screen { case menu, game }
-    enum MenuPanel { case none, newGame, settings, achievements, records }
+    enum MenuPanel { case none, newGame, battlefields, settings, achievements, records, credits }
 
     private(set) var screen: Screen = .menu
     private(set) var game: GameController?
@@ -25,6 +25,15 @@ final class AppRouter {
     @ObservationIgnored private var quitObserver: NSObjectProtocol?
 
     var settings: GameSettings { profile.settings }
+
+    /// Every battlefield, in menu order.
+    var battlefields: [MapDefinition] { config?.maps ?? [] }
+    /// The battlefield chosen in the menu (falls back to the default if a saved id no longer exists).
+    var selectedBattlefield: MapDefinition? { config?.battlefield(settings.battlefield) ?? config?.map }
+    func selectBattlefield(_ id: String) {
+        guard config?.battlefield(id) != nil, id != settings.battlefield else { return }
+        updateSettings { $0.battlefield = id }
+    }
 
     init() {
         // Tools get a throw-away profile so they never touch the player's saves.
@@ -57,7 +66,8 @@ final class AppRouter {
 
     func newGame(_ options: MatchOptions? = nil) {
         guard let config else { return }
-        let opts = options ?? MatchOptions(difficulty: settings.difficulty, randomEvents: settings.randomEvents)
+        let opts = options ?? MatchOptions(difficulty: settings.difficulty, randomEvents: settings.randomEvents,
+                                           battlefield: selectedBattlefield?.id ?? MatchOptions.defaultBattlefield)
         store.deleteCheckpoint()
         checkpoint = nil
         start(GameWorld(config: config, options: opts, seed: UInt64.random(in: 1...UInt64.max)))

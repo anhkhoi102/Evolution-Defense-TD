@@ -274,8 +274,17 @@ final class ArtLibrary {
     private var projectileCache: [String: SpriteAsset] = [:]
     func mapBackground(_ map: MapDefinition) -> SpriteAsset { sprite(AssetID.mapBackground(map.id)) }
     func base(_ era: Era) -> SpriteAsset { sprite(AssetID.base(AssetValidator.eraKey(era))) }
-    func slot(highlighted: Bool) -> SpriteAsset { sprite(highlighted ? AssetID.slotHighlighted : AssetID.slot) }
-    func spawn() -> SpriteAsset { sprite(AssetID.spawn) }
+    /// Build pad: the battlefield's own (`map.<id>.slot`) when the pack has one, else the shared pad.
+    func slot(highlighted: Bool, map: MapDefinition? = nil) -> SpriteAsset {
+        if let map, has(AssetID.slot(map: map.id, highlighted: highlighted)) {
+            return sprite(AssetID.slot(map: map.id, highlighted: highlighted))
+        }
+        return sprite(highlighted ? AssetID.slotHighlighted : AssetID.slot)
+    }
+    func spawn(map: MapDefinition? = nil) -> SpriteAsset {
+        if let map, has(AssetID.spawn(map: map.id)) { return sprite(AssetID.spawn(map: map.id)) }
+        return sprite(AssetID.spawn)
+    }
     func fx(_ name: String) -> SpriteAsset { sprite(AssetID.fx(name)) }
     func ui(_ name: String) -> SpriteAsset { sprite(AssetID.ui(name)) }
 
@@ -340,14 +349,64 @@ final class ArtLibrary {
         return img
     }
 
-    /// Map background at 1× for the main menu backdrop.
+    /// Battlefield preview for the menu (backdrop and selection cards): the
+    /// background with its standing decorations, spawn and base composited in,
+    /// at 80 % of world size. The full-size background texture isn't kept.
     func backgroundImage(for map: MapDefinition) -> CGImage {
         let key = "menu.\(map.id)"
         if let img = imageCache[key] { return img }
-        let a = mapBackground(map).first
-        let img = a.texture.cgImage()
+        let k: CGFloat = 0.8
+        let size = CGSize(width: map.worldSize.width * k, height: map.worldSize.height * k)
+        let view = self.view
+        let bgID = AssetID.mapBackground(map.id)
+        let wasLoaded = sprites[bgID] != nil
+        let bg = mapBackground(map).first
+        let img = renderImage(size: size, scale: 1) { ctx in
+            ctx.interpolationQuality = .high
+            ctx.draw(bg.texture.cgImage(), in: CGRect(origin: .zero, size: size))
+            func draw(_ art: Art, anchor: CGPoint, at world: CGPoint, scale: CGFloat = 1) {
+                let p = view.ground(world)
+                let w = art.size.width * scale * k, h = art.size.height * scale * k
+                ctx.draw(art.texture.cgImage(), in: CGRect(x: p.x * k - anchor.x * w, y: p.y * k - anchor.y * h, width: w, height: h))
+            }
+            var items: [(y: CGFloat, draw: () -> Void)] = []
+            for s in map.buildSlots {
+                let a = slot(highlighted: false, map: map)
+                draw(a.first, anchor: a.anchor, at: map.slotPosition(s))
+            }
+            for (i, d) in map.resolvedDecorations().enumerated() {
+                let id = AssetID.decoration(d.kind.rawValue)
+                guard has(id) else { continue }
+                let s = sprite(id)
+                let variants = s.clip("variants")
+                let p = map.world(x: d.x, y: d.y)
+                let a = variants.frames[i % variants.frames.count]
+                items.append((p.y, { draw(a, anchor: s.anchor, at: p, scale: CGFloat(d.scale) * s.metric("scale", 1)) }))
+            }
+            let sp = spawn(map: map), b = base(.primitive)
+            items.append((map.world(map.spawn).y, { draw(sp.first, anchor: sp.anchor, at: map.world(map.spawn)) }))
+            items.append((map.world(map.base).y, { draw(b.first, anchor: b.anchor, at: map.world(map.base)) }))
+            for item in items.sorted(by: { $0.y > $1.y }) { item.draw() }      // far to near
+        }
+        if !wasLoaded { sprites[bgID] = nil }        // 20 MB texture: only the match in play keeps one
         imageCache[key] = img
         return img
+    }
+
+    /// Battlefield backgrounds currently held as textures (diagnostics: should be 1 in a match).
+    var loadedBattlefieldBackgrounds: [String] {
+        sprites.keys.filter { $0.hasPrefix("map.") && $0.hasSuffix(".background") }.sorted()
+    }
+
+    /// Drops art that only another battlefield uses (its background, pads, spawn
+    /// and decoration sprites), so switching maps doesn't accumulate textures.
+    func releaseBattlefieldArt(keeping map: MapDefinition) {
+        let kinds = Set(map.resolvedDecorations().map { AssetID.decoration($0.kind.rawValue) })
+        let shared: Set<String> = [AssetID.slot, AssetID.slotHighlighted, AssetID.spawn]
+        for id in sprites.keys {
+            if id.hasPrefix("map."), !id.hasPrefix("map.\(map.id)."), !shared.contains(id) { sprites[id] = nil }
+            if id.hasPrefix("deco."), !kinds.contains(id) { sprites[id] = nil }
+        }
     }
 
     private static func draw(_ art: Art, in ctx: CGContext, center: CGPoint, angle: CGFloat) {
@@ -365,6 +424,7 @@ final class ArtLibrary {
     /// atlases instead of four. Anything else is still resolved on first use.
     func warmUp(config: GameConfiguration, era: Era? = nil) {
         if self.config == nil { prepare(config: config) }
+        releaseBattlefieldArt(keeping: config.map)
         let skip = Set(config.enemies.values.filter { e in
             guard let era else { return false }
             return e.era < era || e.era.rawValue > era.rawValue + 1

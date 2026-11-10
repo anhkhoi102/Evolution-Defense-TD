@@ -903,6 +903,40 @@
     }
    }
   },
+  "map.desert.background": {
+   "anchor": {
+    "x": 0,
+    "y": 0
+   },
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "mapBackground",
+       "key": "desert"
+      }
+     ]
+    }
+   }
+  },
+  "map.lakeside.background": {
+   "anchor": {
+    "x": 0,
+    "y": 0
+   },
+   "facing": "fixed",
+   "animations": {
+    "default": {
+     "frames": [
+      {
+       "procedural": "mapBackground",
+       "key": "lakeside"
+      }
+     ]
+    }
+   }
+  },
   "map.meadow.background": {
    "anchor": {
     "x": 0,

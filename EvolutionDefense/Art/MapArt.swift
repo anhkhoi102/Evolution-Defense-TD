@@ -3,17 +3,49 @@
 // the whole map costs a single draw call.
 
 import CoreGraphics
+import EvolutionDefenseAssets
 import EvolutionDefenseCore
 
 enum MapArt {
 
     // MARK: Background
 
+    /// Fallback background for themed battlefields: ground patches, water, road.
+    static func drawThemedBackground(_ ctx: CGContext, map: MapDefinition, theme t: BattlefieldTheme) {
+        let size = map.worldSize
+        var rng = ArtRandom(map.scatter.seed)
+        func hex(_ s: String?, _ fallback: UInt32) -> UInt32 { s.flatMap(AssetValidator.parseHex) ?? fallback }
+        ctx.setFillColor(rgb(hex(t.ground, 0x6DA046))); ctx.fill(CGRect(origin: .zero, size: size))
+        for _ in 0..<160 {
+            let p = CGPoint(x: rng.range(-40, size.width + 40), y: rng.range(-40, size.height + 40))
+            ctx.radialGlow(p, rng.range(30, 110), hex(t.groundAlt, 0x82B455), alpha: rng.range(0.25, 0.5))
+        }
+        for area in map.water ?? [] where area.points.count >= 3 {
+            let cg = CGMutablePath()
+            cg.addLines(between: area.points.map(map.world))
+            cg.closeSubpath()
+            ctx.addPath(cg); ctx.setFillColor(rgb(hex(t.water, 0x3FA7C9))); ctx.fillPath()
+            ctx.addPath(cg); ctx.setStrokeColor(rgb(0xE6D6A6)); ctx.setLineWidth(6); ctx.strokePath()
+        }
+        let pw = map.pathWidth * map.tileSize
+        let cg = CGMutablePath()
+        cg.addLines(between: map.makePath().points)
+        ctx.setLineJoin(.round)
+        for (color, width) in [(rgb(hex(t.roadEdge, 0x6B5433)), pw + 8), (rgb(hex(t.road, 0xC4A06A)), pw)] {
+            ctx.addPath(cg); ctx.setStrokeColor(color); ctx.setLineWidth(width); ctx.strokePath()
+        }
+    }
+
     static func drawBackground(_ ctx: CGContext, map: MapDefinition) {
         let size = map.worldSize
         let path = map.makePath()
         var rng = ArtRandom(map.scatter.seed)
 
+        // Other battlefields: a plain themed version (ground, water, road) in the map's colours.
+        if let t = map.theme, t.environment != "grassland" {
+            drawThemedBackground(ctx, map: map, theme: t)
+            return
+        }
         // Grass base with soft tonal patches.
         ctx.setFillColor(rgb(0x6DA046)); ctx.fill(CGRect(origin: .zero, size: size))
         for _ in 0..<160 {
@@ -84,6 +116,7 @@ enum MapArt {
             case .boulder: drawRock(ctx, p, s * 1.25, &local)
             case .bush: drawBush(ctx, p, s, &local)
             case .flowers: drawFlowers(ctx, p, s, &local)
+            case .cactus, .palm, .ruin: drawBush(ctx, p, s, &local)     // desert kinds: simple stand-in
             }
         }
 

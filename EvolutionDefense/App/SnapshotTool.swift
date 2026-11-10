@@ -16,7 +16,8 @@ enum SnapshotTool {
     /// SpriteKit image can be composited under the SwiftUI layer.
     static let isDeathTest = ProcessInfo.processInfo.environment["EVO_DEATH_TEST"] != nil
     static let isSummonTest = ProcessInfo.processInfo.environment["EVO_SUMMON_TEST"] != nil
-    static let capturesWindow = isActive || isAssetDemo || isDeathTest || isSummonTest
+    static let isBattlefieldTest = ProcessInfo.processInfo.environment["EVO_BATTLEFIELD_TEST"] != nil
+    static let capturesWindow = isActive || isAssetDemo || isDeathTest || isSummonTest || isBattlefieldTest
 
     /// Output folder. The app is sandboxed, so images go to the container's
     /// temporary folder and Scripts/snapshot.sh copies them out.
@@ -383,6 +384,73 @@ enum SnapshotTool {
             }
             for _ in 0..<15 { await pause(0.1); worst = max(worst, c.scene.debugEffectSizeMismatches); checks += 1 }
             print("DEATHTEST \(worst == 0 ? "PASS" : "FAIL") frames=\(n) checks=\(checks) worstMismatchedSprites=\(worst)")
+            fflush(stdout)
+            NSApp.terminate(nil)
+        }
+    }
+
+    // MARK: Battlefield check (EVO_BATTLEFIELD_TEST=1)
+
+    /// Menu, battlefield selection and a fight on every battlefield. Fails if a
+    /// map doesn't load its own background, towers can't be built on its pads,
+    /// enemies don't advance along its road, a summon can't be placed on it, or
+    /// another map's background stays in memory after switching.
+    static func runBattlefieldTestIfRequested(router: AppRouter) {
+        guard isBattlefieldTest else { return }
+        Task { @MainActor in
+            let out = outputDirectory
+            try? FileManager.default.removeItem(at: out)
+            try? FileManager.default.createDirectory(at: out, withIntermediateDirectories: true)
+            await pause(1.2)
+            if let w = NSApp.windows.first { w.setContentSize(NSSize(width: 1440, height: 860)); w.center() }
+            var failures: [String] = []
+            await pause(0.8)
+            capture(out.appendingPathComponent("bf-00-menu.png"))
+            router.menuPanel = .battlefields
+            await pause(0.7)
+            capture(out.appendingPathComponent("bf-01-select-\(router.selectedBattlefield?.id ?? "x").png"))
+            for (i, map) in router.battlefields.enumerated() {
+                router.menuPanel = .battlefields
+                router.selectBattlefield(map.id)
+                await pause(0.8)
+                capture(out.appendingPathComponent("bf-\(i + 1)0-select-\(map.id).png"))
+                router.menuPanel = .newGame
+                await pause(0.6)
+                if i == 0 { capture(out.appendingPathComponent("bf-02-new-game.png")) }
+                router.newGame()
+                await pause(1.0)
+                guard let c = router.game else { failures.append("\(map.id): no game"); continue }
+                let w = c.world
+                if w.config.map.id != map.id { failures.append("\(map.id): match runs on \(w.config.map.id)") }
+                if ArtLibrary.shared.loadedBattlefieldBackgrounds != ["map.\(map.id).background"] {
+                    failures.append("\(map.id): backgrounds in memory \(ArtLibrary.shared.loadedBattlefieldBackgrounds)")
+                }
+                w.debugSetGold(100_000)
+                w.debugSkipToWave(7)
+                var built = 0
+                for (k, s) in w.config.map.buildSlots.enumerated() {
+                    if case .success = w.build([.splash, .sniper, .heavy, .rapid][k % 4], atSlot: s.id) { built += 1 }
+                }
+                if built != w.config.map.buildSlots.count { failures.append("\(map.id): built \(built) of \(w.config.map.buildSlots.count) pads") }
+                for t in w.towers { for _ in 0..<2 { _ = w.upgrade(t) } }
+                c.startNextWave()
+                c.scene.fastForward(seconds: 9)
+                let lead = w.enemies.filter(\.isActive).map(\.distance).max() ?? 0
+                if lead < 200 { failures.append("\(map.id): enemies are not advancing (\(lead))") }
+                if case .success = w.summon("militia", at: w.path.position(at: min(lead + 60, w.path.totalLength - 100))) {} else {
+                    failures.append("\(map.id): militia could not deploy on the road")
+                }
+                await pause(1.2)
+                capture(out.appendingPathComponent("bf-\(i + 1)1-play-\(map.id).png"))
+                c.scene.fastForward(seconds: 40)
+                if w.phase.isOver && w.phase != .victory { failures.append("\(map.id): lost wave 7 with a full defence") }
+                c.onExitToMenu?()
+                await pause(0.6)
+            }
+            router.menuPanel = .credits
+            await pause(0.6)
+            capture(out.appendingPathComponent("bf-90-credits.png"))
+            print("BATTLEFIELDTEST \(failures.isEmpty ? "PASS" : "FAIL: " + failures.joined(separator: "; ")) maps=\(router.battlefields.map(\.id))")
             fflush(stdout)
             NSApp.terminate(nil)
         }

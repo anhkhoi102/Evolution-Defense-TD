@@ -74,7 +74,10 @@ public struct GameConfiguration: Sendable {
     public var rules: RulesConfig
     public var towers: [TowerArchetype: TowerDefinition]
     public var enemies: [String: EnemyDefinition]
+    /// The battlefield in play (the default one until a match selects another).
     public var map: MapDefinition
+    /// Every battlefield, in menu order (battlefields.json).
+    public var maps: [MapDefinition]
     public var waves: [WaveDefinition]
     public var techs: [TechDefinition]
     public var difficulties: [DifficultyDefinition]
@@ -89,6 +92,7 @@ public struct GameConfiguration: Sendable {
                 events: [RandomEventDefinition] = [], achievements: [AchievementDefinition] = [],
                 summons: SummonConfig = .none) {
         self.rules = rules; self.towers = towers; self.enemies = enemies; self.map = map; self.waves = waves
+        self.maps = [map]
         self.techs = techs; self.difficulties = difficulties; self.events = events; self.achievements = achievements
         self.summons = summons
     }
@@ -101,6 +105,16 @@ public struct GameConfiguration: Sendable {
     }
 
     public func event(_ id: String) -> RandomEventDefinition? { events.first { $0.id == id } }
+
+    public func battlefield(_ id: String) -> MapDefinition? { maps.first { $0.id == id } }
+
+    /// This configuration with `id` as the battlefield in play (unknown ids keep the current one).
+    public func selecting(battlefield id: String) -> GameConfiguration {
+        guard id != map.id, let m = battlefield(id) else { return self }
+        var c = self
+        c.map = m
+        return c
+    }
 
     public func tech(_ id: String) -> TechDefinition? { techs.first { $0.id == id } }
 
@@ -128,7 +142,10 @@ public struct GameConfiguration: Sendable {
         let rules = try read("game.json", as: RulesConfig.self)
         let towerList = try read("towers.json", as: [TowerDefinition].self)
         let enemyList = try read("enemies.json", as: [EnemyDefinition].self)
-        let map = try read("map_meadow.json", as: MapDefinition.self)
+        // Battlefields: battlefields.json lists the map files in menu order; the first is the default.
+        let mapFiles = (try? read("battlefields.json", as: [String].self)) ?? ["map_meadow.json"]
+        let maps = try mapFiles.map { try read($0, as: MapDefinition.self) }
+        guard let map = maps.first else { throw ConfigurationError.invalid("battlefields.json lists no maps") }
         let waves = try read("waves.json", as: [WaveDefinition].self)
         let techs = try read("tech.json", as: [TechDefinition].self)
         let difficulties = try read("difficulty.json", as: [DifficultyDefinition].self)
@@ -152,8 +169,10 @@ public struct GameConfiguration: Sendable {
             waves: waves.sorted { $0.number < $1.number },
             techs: techs, difficulties: difficulties, events: events, achievements: achievements,
             summons: summons)
-        try config.validate()
-        return config
+        var withMaps = config
+        withMaps.maps = maps
+        try withMaps.validate()
+        return withMaps
     }
 
     /// Catches data mistakes at load time instead of mid-game.
@@ -226,9 +245,37 @@ public struct GameConfiguration: Sendable {
         if rules.repair.options.contains(where: { $0.cost <= 0 || $0.hp <= 0 }) {
             throw ConfigurationError.invalid("repair options need positive cost and hp")
         }
-        let ids = Set(map.buildSlots.map(\.id))
-        if ids.count != map.buildSlots.count { throw ConfigurationError.invalid("duplicate build slot ids") }
-        if map.path.count < 2 { throw ConfigurationError.invalid("map path too short") }
+        if Set(maps.map(\.id)).count != maps.count { throw ConfigurationError.invalid("duplicate battlefield ids") }
+        for map in maps {
+            let name = "battlefield '\(map.id)'"
+            let ids = Set(map.buildSlots.map(\.id))
+            if ids.count != map.buildSlots.count { throw ConfigurationError.invalid("\(name): duplicate build slot ids") }
+            if map.path.count < 2 { throw ConfigurationError.invalid("\(name): path too short") }
+            let geo = map.makePath()
+            for s in map.buildSlots {
+                // Pads must be on dry land, inside the playfield and clear of the road.
+                guard s.x > 0.5, s.y > 0.5, s.x < Double(map.columns) - 0.5, s.y < Double(map.rows) - 0.5 else {
+                    throw ConfigurationError.invalid("\(name): pad \(s.id) is outside the playfield")
+                }
+                if map.isInWater(GridPoint(x: s.x, y: s.y), margin: 0.5) {
+                    throw ConfigurationError.invalid("\(name): pad \(s.id) is in water")
+                }
+                if Double(geo.distanceToPath(from: map.slotPosition(s))) < (map.pathWidth / 2 + 0.55) * map.tileSize {
+                    throw ConfigurationError.invalid("\(name): pad \(s.id) is on the road")
+                }
+            }
+            // The road may only cross water on a bridge.
+            var d = 0.0
+            let total = Double(geo.totalLength)
+            while d <= total {
+                let p = geo.position(at: CGFloat(d))
+                let g = GridPoint(x: Double(p.x) / map.tileSize, y: Double(p.y) / map.tileSize)
+                if map.isInWater(g, margin: map.pathWidth / 2), !map.isOnBridge(g) {
+                    throw ConfigurationError.invalid("\(name): the road enters water at (\(g.x), \(g.y)) without a bridge")
+                }
+                d += map.tileSize / 4
+            }
+        }
     }
 }
 

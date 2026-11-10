@@ -12,6 +12,7 @@ from tents to a castle, a factory and a shining future city.
 - 🌍 **4 ages:** Stone Age, Medieval, Industrial and Futuristic
 - 🐺 **19 kinds of enemies:** wolves, trolls, dragons, mutants and robots
 - 👑 **4 big bosses**, one at the end of each age
+- 🗺️ **3 battlefields:** Grassland, Desert and Lakeside
 - 🏰 **4 kinds of towers** that each grow through 5 levels
 
 ---
@@ -74,6 +75,8 @@ also find it in **Launchpad**.
 ---
 
 ## 🎮 How to play
+
+First, pick a battlefield: on the main menu, click **Battlefield** and choose Grassland, Desert or Lakeside. Then:
 
 1. **Pick a tower.** Click a tower card at the bottom of the screen, or press
    **1**, **2**, **3** or **4**.

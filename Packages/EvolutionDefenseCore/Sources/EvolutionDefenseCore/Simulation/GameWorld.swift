@@ -228,6 +228,8 @@ public final class GameWorld {
     /// Tests and tools default to no random events so results are reproducible.
     public init(config: GameConfiguration, options: MatchOptions = MatchOptions(randomEvents: false),
                 seed: UInt64 = 0xED_2026) {
+        // The match plays on the battlefield named in its options (same rules, different map).
+        let config = config.selecting(battlefield: options.battlefield)
         self.config = config
         self.options = options
         let diff = config.difficulty(options.difficulty)

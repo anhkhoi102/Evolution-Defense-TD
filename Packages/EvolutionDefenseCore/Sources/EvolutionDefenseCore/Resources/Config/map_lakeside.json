@@ -1,0 +1,60 @@
+{
+  "id": "lakeside",
+  "name": "Lakeside",
+  "summary": "A calm lake, a pond and a stream with a wooden bridge. The road runs between the shores.",
+  "theme": {"environment": "lakeside", "ground": "#5E9A48", "groundAlt": "#74AE52", "road": "#C2A072", "roadEdge": "#77603E", "water": "#3FA7C9", "accent": "#45B5E0"},
+  "ambient": ["waterSparkle"],
+  "tileSize": 50,
+  "columns": 32,
+  "rows": 16,
+  "pathWidth": 1.25,
+  "path": [
+    {"x": -1.5, "y": 12.5},
+    {"x": 17, "y": 12.5},
+    {"x": 17, "y": 8},
+    {"x": 10, "y": 8},
+    {"x": 10, "y": 3.5},
+    {"x": 29.4, "y": 3.5}
+  ],
+  "spawn": {"x": 0.6, "y": 12.5},
+  "base": {"x": 30.3, "y": 3.5},
+  "buildSlots": [
+    {"id": 1, "x": 3.5, "y": 14.3, "hint": "entrance"},
+    {"id": 2, "x": 8, "y": 14.3, "hint": "straight"},
+    {"id": 3, "x": 13, "y": 14.3, "hint": "straight"},
+    {"id": 4, "x": 5.5, "y": 10.6, "hint": "straight"},
+    {"id": 5, "x": 10.5, "y": 10.9, "hint": "straight"},
+    {"id": 6, "x": 14.5, "y": 9.7, "hint": "choke"},
+    {"id": 7, "x": 18.8, "y": 10.4, "hint": "corner"},
+    {"id": 8, "x": 18.7, "y": 6.6, "hint": "corner"},
+    {"id": 9, "x": 13.5, "y": 5.2, "hint": "choke"},
+    {"id": 10, "x": 8.2, "y": 5.8, "hint": "corner"},
+    {"id": 11, "x": 11, "y": 1.7, "hint": "straight"},
+    {"id": 12, "x": 16, "y": 1.7, "hint": "straight"},
+    {"id": 13, "x": 20.5, "y": 5.3, "hint": "narrow"},
+    {"id": 14, "x": 20.8, "y": 1.7, "hint": "straight"},
+    {"id": 15, "x": 25.6, "y": 5.4, "hint": "narrow"},
+    {"id": 16, "x": 26.5, "y": 1.8, "hint": "lastLine"}
+  ],
+  "water": [
+    {"points": [{"x": 21, "y": 8.2}, {"x": 22.5, "y": 7.2}, {"x": 25, "y": 6.9}, {"x": 28, "y": 7.3}, {"x": 30.8, "y": 7.0}, {"x": 33, "y": 8}, {"x": 33, "y": 17}, {"x": 22.5, "y": 17}, {"x": 21.4, "y": 15}, {"x": 20.6, "y": 12.5}, {"x": 20.4, "y": 10.2}]},
+    {"points": [{"x": 1.2, "y": 3.0}, {"x": 2.6, "y": 1.6}, {"x": 4.4, "y": 1.3}, {"x": 5.6, "y": 2.2}, {"x": 6.0, "y": 4.2}, {"x": 5.5, "y": 6.2}, {"x": 4.0, "y": 7.2}, {"x": 2.4, "y": 7.0}, {"x": 1.0, "y": 5.2}]},
+    {"points": [{"x": 22.5, "y": 7.4}, {"x": 23.7, "y": 7.2}, {"x": 23.6, "y": 5.5}, {"x": 23.8, "y": 2.0}, {"x": 23.6, "y": -1.5}, {"x": 22.4, "y": -1.5}, {"x": 22.5, "y": 2.0}, {"x": 22.3, "y": 5.5}]}
+  ],
+  "bridges": [
+    {"x": 23.05, "y": 3.5, "rotation": 0, "length": 2.2}
+  ],
+  "decorations": [
+    {"kind": "boulder", "x": 0.5, "y": 13.9, "scale": 1.2},
+    {"kind": "boulder", "x": 0.5, "y": 11.1, "scale": 1.1},
+    {"kind": "pine", "x": 1.4, "y": 15.4, "scale": 1.1},
+    {"kind": "pine", "x": 1.3, "y": 10.2, "scale": 1.0},
+    {"kind": "boulder", "x": 20.3, "y": 8.9, "scale": 0.9},
+    {"kind": "rock", "x": 21.9, "y": 6.6, "scale": 1.0},
+    {"kind": "rock", "x": 24.4, "y": 6.3, "scale": 0.9},
+    {"kind": "boulder", "x": 6.6, "y": 7.4, "scale": 0.9},
+    {"kind": "tree", "x": 19.6, "y": 13.6, "scale": 1.1},
+    {"kind": "tree", "x": 19.8, "y": 15.2, "scale": 1.0}
+  ],
+  "scatter": {"seed": 20261111, "counts": {"tree": 22, "pine": 10, "rock": 16, "boulder": 4, "bush": 34, "flowers": 50}, "pathClearance": 1.35, "objectClearance": 1.3}
+}

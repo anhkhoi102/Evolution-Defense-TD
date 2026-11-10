@@ -69,9 +69,11 @@ for t in json.load(open(os.path.join(CFG, "towers.json"))):
             spec["tint"] = "#80E6FF" if pk in ENERGY else "#FFBF59"
         sprites[f"projectile.{pv}"] = spec
 
-mapdef = json.load(open(os.path.join(CFG, "map_meadow.json")))
-sprites[f"map.{mapdef['id']}.background"] = {"anchor": {"x": 0, "y": 0}, "facing": "fixed",
-                                             "animations": {"default": {"frames": [proc("mapBackground", key=mapdef["id"])]}}}
+# One background per battlefield (battlefields.json lists the map files).
+for map_file in json.load(open(os.path.join(CFG, "battlefields.json"))):
+    mapdef = json.load(open(os.path.join(CFG, map_file)))
+    sprites[f"map.{mapdef['id']}.background"] = {"anchor": {"x": 0, "y": 0}, "facing": "fixed",
+                                                 "animations": {"default": {"frames": [proc("mapBackground", key=mapdef["id"])]}}}
 sprites["map.slot"] = {"facing": "fixed", "animations": {"default": {"frames": [proc("slot", key="normal")]}}}
 sprites["map.slot.highlighted"] = {"facing": "fixed", "animations": {"default": {"frames": [proc("slot", key="highlighted")]}}}
 sprites["map.spawn"] = {"facing": "fixed", "animations": {"default": {"frames": [proc("spawn")]}}}

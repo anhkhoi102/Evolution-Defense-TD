@@ -181,6 +181,42 @@ if os.path.exists(os.path.join(env_dir, "env.json")):
                                    "animations": {"variants": {"frames": [frame("Environment", "env_" + n) for n in names]}},
                                    "metrics": {"scale": 0.95}}
 
+# ------------------------------------------------------------ other battlefields (Docs/BATTLEFIELDS.md)
+# out/env/<map id>/: a background, and optionally the map's own pads, spawn and
+# decoration sprites (in their own atlas, so only the map in play loads them).
+if os.path.isdir(env_dir):
+    for map_id in sorted(d for d in os.listdir(env_dir) if os.path.exists(os.path.join(env_dir, d, "env.json"))):
+        mdir = os.path.join(env_dir, map_id)
+        mspec = json.load(open(os.path.join(mdir, "env.json")))
+        bg = Image.open(os.path.join(mdir, "background.png")).convert("RGB")
+        write_imageset(CATALOG, f"env_{map_id}_background", bg)
+        sprites[f"map.{map_id}.background"] = {"anchor": {"x": 0, "y": 0}, "facing": "fixed",
+                                               "size": {"width": mspec["background"]["size"][0], "height": mspec["background"]["size"][1]},
+                                               "animations": {"default": {"frames": [f"env_{map_id}_background"]}}}
+        extras = [k for k in mspec if k != "background"]
+        if not extras:
+            continue
+        atlas = "Env" + map_id.capitalize()
+        adir = new_atlas(atlas)
+        for file, sid in [("slot", f"map.{map_id}.slot"), ("slot_highlighted", f"map.{map_id}.slot.highlighted"), ("spawn", f"map.{map_id}.spawn")]:
+            if file not in mspec:
+                continue
+            m = mspec[file]
+            im, size, anchor = trim(os.path.join(mdir, file + ".png"), m["size"], m["anchor"])
+            write_imageset(adir, f"env_{map_id}_{file}", clean_alpha(im))
+            sprites[sid] = {"size": {"width": size[0], "height": size[1]}, "anchor": {"x": round(anchor[0], 4), "y": round(anchor[1], 4)},
+                            "facing": "fixed", "animations": {"default": {"frames": [frame(atlas, f"env_{map_id}_{file}")]}}}
+        kinds = sorted({k.split("_")[1] for k in extras if k.startswith("deco_")})
+        for kind in kinds:
+            names = sorted(n for n in extras if n.startswith(f"deco_{kind}_"))
+            m = mspec[names[0]]
+            for n in names:
+                write_imageset(adir, f"env_{map_id}_{n}", clean_alpha(soften(Image.open(os.path.join(mdir, n + ".png")).convert("RGBA"))))
+            sprites["deco." + kind] = {"size": {"width": m["size"][0], "height": m["size"][1]},
+                                       "anchor": {"x": m["anchor"][0], "y": m["anchor"][1]}, "facing": "fixed",
+                                       "animations": {"variants": {"frames": [frame(atlas, f"env_{map_id}_{n}") for n in names]}},
+                                       "metrics": {"scale": 0.95}}
+
 # ------------------------------------------------------------ towers
 tow_dir = os.path.join(OUT, "towers")
 if os.path.exists(os.path.join(tow_dir, "towers.json")):

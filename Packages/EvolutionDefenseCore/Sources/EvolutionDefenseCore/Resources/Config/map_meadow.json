@@ -1,6 +1,9 @@
 {
   "id": "meadow",
-  "name": "Riverside Meadow",
+  "name": "Grassland",
+  "summary": "Green meadows and forest. A winding road with long open lanes.",
+  "theme": { "environment": "grassland", "ground": "#5C9140", "groundAlt": "#6FA445", "road": "#B8946A", "roadEdge": "#6E5A3A", "accent": "#6CC24A" },
+  "ambient": [],
   "tileSize": 50,
   "columns": 32,
   "rows": 16,
