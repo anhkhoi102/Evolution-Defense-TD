@@ -1,3 +1,4 @@
+import EvolutionDefenseAssets
 import EvolutionDefenseCore
 import SpriteKit
 
@@ -117,7 +118,7 @@ final class MapRenderer {
         era = newEra
         eraTint.removeAllActions()
         if animated {
-            oldBaseNode.apply(Art(texture: baseNode.texture!, size: baseNode.size))
+            oldBaseNode.apply(Art(texture: baseNode.texture!, size: baseNode.unscaledSize))
             oldBaseNode.anchorPoint = baseNode.anchorPoint
             oldBaseNode.alpha = 1
             oldBaseNode.isHidden = false

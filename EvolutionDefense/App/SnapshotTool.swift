@@ -14,7 +14,8 @@ enum SnapshotTool {
     static let isAssetDemo = ProcessInfo.processInfo.environment["EVO_ASSET_DEMO"] != nil
     /// A tool will screenshot the window: map backgrounds go transparent so the
     /// SpriteKit image can be composited under the SwiftUI layer.
-    static let capturesWindow = isActive || isAssetDemo
+    static let isDeathTest = ProcessInfo.processInfo.environment["EVO_DEATH_TEST"] != nil
+    static let capturesWindow = isActive || isAssetDemo || isDeathTest
 
     /// Output folder. The app is sandboxed, so images go to the container's
     /// temporary folder and Scripts/snapshot.sh copies them out.
@@ -329,6 +330,56 @@ enum SnapshotTool {
             let pack = ProcessInfo.processInfo.environment["EVO_ASSET_PACK"] ?? "default"
             capture(out.appendingPathComponent("asset-pack-\(pack).png"))
             print("ASSETDEMO pack=\(ArtLibrary.shared.manifest.name) issues=\(ArtLibrary.shared.issues.count)")
+            NSApp.terminate(nil)
+        }
+    }
+
+    // MARK: Mass-death check (EVO_DEATH_TEST=1)
+
+    /// Many large enemies dying at the same moment (wave 7 / 8 packs under
+    /// strong splash fire). Captures frames through the death animations so
+    /// corpse size and dissolve can be inspected: snapshots/death-NN.png.
+    static func runDeathTestIfRequested(router: AppRouter) {
+        guard ProcessInfo.processInfo.environment["EVO_DEATH_TEST"] != nil else { return }
+        Task { @MainActor in
+            let out = outputDirectory
+            try? FileManager.default.removeItem(at: out)
+            try? FileManager.default.createDirectory(at: out, withIntermediateDirectories: true)
+            await pause(1.0)
+            if let w = NSApp.windows.first { w.setContentSize(NSSize(width: 1440, height: 860)); w.center() }
+            router.newGame(MatchOptions(difficulty: .normal, randomEvents: false))
+            await pause(1.0)
+            guard let c = router.game else { NSApp.terminate(nil); return }
+            let w = c.world
+            w.debugSetGold(1_000_000)
+            w.debugSkipToWave(7)
+            for (i, s) in w.config.map.buildSlots.prefix(8).enumerated() { w.build(i % 2 == 0 ? .splash : .heavy, atSlot: s.id) }
+            for t in w.towers { while case .success = w.upgrade(t) {} }
+            c.startNextWave()
+            let kinds = ["giantWolf", "armoredBeast", "troll", "giantWolf"]
+            let free = Array(w.config.map.buildSlots.dropFirst(8))
+            var n = 0, worst = 0, checks = 0
+            // Three packs, each dying together under maxed splash fire. Between
+            // packs, new towers are built and evolved: their level-up sparks
+            // shrink to 0.2 and go back to the effect pool, which is what made
+            // later death animations come out 5× too big.
+            for round in 0..<3 {
+                for i in 0..<24 { w.debugSpawn(kinds[(i + round) % kinds.count], atDistance: 200 + CGFloat(i % 6) * 6, elite: i % 4 == 0) }
+                for i in 0..<24 { w.debugSpawn(kinds[(i + round + 1) % kinds.count], atDistance: 520 + CGFloat(i % 6) * 6) }
+                for _ in 0..<20 {
+                    await pause(0.12)
+                    worst = max(worst, c.scene.debugEffectSizeMismatches); checks += 1
+                    if round == 0 || n < 60 { capture(out.appendingPathComponent(String(format: "death-%02d.png", n))) }
+                    n += 1
+                }
+                if round < free.count {
+                    _ = w.build(.splash, atSlot: free[round].id)
+                    for t in w.towers { while case .success = w.upgrade(t) {} }
+                }
+            }
+            for _ in 0..<15 { await pause(0.1); worst = max(worst, c.scene.debugEffectSizeMismatches); checks += 1 }
+            print("DEATHTEST \(worst == 0 ? "PASS" : "FAIL") frames=\(n) checks=\(checks) worstMismatchedSprites=\(worst)")
+            fflush(stdout)
             NSApp.terminate(nil)
         }
     }

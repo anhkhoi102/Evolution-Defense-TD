@@ -40,6 +40,9 @@ public final class Enemy {
     var stealthTimer: Double = 0
     var sprintTimer: Double = 0
     var summonTimer: Double = 0
+    var healTimer: Double = 0
+    /// Last time a healer mended this enemy (heals from several healers don't stack).
+    var lastHealedTime: Double = -100
     var disableTimer: Double = 0
     var strikeTimer: Double = 0
     var nextBroodHP: Double = 0
@@ -47,6 +50,8 @@ public final class Enemy {
     public internal(set) var isSpawnedMinion = false
     /// Gold reward multiplier (difficulty, Enemy Mutation event).
     public internal(set) var rewardMultiplier = 1.0
+    /// Elite variant (tougher, worth more gold, marked on screen).
+    public internal(set) var isElite = false
 
     // MARK: Status effects (from tower hits)
     public internal(set) var slowAmount: Double = 0
@@ -90,6 +95,7 @@ public final class Enemy {
         if let s = abilities.stealth { stealthTimer = s.visible }
         if let s = abilities.sprint { sprintTimer = s.cooldown * 0.5 }
         if let s = abilities.summon { summonTimer = s.interval }
+        if let h = abilities.healAura { healTimer = h.interval * 0.5 }
         if let d = abilities.disableTowers { disableTimer = d.interval * 0.6 }
         if let b = abilities.baseStrike { strikeTimer = b.interval * 0.5 }
         if let b = abilities.brood, nextBroodHP == 0 { nextBroodHP = maxHP * (1 - b.everyHPFraction) }

@@ -23,6 +23,9 @@ public struct DifficultyDefinition: Codable, Sendable, Equatable {
     public var startingResearch: Int
     /// Countdown between waves (seconds); nil = game.json value.
     public var preparationTime: Double?
+    /// How strongly the difficulty curve (game.json → progression) applies:
+    /// 1 = as configured, 0.5 = half the ramp, 0 = flat. nil = 1.
+    public var curve: Double?
 }
 
 /// How a match is set up. Saved with checkpoints.

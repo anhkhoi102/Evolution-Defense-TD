@@ -50,6 +50,10 @@ public struct RulesConfig: Codable, Sendable {
     public var laneSpread: Double
     /// Minimum fraction of damage that always gets through armor.
     public var minimumDamageFraction: Double
+    /// The difficulty curve: per-phase multipliers (see ProgressionData.swift).
+    public var progression: [ProgressionPhase]?
+    /// Stats of elite enemies (wave groups with "elite": true).
+    public var elite: EliteConfig?
 }
 
 public enum ConfigurationError: Error, CustomStringConvertible {

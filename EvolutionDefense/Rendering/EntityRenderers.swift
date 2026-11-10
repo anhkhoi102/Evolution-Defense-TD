@@ -29,6 +29,9 @@ final class EnemyVisual {
     var hasShield = false
     /// Last status tint sent to the shader (avoids per-frame attribute writes).
     var tint = SIMD4<Float>(-1, 0, 0, 0)
+    /// Gold ring on the ground under elite enemies.
+    let eliteRing = SKSpriteNode()
+    var isElite = false
 
     init() {
         barFill.anchorPoint = CGPoint(x: 0, y: 0.5)
@@ -65,6 +68,12 @@ final class EnemyRenderer {
             let screen = view.ground(e.position)
             v.body.position = screen
             v.body.zPosition = view.depth(e.position) + (e.isFlying ? Layer.flyingOffset : 0) + (e.isBoss ? 0.005 : 0.002)
+            if v.isElite {
+                v.eliteRing.position = screen
+                v.eliteRing.zPosition = v.body.zPosition - 0.001
+                v.eliteRing.alpha = lightweight ? 0.7 : 0.55 + 0.3 * CGFloat(sin(now * 4 + Double(e.id)))
+                v.eliteRing.isHidden = e.isCloaked
+            }
             guard let sprite = v.sprite, let walk = v.walk else { continue }
             var dir = 0
             switch sprite.facing {
@@ -93,6 +102,9 @@ final class EnemyRenderer {
                 tint = Self.slowTint
             } else if e.phaseIndex >= 0 {
                 tint = Self.enrageTint; tint.w = 0.16 + 0.12 * Self.pulse(now * 6)
+            } else if e.isElite {
+                // Elites glow gold (their ground ring can hide under big sprites).
+                tint = Self.eliteTint; tint.w = lightweight ? 0.22 : 0.12 + 0.16 * Self.pulse(now * 3 + Double(e.id))
             }
             if tint != v.tint {
                 v.tint = tint
@@ -147,6 +159,7 @@ final class EnemyRenderer {
         for id in stale {
             guard let v = active.removeValue(forKey: id) else { continue }
             v.body.removeFromParent(); v.barBack.removeFromParent(); v.barFill.removeFromParent()
+            v.eliteRing.removeFromParent()
             v.shield.removeFromParent(); v.shieldBar.removeFromParent(); v.hasShield = false
             pool.append(v)
         }
@@ -164,10 +177,14 @@ final class EnemyRenderer {
     private static let burnTint = SIMD4<Float>(1, 0.42, 0.08, 0.3)
     private static let slowTint = SIMD4<Float>(0.62, 0.86, 1, 0.42)
     private static let enrageTint = SIMD4<Float>(1, 0.15, 0.1, 0.2)
+    private static let eliteTint = SIMD4<Float>(1, 0.8, 0.3, 0.2)
     /// 0…1 pulse, quantised to 6 steps.
     private static func pulse(_ x: Double) -> Float { ((Float(sin(x)) * 0.5 + 0.5) * 6).rounded() / 6 }
 
     private lazy var bossBreathing = art.layout("enemy.bossBreathing", 0.035)
+    /// Elite body scale (visual only), from the pack's layout.
+    private lazy var eliteScale = art.layout("enemy.eliteScale", 1.12)
+    private static let eliteGold = NSColor(srgbRed: 1, green: 0.78, blue: 0.25, alpha: 1)
     private lazy var view = art.view
 
     private func attach(_ e: Enemy) -> EnemyVisual {
@@ -190,6 +207,21 @@ final class EnemyRenderer {
         v.barWidth = barWidth
         v.barBack.size = CGSize(width: v.barWidth + 2, height: e.isBoss ? 7 : 5)
         v.barFill.size = CGSize(width: v.barWidth, height: e.isBoss ? 5 : 3)
+        // Elites: a pulsing gold ring on the ground, a slightly larger body and a
+        // gold health-bar frame. Visual only: the hit radius stays the same.
+        v.isElite = e.isElite
+        v.barBack.color = e.isElite ? Self.eliteGold.withAlphaComponent(0.9) : NSColor(white: 0, alpha: 0.65)
+        if e.isElite {
+            v.body.setScale(eliteScale)
+            v.eliteRing.apply(art.fx("ring"))
+            v.eliteRing.color = Self.eliteGold
+            v.eliteRing.colorBlendFactor = 1
+            v.eliteRing.blendMode = .add
+            let w = max(e.radius * 3.4, sprite.size.width * 0.95)   // visible around big sprites too
+            v.eliteRing.setScale(1)
+            v.eliteRing.setUnscaledSize(CGSize(width: w, height: w * view.groundScaleY))
+            layer.addChild(v.eliteRing)
+        }
         layer.addChild(v.body)
         barLayer.addChild(v.barBack)
         barLayer.addChild(v.barFill)

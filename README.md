@@ -111,6 +111,9 @@ also find it in **Launchpad**.
 - 🛣️ Build towers where the road bends. They can hit monsters for longer there.
 - ⬆️ A few upgraded towers beat lots of small ones.
 - 🔬 Bosses give **Research Points**. Spend them in the technology tree (**T**).
+- ✨ Monsters with a **gold ring** are **elites**: much tougher. Use Heavy towers on them.
+- 💚 **Trolls heal** the monsters around them (you'll see a green circle). Stop them first!
+- 🧭 The bottom panel tells you what kind of wave is coming (air, armored, swarm…). Get ready for it!
 - 😌 Too hard? Choose **Easy** when you start a new game.
 - 💾 The game saves by itself between waves. Click **Continue** to keep playing later.
 

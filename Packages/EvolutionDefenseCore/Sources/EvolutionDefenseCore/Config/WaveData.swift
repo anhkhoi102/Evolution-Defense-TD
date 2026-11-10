@@ -12,11 +12,14 @@ public struct SpawnGroup: Codable, Sendable {
     public var hpMultiplier: Double?
     public var speedMultiplier: Double?
     public var armorBonus: Double?
+    /// Elite group: stats from game.json → "elite", marked on screen.
+    public var elite: Bool?
 
     public init(enemy: String, count: Int, interval: Double, delay: Double,
-                hpMultiplier: Double? = nil, speedMultiplier: Double? = nil, armorBonus: Double? = nil) {
+                hpMultiplier: Double? = nil, speedMultiplier: Double? = nil, armorBonus: Double? = nil, elite: Bool? = nil) {
         self.enemy = enemy; self.count = count; self.interval = interval; self.delay = delay
         self.hpMultiplier = hpMultiplier; self.speedMultiplier = speedMultiplier; self.armorBonus = armorBonus
+        self.elite = elite
     }
 }
 
@@ -25,8 +28,9 @@ public struct SpawnModifiers: Sendable, Equatable {
     public var hp: Double = 1
     public var speed: Double = 1
     public var armorBonus: Double = 0
-    public init(hp: Double = 1, speed: Double = 1, armorBonus: Double = 0) {
-        self.hp = hp; self.speed = speed; self.armorBonus = armorBonus
+    public var elite = false
+    public init(hp: Double = 1, speed: Double = 1, armorBonus: Double = 0, elite: Bool = false) {
+        self.hp = hp; self.speed = speed; self.armorBonus = armorBonus; self.elite = elite
     }
 }
 
@@ -38,8 +42,10 @@ public struct WaveDefinition: Codable, Sendable {
     public var isBossWave: Bool = false
     /// Gold for clearing this wave. nil = use the economy formula.
     public var clearReward: Int?
+    /// What the wave tests (Swarm, Speed, Air, Armored, Tank, Elite, Stealth, Mixed, Boss…), shown in the wave intel.
+    public var theme: String?
 
-    enum CodingKeys: String, CodingKey { case number, era, groups, isBossWave, clearReward }
+    enum CodingKeys: String, CodingKey { case number, era, groups, isBossWave, clearReward, theme }
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -48,6 +54,7 @@ public struct WaveDefinition: Codable, Sendable {
         groups = try c.decode([SpawnGroup].self, forKey: .groups)
         isBossWave = try c.decodeIfPresent(Bool.self, forKey: .isBossWave) ?? false
         clearReward = try c.decodeIfPresent(Int.self, forKey: .clearReward)
+        theme = try c.decodeIfPresent(String.self, forKey: .theme)
     }
 
     public init(number: Int, era: Era, groups: [SpawnGroup], isBossWave: Bool = false, clearReward: Int? = nil) {

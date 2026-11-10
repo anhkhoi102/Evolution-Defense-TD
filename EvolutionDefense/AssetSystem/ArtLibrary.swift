@@ -372,9 +372,12 @@ extension SKSpriteNode {
         self.init(texture: art.texture, color: .white, size: art.size)
     }
 
+    /// Sets texture and size. The size is applied as the unscaled size: pooled
+    /// nodes arrive at whatever scale their last use left them at, and
+    /// SpriteKit's `size` is relative to the current scale.
     func apply(_ art: Art) {
         if texture !== art.texture { texture = art.texture }
-        size = art.size
+        setUnscaledSize(art.size)
     }
 
     /// Applies a sprite's first frame, size and anchor.

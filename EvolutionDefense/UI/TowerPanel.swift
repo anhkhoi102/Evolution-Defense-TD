@@ -470,6 +470,18 @@ private struct IntelStrip: View {
 private struct WaveIntelInfo: View {
     let controller: GameController
 
+    /// What each wave theme asks of the player (tooltip on the theme label).
+    static let themeHelp: [String: String] = [
+        "Speed": "Fast enemies: cover the path and bring attack speed (Rapid Fire, Sniper).",
+        "Swarm": "Huge numbers of weak enemies: area damage (Splash) and Rapid Fire.",
+        "Air": "Flying enemies: only Sniper, Rapid Fire and Heavy from level 4 can hit them.",
+        "Armored": "Thick armor: armor penetration (Heavy, high-level Sniper) and upgrades.",
+        "Tank": "Big HP pools, some protected by healers: focus fire and burn.",
+        "Elite": "Elite enemies (gold ring) with an escort: target priorities matter.",
+        "Stealth": "Cloaking robots: Sniper from level 4, splash, or AI Targeting.",
+        "Mixed": "A bit of everything: a balanced defence holds.",
+    ]
+
     var body: some View {
         let intel = controller.waveIntel
         let inWave = controller.phase == .waveInProgress
@@ -481,6 +493,11 @@ private struct WaveIntelInfo: View {
                 if let era = controller.config.waves[safe: number - 1]?.era {
                     Text(era.displayName).font(.system(size: 11, weight: .semibold, design: .rounded))
                         .foregroundStyle(Theme.eraColor(era))
+                }
+                if let theme = controller.intelWave?.theme, theme != "Boss", theme != "Learning" {
+                    Text("· \(theme) wave").font(.system(size: 11, weight: .semibold, design: .rounded))
+                        .foregroundStyle(Theme.textDim)
+                        .help(Self.themeHelp[theme] ?? "")
                 }
                 Spacer()
                 if !inWave {

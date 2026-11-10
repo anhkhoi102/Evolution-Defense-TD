@@ -260,6 +260,8 @@ final class GameScene: SKScene {
             effects.missile(from: enemy.position, to: basePosition)
             mapRenderer.baseHit()
             audio.play(.missile)
+        case .enemiesHealed(let healer, _, let count, let radius):
+            effects.healPulse(at: healer.position, radius: CGFloat(radius), healed: count)
         case .baseShieldAbsorbed:
             effects.shieldAbsorbed(at: basePosition)
         case .eraAdvanced(_, let to):
@@ -389,6 +391,8 @@ final class GameScene: SKScene {
     func resetFrameTimes() { frameTimes.removeAll(keepingCapacity: true) }
 
     var debugCounts: (enemies: Int, effects: Int) { (enemyRenderer.visibleCount, effects.activeCount) }
+    /// Effect sprites drawn at the wrong size (should always be 0).
+    var debugEffectSizeMismatches: Int { effects.sizeMismatches }
 
     /// Test hook used by the snapshot tool to emulate hovering a slot.
     func debugHover(slot: Int?) { hoverSlot = slot }

@@ -100,6 +100,16 @@ public struct SplitAbility: Codable, Sendable, Equatable {
     public var count: Int
 }
 
+/// Support enemy: every `interval` seconds it heals other non-boss enemies
+/// within `radius` by `fraction` of their max HP. Burning enemies can't be
+/// healed (Fire Technology is the counter), and it never heals itself.
+public struct HealAuraAbility: Codable, Sendable, Equatable {
+    public var name: String
+    public var radius: Double
+    public var fraction: Double
+    public var interval: Double
+}
+
 /// Calls reinforcements on a timer.
 public struct SummonAbility: Codable, Sendable, Equatable {
     public var name: String
@@ -145,6 +155,7 @@ public struct EnemyAbilities: Codable, Sendable, Equatable {
     public var brood: BroodAbility?
     public var disableTowers: DisableTowersAbility?
     public var baseStrike: BaseStrikeAbility?
+    public var healAura: HealAuraAbility?
 
     public init() {}
 
@@ -161,12 +172,14 @@ public struct EnemyAbilities: Codable, Sendable, Equatable {
         if let v = o.brood { r.brood = v }
         if let v = o.disableTowers { r.disableTowers = v }
         if let v = o.baseStrike { r.baseStrike = v }
+        if let v = o.healAura { r.healAura = v }
         return r
     }
 
     /// Short labels for the UI.
     public var labels: [String] {
         var l: [String] = []
+        if let h = healAura { l.append("Heals allies (\(h.name))") }   // support role first: it changes target priority
         if regen != nil { l.append("Regenerates") }
         if sprint != nil { l.append("Sprints") }
         if stealth != nil { l.append("Stealth") }

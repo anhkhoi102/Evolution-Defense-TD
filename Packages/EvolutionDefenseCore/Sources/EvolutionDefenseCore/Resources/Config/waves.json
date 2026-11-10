@@ -1,91 +1,103 @@
 [
-  { "number": 1, "era": 1, "clearReward": 30, "groups": [
-      {"enemy": "wolf", "count": 10, "interval": 1.0, "delay": 0},
-      {"enemy": "wildBoar", "count": 4, "interval": 2.0, "delay": 8} ] },
-  { "number": 2, "era": 1, "clearReward": 40, "groups": [
-      {"enemy": "wolf", "count": 12, "interval": 0.6, "delay": 0},
-      {"enemy": "wildBoar", "count": 8, "interval": 1.1, "delay": 5} ] },
-  { "number": 3, "era": 1, "clearReward": 50, "groups": [
-      {"enemy": "wildBoar", "count": 12, "interval": 0.8, "delay": 0},
-      {"enemy": "wolf", "count": 16, "interval": 0.4, "delay": 6},
+  { "number": 1, "era": 1, "theme": "Learning", "clearReward": 33, "groups": [
+      {"enemy": "wolf", "count": 8, "interval": 1.2, "delay": 0},
+      {"enemy": "wildBoar", "count": 3, "interval": 2.0, "delay": 9} ] },
+  { "number": 2, "era": 1, "theme": "Learning", "clearReward": 44, "groups": [
+      {"enemy": "wolf", "count": 10, "interval": 0.8, "delay": 0},
+      {"enemy": "wildBoar", "count": 6, "interval": 1.2, "delay": 5} ] },
+  { "number": 3, "era": 1, "theme": "Speed", "clearReward": 55, "groups": [
+      {"enemy": "wildBoar", "count": 10, "interval": 0.8, "delay": 0},
+      {"enemy": "wolf", "count": 14, "interval": 0.45, "delay": 6},
       {"enemy": "bear", "count": 2, "interval": 4.0, "delay": 14} ] },
-  { "number": 4, "era": 1, "clearReward": 60, "groups": [
-      {"enemy": "bear", "count": 6, "interval": 2.5, "delay": 0},
-      {"enemy": "wolf", "count": 20, "interval": 0.35, "delay": 3},
-      {"enemy": "wildBoar", "count": 12, "interval": 0.7, "delay": 12} ] },
-  { "number": 5, "era": 1, "isBossWave": true, "clearReward": 100, "groups": [
-      {"enemy": "wolf", "count": 14, "interval": 0.4, "delay": 0},
-      {"enemy": "bear", "count": 5, "interval": 2.5, "delay": 4},
+  { "number": 4, "era": 1, "theme": "Tank", "clearReward": 66, "groups": [
+      {"enemy": "bear", "count": 6, "interval": 2.2, "delay": 0},
+      {"enemy": "wolf", "count": 18, "interval": 0.35, "delay": 3},
+      {"enemy": "wildBoar", "count": 12, "interval": 0.6, "delay": 12} ] },
+  { "number": 5, "era": 1, "theme": "Boss", "isBossWave": true, "clearReward": 100, "groups": [
+      {"enemy": "wolf", "count": 16, "interval": 0.4, "delay": 0},
+      {"enemy": "bear", "count": 6, "interval": 2.2, "delay": 4},
       {"enemy": "alphaBeast", "count": 1, "interval": 0, "delay": 16},
-      {"enemy": "wildBoar", "count": 14, "interval": 0.6, "delay": 20},
-      {"enemy": "wolf", "count": 12, "interval": 0.35, "delay": 30} ] },
-  { "number": 6, "era": 2, "clearReward": 70, "groups": [
-      {"enemy": "giantWolf", "count": 12, "interval": 1.0, "delay": 0},
-      {"enemy": "wolf", "count": 16, "interval": 0.4, "delay": 4},
-      {"enemy": "armoredBeast", "count": 4, "interval": 2.5, "delay": 10} ] },
-  { "number": 7, "era": 2, "clearReward": 75, "groups": [
-      {"enemy": "flyingMonster", "count": 8, "interval": 1.2, "delay": 0},
-      {"enemy": "giantWolf", "count": 14, "interval": 0.8, "delay": 5},
-      {"enemy": "wildBoar", "count": 14, "interval": 0.5, "delay": 12, "hpMultiplier": 1.5} ] },
-  { "number": 8, "era": 2, "clearReward": 80, "groups": [
-      {"enemy": "armoredBeast", "count": 10, "interval": 1.6, "delay": 0},
-      {"enemy": "troll", "count": 2, "interval": 6, "delay": 8},
+      {"enemy": "wildBoar", "count": 16, "interval": 0.5, "delay": 20},
+      {"enemy": "wolf", "count": 14, "interval": 0.3, "delay": 30} ] },
+  { "number": 6, "era": 2, "theme": "Speed", "clearReward": 70, "groups": [
+      {"enemy": "giantWolf", "count": 16, "interval": 0.8, "delay": 0},
+      {"enemy": "wolf", "count": 20, "interval": 0.3, "delay": 4},
+      {"enemy": "giantWolf", "count": 3, "interval": 2.0, "delay": 12, "elite": true} ] },
+  { "number": 7, "era": 2, "theme": "Air", "clearReward": 75, "groups": [
+      {"enemy": "flyingMonster", "count": 10, "interval": 1.0, "delay": 0},
+      {"enemy": "giantWolf", "count": 14, "interval": 0.7, "delay": 6},
+      {"enemy": "wildBoar", "count": 16, "interval": 0.45, "delay": 12, "hpMultiplier": 1.5} ] },
+  { "number": 8, "era": 2, "theme": "Armored", "clearReward": 80, "groups": [
+      {"enemy": "armoredBeast", "count": 12, "interval": 1.4, "delay": 0},
+      {"enemy": "troll", "count": 2, "interval": 5, "delay": 6},
       {"enemy": "flyingMonster", "count": 10, "interval": 0.9, "delay": 14} ] },
-  { "number": 9, "era": 2, "clearReward": 90, "groups": [
-      {"enemy": "troll", "count": 5, "interval": 4, "delay": 0},
-      {"enemy": "giantWolf", "count": 20, "interval": 0.6, "delay": 3},
-      {"enemy": "armoredBeast", "count": 8, "interval": 1.5, "delay": 14},
-      {"enemy": "flyingMonster", "count": 12, "interval": 0.8, "delay": 20} ] },
-  { "number": 10, "era": 2, "isBossWave": true, "clearReward": 150, "groups": [
-      {"enemy": "giantWolf", "count": 16, "interval": 0.6, "delay": 0},
-      {"enemy": "armoredBeast", "count": 6, "interval": 2, "delay": 5},
+  { "number": 9, "era": 2, "theme": "Elite", "clearReward": 90, "groups": [
+      {"enemy": "troll", "count": 3, "interval": 4, "delay": 0},
+      {"enemy": "giantWolf", "count": 22, "interval": 0.55, "delay": 3},
+      {"enemy": "armoredBeast", "count": 3, "interval": 2, "delay": 12, "elite": true},
+      {"enemy": "armoredBeast", "count": 8, "interval": 1.4, "delay": 14},
+      {"enemy": "flyingMonster", "count": 10, "interval": 0.75, "delay": 20} ] },
+  { "number": 10, "era": 2, "theme": "Boss", "isBossWave": true, "clearReward": 150, "groups": [
+      {"enemy": "giantWolf", "count": 18, "interval": 0.55, "delay": 0},
+      {"enemy": "armoredBeast", "count": 8, "interval": 1.8, "delay": 5},
       {"enemy": "ancientDragon", "count": 1, "interval": 0, "delay": 14},
-      {"enemy": "flyingMonster", "count": 14, "interval": 0.9, "delay": 18},
-      {"enemy": "troll", "count": 3, "interval": 4, "delay": 24} ] },
-  { "number": 11, "era": 3, "clearReward": 130, "groups": [
-      {"enemy": "mutantBeast", "count": 14, "interval": 0.9, "delay": 0},
-      {"enemy": "swarmCreature", "count": 30, "interval": 0.25, "delay": 8} ] },
-  { "number": 12, "era": 3, "clearReward": 140, "groups": [
-      {"enemy": "armoredMonster", "count": 6, "interval": 2.2, "delay": 0},
-      {"enemy": "mutantBeast", "count": 16, "interval": 0.7, "delay": 6},
-      {"enemy": "swarmCreature", "count": 30, "interval": 0.2, "delay": 16} ] },
-  { "number": 13, "era": 3, "clearReward": 150, "groups": [
-      {"enemy": "giantMutant", "count": 3, "interval": 6, "delay": 0},
-      {"enemy": "flyingMonster", "count": 14, "interval": 0.8, "delay": 4, "hpMultiplier": 2.5},
-      {"enemy": "armoredMonster", "count": 6, "interval": 2, "delay": 12},
-      {"enemy": "swarmCreature", "count": 40, "interval": 0.18, "delay": 20} ] },
-  { "number": 14, "era": 3, "clearReward": 160, "groups": [
-      {"enemy": "giantMutant", "count": 5, "interval": 4.5, "delay": 0},
-      {"enemy": "armoredMonster", "count": 8, "interval": 1.8, "delay": 6},
-      {"enemy": "mutantBeast", "count": 20, "interval": 0.5, "delay": 14},
-      {"enemy": "swarmCreature", "count": 40, "interval": 0.15, "delay": 24} ] },
-  { "number": 15, "era": 3, "isBossWave": true, "clearReward": 220, "groups": [
-      {"enemy": "swarmCreature", "count": 30, "interval": 0.2, "delay": 0},
-      {"enemy": "armoredMonster", "count": 6, "interval": 2, "delay": 5},
+      {"enemy": "flyingMonster", "count": 12, "interval": 0.8, "delay": 18},
+      {"enemy": "troll", "count": 3, "interval": 4, "delay": 24},
+      {"enemy": "flyingMonster", "count": 2, "interval": 1.5, "delay": 30, "elite": true} ] },
+  { "number": 11, "era": 3, "theme": "Swarm", "clearReward": 130, "groups": [
+      {"enemy": "mutantBeast", "count": 20, "interval": 0.8, "delay": 0},
+      {"enemy": "swarmCreature", "count": 55, "interval": 0.2, "delay": 8},
+      {"enemy": "swarmCreature", "count": 30, "interval": 0.15, "delay": 22} ] },
+  { "number": 12, "era": 3, "theme": "Armored", "clearReward": 140, "groups": [
+      {"enemy": "armoredMonster", "count": 7, "interval": 1.8, "delay": 0},
+      {"enemy": "mutantBeast", "count": 3, "interval": 1.5, "delay": 6, "elite": true},
+      {"enemy": "mutantBeast", "count": 14, "interval": 0.6, "delay": 10},
+      {"enemy": "swarmCreature", "count": 30, "interval": 0.18, "delay": 18} ] },
+  { "number": 13, "era": 3, "theme": "Tank", "clearReward": 150, "groups": [
+      {"enemy": "giantMutant", "count": 3, "interval": 5, "delay": 0},
+      {"enemy": "troll", "count": 2, "interval": 4, "delay": 4},
+      {"enemy": "flyingMonster", "count": 6, "interval": 0.9, "delay": 10, "elite": true},
+      {"enemy": "armoredMonster", "count": 5, "interval": 2, "delay": 16},
+      {"enemy": "swarmCreature", "count": 40, "interval": 0.15, "delay": 22} ] },
+  { "number": 14, "era": 3, "theme": "Elite", "clearReward": 160, "groups": [
+      {"enemy": "giantMutant", "count": 5, "interval": 4, "delay": 0},
+      {"enemy": "armoredMonster", "count": 4, "interval": 2.5, "delay": 6, "elite": true},
+      {"enemy": "mutantBeast", "count": 22, "interval": 0.45, "delay": 12},
+      {"enemy": "troll", "count": 3, "interval": 4, "delay": 14},
+      {"enemy": "swarmCreature", "count": 45, "interval": 0.13, "delay": 22} ] },
+  { "number": 15, "era": 3, "theme": "Boss", "isBossWave": true, "clearReward": 220, "groups": [
+      {"enemy": "swarmCreature", "count": 35, "interval": 0.18, "delay": 0},
+      {"enemy": "armoredMonster", "count": 8, "interval": 1.8, "delay": 5},
       {"enemy": "mutantTitan", "count": 1, "interval": 0, "delay": 14},
-      {"enemy": "mutantBeast", "count": 16, "interval": 0.6, "delay": 20},
-      {"enemy": "giantMutant", "count": 2, "interval": 6, "delay": 28} ] },
-  { "number": 16, "era": 4, "clearReward": 160, "groups": [
-      {"enemy": "scoutRobot", "count": 16, "interval": 0.8, "delay": 0},
-      {"enemy": "assaultRobot", "count": 4, "interval": 3, "delay": 8} ] },
-  { "number": 17, "era": 4, "clearReward": 170, "groups": [
-      {"enemy": "stealthRobot", "count": 10, "interval": 1.2, "delay": 0},
-      {"enemy": "scoutRobot", "count": 20, "interval": 0.5, "delay": 6},
-      {"enemy": "assaultRobot", "count": 6, "interval": 2.5, "delay": 12} ] },
-  { "number": 18, "era": 4, "clearReward": 180, "groups": [
-      {"enemy": "heavyMech", "count": 3, "interval": 6, "delay": 0},
-      {"enemy": "assaultRobot", "count": 8, "interval": 2, "delay": 4},
-      {"enemy": "stealthRobot", "count": 12, "interval": 1, "delay": 14},
-      {"enemy": "scoutRobot", "count": 20, "interval": 0.4, "delay": 22} ] },
-  { "number": 19, "era": 4, "clearReward": 200, "groups": [
-      {"enemy": "heavyMech", "count": 5, "interval": 4.5, "delay": 0},
-      {"enemy": "stealthRobot", "count": 14, "interval": 0.9, "delay": 5},
-      {"enemy": "assaultRobot", "count": 10, "interval": 1.6, "delay": 12},
-      {"enemy": "scoutRobot", "count": 30, "interval": 0.3, "delay": 20} ] },
-  { "number": 20, "era": 4, "isBossWave": true, "clearReward": 0, "groups": [
-      {"enemy": "scoutRobot", "count": 20, "interval": 0.4, "delay": 0},
-      {"enemy": "assaultRobot", "count": 6, "interval": 2, "delay": 5},
+      {"enemy": "mutantBeast", "count": 18, "interval": 0.5, "delay": 20},
+      {"enemy": "giantMutant", "count": 3, "interval": 5, "delay": 26},
+      {"enemy": "armoredMonster", "count": 3, "interval": 3, "delay": 34, "elite": true} ] },
+  { "number": 16, "era": 4, "theme": "Speed", "clearReward": 160, "groups": [
+      {"enemy": "scoutRobot", "count": 28, "interval": 0.6, "delay": 0},
+      {"enemy": "assaultRobot", "count": 8, "interval": 2.5, "delay": 8},
+      {"enemy": "scoutRobot", "count": 8, "interval": 1.0, "delay": 16, "elite": true} ] },
+  { "number": 17, "era": 4, "theme": "Stealth", "clearReward": 170, "groups": [
+      {"enemy": "stealthRobot", "count": 14, "interval": 1.0, "delay": 0},
+      {"enemy": "scoutRobot", "count": 24, "interval": 0.45, "delay": 6},
+      {"enemy": "assaultRobot", "count": 4, "interval": 3, "delay": 12, "elite": true},
+      {"enemy": "assaultRobot", "count": 4, "interval": 2.5, "delay": 14} ] },
+  { "number": 18, "era": 4, "theme": "Armored", "clearReward": 180, "groups": [
+      {"enemy": "heavyMech", "count": 4, "interval": 5, "delay": 0},
+      {"enemy": "assaultRobot", "count": 10, "interval": 1.8, "delay": 4},
+      {"enemy": "stealthRobot", "count": 14, "interval": 0.9, "delay": 14},
+      {"enemy": "scoutRobot", "count": 26, "interval": 0.35, "delay": 22},
+      {"enemy": "stealthRobot", "count": 4, "interval": 1.5, "delay": 26, "elite": true} ] },
+  { "number": 19, "era": 4, "theme": "Mixed", "clearReward": 200, "groups": [
+      {"enemy": "heavyMech", "count": 6, "interval": 4, "delay": 0},
+      {"enemy": "assaultRobot", "count": 6, "interval": 2, "delay": 4, "elite": true},
+      {"enemy": "stealthRobot", "count": 16, "interval": 0.8, "delay": 10},
+      {"enemy": "scoutRobot", "count": 34, "interval": 0.28, "delay": 18},
+      {"enemy": "heavyMech", "count": 1, "interval": 0, "delay": 30, "elite": true} ] },
+  { "number": 20, "era": 4, "theme": "Boss", "isBossWave": true, "clearReward": 0, "groups": [
+      {"enemy": "scoutRobot", "count": 24, "interval": 0.35, "delay": 0},
+      {"enemy": "assaultRobot", "count": 8, "interval": 1.8, "delay": 5},
       {"enemy": "titanWarMachine", "count": 1, "interval": 0, "delay": 16},
-      {"enemy": "heavyMech", "count": 2, "interval": 8, "delay": 26},
-      {"enemy": "stealthRobot", "count": 10, "interval": 1, "delay": 30} ] }
+      {"enemy": "heavyMech", "count": 3, "interval": 7, "delay": 26},
+      {"enemy": "stealthRobot", "count": 14, "interval": 0.9, "delay": 30},
+      {"enemy": "assaultRobot", "count": 4, "interval": 2, "delay": 40, "elite": true} ] }
 ]

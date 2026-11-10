@@ -22,7 +22,8 @@ public struct EnemySpawner: Sendable {
         list.reserveCapacity(wave.totalEnemies)
         for g in wave.groups {
             for i in 0..<max(0, g.count) {
-                let mods = SpawnModifiers(hp: g.hpMultiplier ?? 1, speed: g.speedMultiplier ?? 1, armorBonus: g.armorBonus ?? 0)
+                let mods = SpawnModifiers(hp: g.hpMultiplier ?? 1, speed: g.speedMultiplier ?? 1, armorBonus: g.armorBonus ?? 0,
+                                          elite: g.elite ?? false)
                 list.append(ScheduledSpawn(time: g.delay + Double(i) * g.interval, enemyID: g.enemy, modifiers: mods))
             }
         }

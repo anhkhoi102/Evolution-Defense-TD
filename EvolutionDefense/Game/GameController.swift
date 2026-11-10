@@ -82,10 +82,11 @@ struct EnemyIntel: Identifiable, Equatable {
 
     static func == (a: EnemyIntel, b: EnemyIntel) -> Bool { a.id == b.id && a.count == b.count }
 
-    init(_ d: EnemyDefinition, count: Int) {
+    init(_ d: EnemyDefinition, count: Int, elites: Int = 0) {
         id = d.id; name = d.displayName; self.count = count; isBoss = d.isBoss; isFlying = d.isFlying
         definition = d
         var t: [String] = []
+        if elites > 0 { t.append(elites == count ? "Elite" : "\(elites) elite") }
         if d.isFlying { t.append("Flying") }
         if d.armor >= 8 { t.append("Armored") }
         let r = d.resistance
@@ -255,7 +256,11 @@ final class GameController {
     var baseStatus: BaseStatus { BaseStatus(hp: baseHP) }
     var canStartWave: Bool { phase == .preparation && waveNumber < totalWaves }
     var isOver: Bool { phase.isOver }
-    var nextWave: WaveDefinition? { config.waves.indices.contains(waveNumber) ? config.waves[waveNumber] : nil }
+    /// The waves as this match plays them (counts and intervals scaled by the difficulty curve).
+    var plannedWaves: [WaveDefinition] { world.waves.waves }
+    var nextWave: WaveDefinition? { plannedWaves.indices.contains(waveNumber) ? plannedWaves[waveNumber] : nil }
+    /// The running wave, or the next one between waves.
+    var intelWave: WaveDefinition? { phase == .waveInProgress ? plannedWaves[safe: waveNumber - 1] : nextWave }
     var canRepair: Bool { phase == .preparation && baseHP < maxBaseHP }
 
     /// Management UI is open → the preparation countdown must wait for the player.
@@ -263,14 +268,16 @@ final class GameController {
 
     /// Enemy types in the coming wave (or the running one), biggest threats first.
     var waveIntel: [EnemyIntel] {
-        guard let wave = phase == .waveInProgress ? config.waves[safe: waveNumber - 1] : nextWave else { return [] }
+        guard let wave = intelWave else { return [] }
         var counts: [String: Int] = [:]
+        var elites: [String: Int] = [:]
         var order: [String] = []
         for g in wave.groups {
             if counts[g.enemy] == nil { order.append(g.enemy) }
             counts[g.enemy, default: 0] += g.count
+            if g.elite == true { elites[g.enemy, default: 0] += g.count }
         }
-        return order.compactMap { id in config.enemies[id].map { EnemyIntel($0, count: counts[id]!) } }
+        return order.compactMap { id in config.enemies[id].map { EnemyIntel($0, count: counts[id]!, elites: elites[id] ?? 0) } }
             .sorted { ($0.isBoss ? 1 : 0, $0.definition.hp) > ($1.isBoss ? 1 : 0, $1.definition.hp) }
     }
 

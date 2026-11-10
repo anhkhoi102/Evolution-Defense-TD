@@ -1,3 +1,4 @@
+import EvolutionDefenseAssets
 import EvolutionDefenseCore
 import SpriteKit
 
@@ -23,6 +24,8 @@ final class EffectsRenderer {
         var flat = false
         /// Seconds of dissolve at the end of the life (dissolve shader); 0 = plain fade.
         var dissolve: Double = 0
+        /// Size the art should have at scale 1 (checked by `sizeMismatches`).
+        var size: CGSize = .zero
     }
 
     private struct Emitter {
@@ -156,6 +159,18 @@ final class EffectsRenderer {
         pendingBlasts.append((b, life))
     }
 
+    /// A healer's chant: a green ring sweeping out to its healing radius.
+    func healPulse(at p: CGPoint, radius: CGFloat, healed: Int) {
+        let green = NSColor(srgbRed: 0.45, green: 1, blue: 0.5, alpha: 1)
+        let d = radius * 2 / fxWidth("ring")
+        spawn(fx("ring"), at: p, layer: groundLayer, life: 0.7, from: d * 0.25, to: d, alpha: healed > 0 ? 0.9 : 0.45,
+              blend: .add, tint: green, flat: true)
+        if healed > 0 && !lightweight {
+            spawn(fx("spark"), at: p, layer: airLayer, life: 0.5, from: 1.4, to: 0.6, alpha: 1, rise: 14, blend: .add, tint: green,
+                  lift: 20)
+        }
+    }
+
     func shieldAbsorbed(at p: CGPoint) {
         let cyan = NSColor(srgbRed: 0.45, green: 0.88, blue: 1, alpha: 1)
         spawn(fx("ring"), at: p, layer: airLayer, life: 0.5, from: 0.9, to: 1.3, alpha: 0.9, tint: cyan)
@@ -188,7 +203,8 @@ final class EffectsRenderer {
     func corpse(_ a: Art, at p: CGPoint, rotation: CGFloat, size: CGSize) {
         guard !lightweight, effects.count < maxEffects - 20 else { return }
         spawn(a, at: p, layer: groundLayer, life: 0.45, from: 1, to: 0.55, alpha: 0.85, rotation: rotation)
-        effects[effects.count - 1].node.size = size
+        effects[effects.count - 1].node.setUnscaledSize(size)
+        effects[effects.count - 1].size = size
         effects[effects.count - 1].node.color = .black
         effects[effects.count - 1].node.colorBlendFactor = 0.45
     }
@@ -269,7 +285,7 @@ final class EffectsRenderer {
         if flat { n.yScale = from * view.groundScaleY }
         layer.addChild(n)
         effects.append(Effect(node: n, age: 0, life: life, startScale: from, endScale: to, startAlpha: alpha, rise: rise,
-                              origin: p, target: target, clip: clip, flat: flat))
+                              origin: p, target: target, clip: clip, flat: flat, size: a.size))
     }
 
     /// Spawns at a screen position (already projected), in the air layer.
@@ -289,7 +305,7 @@ final class EffectsRenderer {
         n.zRotation = rotation ?? CGFloat.random(in: 0...(2 * .pi))
         airLayer.addChild(n)
         effects.append(Effect(node: n, age: 0, life: life, startScale: from, endScale: to, startAlpha: alpha, rise: 0,
-                              origin: p, target: nil, clip: nil))
+                              origin: p, target: nil, clip: nil, size: a.size))
     }
 
     // MARK: Particle emitters (pooled SKEmitterNodes)
@@ -367,6 +383,8 @@ final class EffectsRenderer {
             let t = CGFloat(min(1, e.age / e.life))
             if t >= 1 {
                 e.node.removeFromParent()
+                e.node.setScale(1)          // pooled nodes start clean (see setUnscaledSize)
+                e.node.zRotation = 0
                 spritePool.append(e.node)
                 effects.swapAt(i, effects.count - 1)
                 effects.removeLast()
@@ -431,4 +449,16 @@ final class EffectsRenderer {
     }
 
     var activeCount: Int { effects.count + texts.count + emitters.count }
+
+    /// Effects whose sprite is not drawn at its art's size (ignoring the
+    /// effect's own scale animation). Always 0 unless sizing regresses;
+    /// used by the EVO_DEATH_TEST scenario.
+    var sizeMismatches: Int {
+        effects.reduce(0) { n, e in
+            let u = e.node.unscaledSize
+            let bad = abs(u.width - e.size.width) > max(0.5, e.size.width * 0.01)
+                || abs(u.height - e.size.height) > max(0.5, e.size.height * 0.01)
+            return n + (bad ? 1 : 0)
+        }
+    }
 }

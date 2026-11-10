@@ -53,7 +53,10 @@ struct MovementTests {
     @Test func simultaneousLeaksAreAllCountedAndDefeatFiresOnce() {
         let w = makeWorld()
         let near = w.path.totalLength - 0.1
-        for _ in 0..<5 { w.debugSpawn("alphaBeast", atDistance: near) } // 5 × 25 = 125 dmg
+        // One more boss than it takes to destroy the base, all arriving in the same step.
+        let hit = baseConfig.enemies["alphaBeast"]!.baseDamage
+        let needed = (w.baseHP + hit - 1) / hit
+        for _ in 0...needed { w.debugSpawn("alphaBeast", atDistance: near) }
         var defeatEvents = 0
         var baseDamageEvents = 0
         w.step(dt)
@@ -64,7 +67,7 @@ struct MovementTests {
         #expect(w.baseHP == 0)
         #expect(w.phase == .defeat)
         #expect(defeatEvents == 1)
-        #expect(baseDamageEvents == 4, "simulation stops processing after defeat")
+        #expect(baseDamageEvents == needed, "simulation stops processing after defeat")
         // Further steps do nothing once the match is over.
         w.step(dt)
         #expect(w.phase == .defeat)
@@ -253,13 +256,19 @@ struct WaveTests {
     }
 
     @Test func maxedDefenceWinsAllTwentyWaves() {
+        // Every wave and boss is beatable by a complete defence: all pads at max
+        // level plus each technology as soon as its era unlocks it.
         let w = makeWorld(gold: 100_000)
+        w.debugSetResearch(1000)
         let types: [TowerArchetype] = [.sniper, .splash, .heavy, .rapid]
         for (i, s) in w.config.map.buildSlots.enumerated() { w.build(types[i % 4], atSlot: s.id) }
         for t in w.towers { while case .success = w.upgrade(t) {} }
         var bossesSeen = 0
         while !w.phase.isOver {
-            if w.phase == .preparation { w.startNextWave() }
+            if w.phase == .preparation {
+                for t in w.config.techs where !w.isResearched(t.id) { _ = w.research(t.id) }
+                w.startNextWave()
+            }
             w.step(dt)
             w.drainEvents { if case .bossSpawned = $0 { bossesSeen += 1 } }
             if w.time > 60 * 40 { break }

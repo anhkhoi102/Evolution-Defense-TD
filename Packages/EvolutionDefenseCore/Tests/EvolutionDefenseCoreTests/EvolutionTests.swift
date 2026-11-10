@@ -459,8 +459,9 @@ struct ResearchTests {
         w.debugSpawn("bear", atDistance: w.path.totalLength - 0.1)
         w.step(dt)
         #expect(w.baseHP == 100 && w.baseShield == 16)
-        // Alpha (25 → 19): 16 absorbed, 3 to HP.
-        w.debugSpawn("alphaBeast", atDistance: w.path.totalLength - 0.1)
+        // Mutant Titan (25 → 19): 16 absorbed, 3 to HP.
+        #expect(config.enemies["mutantTitan"]!.baseDamage == 25)
+        w.debugSpawn("mutantTitan", atDistance: w.path.totalLength - 0.1)
         w.step(dt)
         #expect(w.baseShield == 0 && w.baseHP == 97)
         #expect(w.waves.tally.baseDamageTaken == 3)

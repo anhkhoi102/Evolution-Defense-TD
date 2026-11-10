@@ -20,6 +20,7 @@ struct EvolutionDefenseApp: App {
                 .task { SnapshotTool.runBenchmarkIfRequested(router: router) }
                 .task { SnapshotTool.runAudioCheckIfRequested() }
                 .task { SnapshotTool.runAssetDemoIfRequested(router: router) }
+                .task { SnapshotTool.runDeathTestIfRequested(router: router) }
         }
         .defaultSize(width: 1440, height: 900)
         .windowResizability(.contentMinSize)

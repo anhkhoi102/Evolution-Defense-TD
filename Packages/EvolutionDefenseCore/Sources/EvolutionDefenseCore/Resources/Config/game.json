@@ -1,6 +1,6 @@
 {
   "economy": {
-    "startingGold": 220,
+    "startingGold": 250,
     "sellRefundRatio": 0.7,
     "perfectWaveBonus": 15,
     "earlyStartGoldPerSecond": 1.0,
@@ -39,5 +39,49 @@
     "firstAfterWave": 3,
     "minGap": 3,
     "maxGap": 4
+  },
+  "progression": [
+    {
+      "name": "Learning",
+      "fromWave": 1
+    },
+    {
+      "name": "Strategic",
+      "fromWave": 5
+    },
+    {
+      "name": "Tactical",
+      "fromWave": 9,
+      "enemyHP": 1.05,
+      "spawnInterval": 0.95,
+      "killReward": 0.85,
+      "clearReward": 0.8
+    },
+    {
+      "name": "Advanced",
+      "fromWave": 13,
+      "enemyHP": 1.15,
+      "enemySpeed": 1.03,
+      "spawnInterval": 0.9,
+      "enemyCount": 1.05,
+      "killReward": 0.75,
+      "clearReward": 0.7
+    },
+    {
+      "name": "Endgame",
+      "fromWave": 17,
+      "enemyHP": 1.6,
+      "enemySpeed": 1.05,
+      "spawnInterval": 0.75,
+      "enemyCount": 1.5,
+      "killReward": 0.6,
+      "clearReward": 0.5
+    }
+  ],
+  "elite": {
+    "hp": 2.2,
+    "armorBonus": 3,
+    "speed": 1.08,
+    "reward": 2.5
   }
 }

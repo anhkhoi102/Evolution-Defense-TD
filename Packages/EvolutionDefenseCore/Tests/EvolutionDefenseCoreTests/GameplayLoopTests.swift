@@ -271,7 +271,7 @@ struct ManagementTests {
     @Test func noActionsAfterMatchEnds() {
         let w = heldWorld(gold: 5000)
         w.build(.rapid, atSlot: 1)
-        for _ in 0..<5 { w.debugSpawn("alphaBeast", atDistance: w.path.totalLength - 0.1) }
+        for _ in 0..<10 { w.debugSpawn("alphaBeast", atDistance: w.path.totalLength - 0.1) }
         w.step(dt)
         #expect(w.phase == .defeat)
         let t = w.tower(atSlot: 1)!
@@ -284,122 +284,96 @@ struct ManagementTests {
 }
 
 // MARK: - Balance simulations
+//
+// The difficulty curve (Docs/BALANCE.md) checked with the scripted players in
+// BalancePlayer: who survives which phase, on which difficulty. `edtool
+// balance` / `balance-summary` print the same runs in full.
 
-/// A scripted player used to sanity-check the economy and difficulty curve.
-/// It acts at the start of every preparation phase and every 3 s during waves
-/// (upgrades are allowed mid-wave, so a real player would do the same).
-struct BalanceBot {
-    var plan: [(slot: Int, type: TowerArchetype)]
-    var upgrades = true
-    var repairs = true
-    var research = true
-    /// Towers to build before upgrading; more are added once all are at max level.
-    var maxTowers: Int
-
-    /// Tech in the order this bot buys it (saving up when the next one is too expensive).
-    static let techPriority = ["improvedArrows", "gunpowder", "fireTechnology", "advancedTraps", "ballisticResearch",
-                               "automatedWeapons", "plasmaTechnology", "aiTargeting", "advancedExplosives",
-                               "strongerWalls", "heavyArmor", "energyShield"]
-
-    func act(_ w: GameWorld) {
-        let preparing = w.phase == .preparation
-        var progress = true
-        while progress {
-            progress = false
-            if research, let id = Self.techPriority.first(where: { !w.isResearched($0) && config.tech($0)!.era <= w.currentEra }),
-               case .success = w.research(id) {
-                progress = true; continue
-            }
-            if repairs, preparing, w.baseHP <= 60, case .success = w.repairBase(optionIndex: 0) {
-                progress = true; continue
-            }
-            if w.towers.count < maxTowers || (upgrades && w.towers.allSatisfy(\.isMaxLevel)),
-               let next = plan.first(where: { w.tower(atSlot: $0.slot) == nil }),
-               case .success = w.build(next.type, atSlot: next.slot) {
-                progress = true; continue
-            }
-            if upgrades, let t = w.towers.filter({ !$0.isMaxLevel }).min(by: { $0.level < $1.level }),
-               case .success = w.upgrade(t) {
-                progress = true
-            }
-        }
-    }
-
-    struct Result {
-        var phase: MatchPhase; var baseHP: Int; var time: Double; var wavesCleared: Int
-        var bossesDefeated: Int; var techs: Int; var towers: Int; var levels: Int
-    }
-
-    func play(seed: UInt64 = 3, options: MatchOptions = MatchOptions(randomEvents: false)) -> Result {
-        let w = GameWorld(config: config, options: options, seed: seed)
-        var wasPreparing = false
-        var ticks = 0
-        while !w.phase.isOver && w.time < 60 * 40 {
-            let preparing = w.phase == .preparation
-            if (preparing && !wasPreparing) || ticks % 180 == 0 { act(w) }
-            wasPreparing = preparing
-            ticks += 1
-            w.step(dt)
-            w.drainEvents { _ in }
-        }
-        return Result(phase: w.phase, baseHP: w.baseHP, time: w.time, wavesCleared: w.stats.wavesCleared,
-                      bossesDefeated: w.stats.bossesDefeated, techs: w.researchedTechs.count,
-                      towers: w.towers.count, levels: w.towers.reduce(0) { $0 + $1.level })
-    }
-
-    static let goodPlan: [(slot: Int, type: TowerArchetype)] = [
-        (5, .splash), (3, .sniper), (9, .heavy), (12, .rapid), (4, .rapid), (2, .splash),
-        (10, .sniper), (11, .heavy), (14, .splash), (16, .rapid), (7, .sniper), (8, .heavy)
-    ]
+private func player(_ prefix: String) -> BalancePlayer {
+    BalancePlayer.profiles.first { $0.name.hasPrefix(prefix) }!
 }
 
-extension BalanceBot.Result: CustomStringConvertible {
-    var description: String {
-        "\(phase) wave=\(wavesCleared) hp=\(baseHP) time=\(Int(time))s bosses=\(bossesDefeated) techs=\(techs) towers=\(towers) levels=\(levels)"
-    }
+private func play(_ prefix: String, seed: UInt64 = 3, _ difficulty: Difficulty = .normal,
+                  events: Bool = false) -> BalancePlayer.Result {
+    player(prefix).play(config: config, seed: seed, options: MatchOptions(difficulty: difficulty, randomEvents: events))
 }
 
-@Suite("Balance (20 waves)")
+/// Mean deepest progress (0…1) over a range of waves.
+private func pressure(_ r: BalancePlayer.Result, _ waves: ClosedRange<Int>) -> Double {
+    let w = r.waves.filter { waves.contains($0.number) }
+    return w.isEmpty ? 1 : w.map(\.deepestProgress).reduce(0, +) / Double(w.count)
+}
+
+@Suite("Balance (difficulty curve)")
 struct BalanceTests {
-    /// The full match should take roughly 20 minutes (45 s combat + 15 s preparation per wave).
-    /// The bot never starts waves early, so allow some slack.
-    static let maxMatchSeconds = 27.0 * 60
+    /// A full match: 20 waves of roughly 45–110 s plus preparation.
+    static let maxMatchSeconds = 32.0 * 60
 
     @Test(arguments: [3, 7, 11] as [UInt64])
-    func focusedPlayerWinsWithTech(seed: UInt64) {
-        let r = BalanceBot(plan: BalanceBot.goodPlan, maxTowers: 8).play(seed: seed)
-        print("BALANCE focused+tech seed \(seed): \(r)")
+    func optimisedDefenceWinsNormal(seed: UInt64) {
+        let r = play("expert", seed: seed)
+        print("BALANCE expert seed \(seed): \(r)")
         #expect(r.phase == .victory)
         #expect(r.bossesDefeated == 4)
-        #expect(r.baseHP >= 60)
+        #expect(r.baseHP >= 40, "the intended strategy should win with a margin")
         #expect(r.time < Self.maxMatchSeconds)
     }
 
-    @Test(arguments: [3, 7, 11] as [UInt64])
-    func techIsNotMandatory(seed: UInt64) {
-        // A focused player can win without researching anything.
-        let r = BalanceBot(plan: BalanceBot.goodPlan, research: false, maxTowers: 8).play(seed: seed)
-        print("BALANCE focused, no tech seed \(seed): \(r)")
-        #expect(r.phase == .victory)
-        #expect(r.techs == 0)
-        #expect(r.time < Self.maxMatchSeconds)
+    @Test(arguments: ["expert", "spread", "focused, no tech", "casual"])
+    func openingIsAccessible(profile: String) {
+        // Phase 1 (waves 1–4): every reasonable defence holds without losing HP.
+        for seed in [3, 7] as [UInt64] {
+            let r = play(profile, seed: seed)
+            let lost = r.waves.filter { $0.number <= 4 }.map(\.hpLost).reduce(0, +)
+            #expect(lost == 0, "\(profile) seed \(seed) lost \(lost) HP in the opening")
+        }
     }
 
-    @Test func technologyMakesADifference() {
-        // Spreading gold over 12 towers is weaker: it needs the tech tree to win.
-        let withTech = BalanceBot(plan: BalanceBot.goodPlan, maxTowers: 12).play()
-        let without = BalanceBot(plan: BalanceBot.goodPlan, research: false, maxTowers: 12).play()
-        print("BALANCE spread: tech \(withTech) | no tech \(without)")
-        #expect(withTech.phase == .victory)
-        #expect(withTech.baseHP >= 40, "a sensible strategy should not be on the brink")
-        #expect(withTech.techs >= 6)
-        #expect(without.phase == .defeat)
-        #expect(without.wavesCleared >= 12, "still gets deep into the match without tech")
+    @Test func pressureRisesAfterTheOpening() {
+        // For the optimised player the endgame pushes enemies much deeper than the opening.
+        let r = play("expert")
+        let opening = pressure(r, 1...4), endgame = pressure(r, 17...19)
+        print("BALANCE expert pressure: opening \(opening) endgame \(endgame)")
+        #expect(endgame > opening + 0.1)
+        #expect(endgame >= 0.7, "the endgame should push even an optimised defence")
+    }
+
+    @Test func averagePlayersFallInTheHardPhases() {
+        // Casual and no-tech players get through phases 1–3 and fall in phase 4–5 (waves 13–20);
+        // nobody falls before wave 12 or exactly at a phase boundary by accident.
+        for prefix in ["casual", "focused, no tech", "spread"] {
+            for seed in [3, 7] as [UInt64] {
+                let r = play(prefix, seed: seed)
+                print("BALANCE \(prefix) seed \(seed): \(r)")
+                #expect(r.phase == .defeat, "\(prefix) should not win Normal")
+                #expect(r.wavesCleared >= 12, "\(prefix) seed \(seed) fell too early: \(r)")
+            }
+        }
+        // Spreading thin with tech still gets into phase 4's end.
+        #expect(play("spread").wavesCleared >= 15)
+    }
+
+    @Test func technologyMatters() {
+        let tech = play("expert"), noTech = play("focused, no tech")
+        print("BALANCE tech \(tech) | no tech \(noTech)")
+        #expect(tech.phase == .victory)
+        #expect(noTech.phase == .defeat)
+        #expect(tech.techs >= 8)
+    }
+
+    @Test func noSingleTowerTypeWins() {
+        for t in TowerArchetype.allCases {
+            let r = BalancePlayer(name: "mono", plan: BalancePlayer.monoPlan(t), maxTowers: 8).play(config: config)
+            print("BALANCE only \(t): \(r)")
+            #expect(r.phase == .defeat, "a defence of only \(t) towers should not win Normal")
+        }
+        // Without flying-capable towers, ground-only defences fall as soon as the air waves start.
+        let splash = BalancePlayer(name: "mono", plan: BalancePlayer.monoPlan(.splash), maxTowers: 8).play(config: config)
+        #expect(splash.wavesCleared <= 9)
     }
 
     @Test func passivePlayerLoses() {
-        let r = BalanceBot(plan: Array(BalanceBot.goodPlan.prefix(2)), upgrades: false, repairs: false,
-                           research: false, maxTowers: 2).play()
+        let r = play("passive")
         print("BALANCE passive: \(r)")
         #expect(r.phase == .defeat)
         #expect(r.wavesCleared < 5)
@@ -407,45 +381,44 @@ struct BalanceTests {
 
     @Test func upgradesAreWorthBuying() {
         // The same 4 towers get much further when evolved.
-        let noUp = BalanceBot(plan: BalanceBot.goodPlan, upgrades: false, repairs: false, research: false, maxTowers: 4).play()
-        let up = BalanceBot(plan: BalanceBot.goodPlan, upgrades: true, repairs: false, research: false, maxTowers: 4).play()
+        let noUp = BalancePlayer(name: "4 no upgrades", plan: BalancePlayer.goodPlan, maxTowers: 4, upgrades: false,
+                                 repairs: false, research: false).play(config: config)
+        let up = BalancePlayer(name: "4 upgrades", plan: BalancePlayer.goodPlan, maxTowers: 4, repairs: false,
+                               research: false).play(config: config)
         print("BALANCE 4 towers: no upgrades \(noUp) | upgrades \(up)")
         #expect(noUp.phase == .defeat)
-        #expect(up.wavesCleared >= noUp.wavesCleared + 5)
+        #expect(up.wavesCleared >= noUp.wavesCleared + 4)
     }
 
-    @Test func easyForgivesASloppyDefence() {
-        let r = BalanceBot(plan: BalanceBot.goodPlan, research: false, maxTowers: 12)
-            .play(options: MatchOptions(difficulty: .easy, randomEvents: false))
-        print("BALANCE easy spread, no tech: \(r)")
-        #expect(r.phase == .victory)
+    @Test func levelOneSpamCannotWin() {
+        let r = play("L1 spam")
+        print("BALANCE L1 spam: \(r)")
+        #expect(r.phase == .defeat)
+        #expect(r.wavesCleared <= 10)
     }
 
-    @Test(arguments: [3, 11] as [UInt64])
-    func hardNeedsTechnology(seed: UInt64) {
-        let hard = MatchOptions(difficulty: .hard, randomEvents: false)
-        let tech = BalanceBot(plan: BalanceBot.goodPlan, maxTowers: 8).play(seed: seed, options: hard)
-        let noTech = BalanceBot(plan: BalanceBot.goodPlan, research: false, maxTowers: 8).play(seed: seed, options: hard)
-        print("BALANCE hard seed \(seed): tech \(tech) | no tech \(noTech)")
-        #expect(tech.phase == .victory && tech.baseHP >= 30)
-        #expect(noTech.phase == .defeat)
+    @Test func easyLetsLearnersFinish() {
+        for prefix in ["casual", "focused, no tech", "spread"] {
+            let r = play(prefix, .easy)
+            print("BALANCE easy \(prefix): \(r)")
+            #expect(r.phase == .victory, "\(prefix) should be able to finish Easy")
+        }
+    }
+
+    @Test func hardIsHarderButBeatable() {
+        let normal = play("expert"), hard = play("expert", .hard)
+        print("BALANCE expert normal \(normal) | hard \(hard)")
+        #expect(hard.phase == .victory, "an optimised defence can win Hard")
+        #expect(hard.baseHP < normal.baseHP)
+        #expect(play("casual", .hard).wavesCleared <= play("casual").wavesCleared)
     }
 
     @Test(arguments: [Difficulty.easy, .normal, .hard])
     func randomEventsNeverCauseAnUnavoidableLoss(difficulty: Difficulty) {
-        // With events on, the focused tech player still wins on every difficulty and seed tried.
+        // With events on, the optimised player still wins on every difficulty and seed tried.
         for seed in [5, 13, 29] as [UInt64] {
-            let r = BalanceBot(plan: BalanceBot.goodPlan, maxTowers: 8)
-                .play(seed: seed, options: MatchOptions(difficulty: difficulty, randomEvents: true))
+            let r = play("expert", seed: seed, difficulty, events: true)
             #expect(r.phase == .victory, "\(difficulty) seed \(seed): \(r)")
         }
-    }
-
-    @Test func levelOneSpamCannotWin() {
-        // Eras get harder: 16 level-1 towers and full tech still fall before the end.
-        let all = BalanceBot.goodPlan + [(1, .sniper), (6, .heavy), (13, .splash), (15, .rapid)]
-        let r = BalanceBot(plan: all, upgrades: false, maxTowers: 16).play()
-        print("BALANCE L1 spam: \(r)")
-        #expect(r.phase == .defeat)
     }
 }

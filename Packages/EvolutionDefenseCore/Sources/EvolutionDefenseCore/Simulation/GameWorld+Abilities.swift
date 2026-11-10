@@ -46,6 +46,23 @@ extension GameWorld {
                     e.sprintTimer += e.isSprinting ? s.duration : s.cooldown
                 }
             }
+            if let h = a.healAura {
+                e.healTimer -= dt
+                if e.healTimer <= 0 {
+                    e.healTimer += h.interval
+                    let r2 = CGFloat(h.radius * h.radius)
+                    var healed = 0
+                    for o in enemies where o !== e && o.isActive && !o.isBoss && o.burnDPS == 0 && o.hp < o.maxHP
+                        && time - o.lastHealedTime >= h.interval * 0.9 {   // one heal per interval, however many healers
+                        let dx = o.position.x - e.position.x, dy = o.position.y - e.position.y
+                        guard dx * dx + dy * dy <= r2 else { continue }
+                        o.hp = min(o.maxHP, o.hp + o.maxHP * h.fraction)
+                        o.lastHealedTime = time
+                        healed += 1
+                    }
+                    events.append(.enemiesHealed(by: e, ability: h.name, count: healed, radius: h.radius))
+                }
+            }
             if let s = a.summon {
                 e.summonTimer -= dt
                 if e.summonTimer <= 0 {

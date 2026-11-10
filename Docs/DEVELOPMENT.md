@@ -17,15 +17,16 @@ macOS 14+.
 | 4 | Polish: audio, animations, random events, difficulty, achievements, saves, perf mode | ✅ |
 | — | Visual overhaul: 2.5D tabletop art baked from CC0 3D kits, particle effects, shaders, UI skin, recorded sound effects | ✅ |
 
-Version **1.0.0**. See *Art & audio* below and [Docs/ASSETS.md](ASSETS.md) § 7.
+Version **1.1.0**. See *Art & audio* below, [ASSETS.md](ASSETS.md) § 7 and [BALANCE.md](BALANCE.md).
 
 ### Polish (Phase 4)
 
 * **Difficulty:** Easy, Normal and Hard, chosen under New Game. `difficulty.json` sets enemy HP and speed, a
-  gold multiplier, starting gold and RP, and the countdown length. Checked by the balance tests:
-  * **Easy:** even a sloppy defence wins.
-  * **Normal:** a focused defence wins without tech.
-  * **Hard:** needs the tech tree (scripted players win with tech at about 55 HP and lose without it).
+  gold multiplier, starting gold and RP, the countdown length, and how strongly the difficulty curve applies
+  (`curve`). Checked by the balance tests:
+  * **Easy:** half-strength curve. Casual and no-tech players finish.
+  * **Normal:** easy start; from the Medieval Age a mixed defence, upgrades and research are needed.
+  * **Hard:** full curve with less gold and a 12 s countdown. Only an optimised defence wins.
 * **Random events** (optional, on by default) happen every 3–4 waves. They are defined in `events.json`:
   * *Resource Bonus:* gold.
   * *Technology Boost:* the next tech costs 2 RP less.
@@ -72,7 +73,7 @@ Version **1.0.0**. See *Art & audio* below and [Docs/ASSETS.md](ASSETS.md) § 7.
   | Era | Enemies | Boss |
   |---|---|---|
   | Primitive | Wolf, Wild Boar, Bear | **Alpha Beast**: howls for wolves, enrages below 50 % HP |
-  | Medieval | Giant Wolf (sprints), Armored Beast (armor), Troll (resists physical, regenerates), Flying Monster | **Ancient Dragon**: flies; Fire Breath knocks out nearby towers, Inferno phase |
+  | Medieval | Giant Wolf (sprints), Armored Beast (armor), Troll (tank and healer: resists physical, regenerates, heals nearby monsters), Flying Monster | **Ancient Dragon**: flies; Fire Breath knocks out nearby towers, Inferno phase |
   | Industrial | Mutant Beast (regenerates), Armored Monster (resists explosive), Giant Mutant (splits in 3), Swarm Creature | **Mutant Titan**: regenerates, releases swarms as it is wounded, Frenzy phase |
   | Futuristic | Scout Robot, Assault Robot (energy shield), Heavy Mech (huge armor), Stealth Robot (cloaks) | **Titan War Machine**: phase 2 adds EMP Blast, Missile Strike, reinforcements and speed. It destroys the base if it arrives |
 
@@ -92,16 +93,16 @@ Version **1.0.0**. See *Art & audio* below and [Docs/ASSETS.md](ASSETS.md) § 7.
   * A notice appears the first time each new enemy type shows up.
   * Era and boss-phase banners announce the change.
 
-**Balance** (checked by the `Balance (20 waves)` tests, which run scripted players over several seeds):
+**Balance:** see **[BALANCE.md](BALANCE.md)** for the difficulty curve (five phases, elites, healers,
+themed waves), the before/after numbers and how to retune. In short, on Normal:
 
 | Strategy | Result |
 |---|---|
-| Focused upgrades + tech | wins with about 110 HP, all bosses killed |
-| Focused upgrades, **no tech** | wins with about 75 HP, so the tech tree is optional |
-| 12 towers spread evenly + tech | wins with about 55 HP |
-| 12 towers spread evenly, no tech | loses around wave 18 |
-| 16 level-1 towers + tech | loses in Era 2, so upgrades are required |
-| Passive | loses in Era 1 |
+| Focused upgrades + tech | wins every seed, pushed hard in the last phase |
+| 12 towers spread evenly + tech | falls around wave 17 |
+| Focused, no tech / casual | fall around waves 13–15 |
+| Only one tower type | falls by wave 17 (snipers) or 8–9 (others) |
+| 16 level-1 towers / passive | fall on waves 9 / 3–4 |
 
 A match lasts about 21–25 minutes if you never start a wave early.
 
@@ -143,6 +144,7 @@ Scripts/test.sh                    # all tests through the Xcode scheme (same as
 swift test --package-path Packages/EvolutionDefenseCore   # fast logic-only test loop
 Scripts/snapshot.sh                # scripted match → PNGs in ./snapshots, then quits
 Scripts/benchmark.sh               # frame-rate benchmark under maximum load (use a Release build)
+Scripts/death-test.sh              # many big enemies dying at once: fails if any effect sprite is mis-sized
 Scripts/asset-demo.sh [pack]       # same scene with the placeholder pack and an override pack
 Scripts/generate-placeholder-manifest.py   # rebuild asset_manifest.placeholder.json after adding entities
 EVO_AUDIO_CHECK=1 build/EvolutionDefense.app/Contents/MacOS/EvolutionDefense   # muted audio self-test

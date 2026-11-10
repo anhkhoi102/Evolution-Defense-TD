@@ -93,6 +93,8 @@ public enum GameEvent {
     case enemyPhaseChanged(Enemy, name: String)
     case enemySplit(Enemy, count: Int)
     case enemiesSummoned(by: Enemy, ability: String, count: Int)
+    /// A healer pulsed: `count` nearby enemies were mended.
+    case enemiesHealed(by: Enemy, ability: String, count: Int, radius: Double)
     case towersDisabled([Tower], by: Enemy, ability: String, duration: Double)
     case baseStruck(by: Enemy, ability: String, damage: Int)
     case researchEarned(amount: Int, reason: String)
@@ -202,6 +204,8 @@ public final class GameWorld {
     public internal(set) var activeEvent: ActiveEvent?
     /// RP discount on the next technology (Technology Boost).
     public internal(set) var researchDiscount = 0
+    /// Difficulty-curve phase of the current wave (refreshed every step, before spawning).
+    public internal(set) var activePhase = ProgressionPhase.neutral
 
     /// Tests and tools default to no random events so results are reproducible.
     public init(config: GameConfiguration, options: MatchOptions = MatchOptions(randomEvents: false),
@@ -217,7 +221,7 @@ public final class GameWorld {
         self.research = diff.startingResearch
         var timing = config.rules.waveTiming
         if let p = diff.preparationTime { timing.preparationTime = p }
-        self.waves = WaveManager(waves: config.waves, timing: timing)
+        self.waves = WaveManager(waves: config.progressionWaves(curve: diff.curve ?? 1), timing: timing)
         self.nextEventWave = config.rules.randomEvents.firstAfterWave
         self.rng = SeededRandom(seed: seed)
         self.eventRNG = SeededRandom(seed: seed ^ 0x5EED_E7E7)
@@ -227,6 +231,7 @@ public final class GameWorld {
         events.reserveCapacity(256)
         scratchTowers.reserveCapacity(16)
         growProjectilePool(by: 128)
+        activePhase = config.rules.phase(forWave: 1, curve: diff.curve ?? 1)
     }
 
     // MARK: - Events
@@ -369,6 +374,7 @@ public final class GameWorld {
 
     private func beginWave(earlyBonus: Int) -> StartWaveResult {
         guard let wave = waves.beginNextWave(earlyStartBonus: earlyBonus) else { return .noWavesLeft }
+        activePhase = config.rules.phase(forWave: wave.number, curve: difficulty.curve ?? 1)
         if earlyBonus > 0 {
             economy.earn(earlyBonus)
             stats.goldEarned += earlyBonus
@@ -385,6 +391,7 @@ public final class GameWorld {
     public func step(_ dt: Double) {
         guard !phase.isOver else { return }
         time += dt
+        activePhase = config.rules.phase(forWave: max(1, waves.waveNumber), curve: difficulty.curve ?? 1)
 
         switch phase {
         case .preparation:
@@ -427,6 +434,21 @@ public final class GameWorld {
         mods.hp *= difficulty.enemyHP
         mods.speed *= difficulty.enemySpeed
         var reward = difficulty.goldMultiplier
+        // Difficulty curve: the phase of the running wave (summons and splits included).
+        // Bosses are tuned directly in enemies.json, so only regular enemies scale.
+        let phase = activePhase
+        if !def.isBoss {
+            mods.hp *= phase.enemyHP
+            mods.speed *= phase.enemySpeed
+        }
+        reward *= phase.killReward
+        if mods.elite, !def.isBoss {
+            let el = config.rules.elite ?? EliteConfig()
+            mods.hp *= el.hp
+            mods.speed *= el.speed
+            mods.armorBonus += el.armorBonus
+            reward *= el.reward
+        }
         if let m = activeMutation {
             mods.hp *= 1 + m.value
             mods.speed *= 1 + (m.speedBonus ?? 0)
@@ -434,6 +456,7 @@ public final class GameWorld {
         }
         let e = Enemy(id: makeID(), definition: def, modifiers: mods, laneOffset: offset)
         e.rewardMultiplier = reward
+        e.isElite = mods.elite && !def.isBoss
         e.isSpawnedMinion = minion
         e.distance = max(0, distance)
         let s = path.sample(at: e.distance, segmentHint: &e.segmentHint)
@@ -505,7 +528,7 @@ public final class GameWorld {
         let econ = config.rules.economy
         let wave = waves.currentWave
         let baseClear = wave?.clearReward ?? (econ.defaultWaveClearReward + econ.waveClearRewardGrowth * (n - 1))
-        let clear = Int((Double(baseClear) * difficulty.goldMultiplier).rounded())
+        let clear = Int((Double(baseClear) * difficulty.goldMultiplier * config.rules.phase(forWave: n, curve: difficulty.curve ?? 1).clearReward).rounded())
         let perfect = waves.tally.isPerfect
         let perfectGold = perfect ? econ.perfectWaveBonus : 0
         economy.earn(clear + perfectGold)
@@ -559,8 +582,8 @@ public final class GameWorld {
 
     /// Spawns an enemy directly (debug tools / tests).
     @discardableResult
-    public func debugSpawn(_ enemyID: String, atDistance d: CGFloat = 0) -> Enemy? {
-        spawnEnemy(enemyID, atDistance: d)
+    public func debugSpawn(_ enemyID: String, atDistance d: CGFloat = 0, elite: Bool = false) -> Enemy? {
+        spawnEnemy(enemyID, atDistance: d, modifiers: SpawnModifiers(elite: elite))
     }
 
     public func debugSetGold(_ value: Int) { economy.debugSet(value) }
