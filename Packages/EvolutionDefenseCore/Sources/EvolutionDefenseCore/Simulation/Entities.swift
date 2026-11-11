@@ -224,6 +224,8 @@ public final class Projectile {
     var canHitAir = false
     /// Damage at the edge of the blast as a fraction of the centre's.
     var edgeDamage: Double = 1
+    /// Share of the damage that reaches bosses.
+    var bossDamage: Double = 1
     /// This shot arcs on to more enemies.
     var chains = false
     weak var source: Tower?

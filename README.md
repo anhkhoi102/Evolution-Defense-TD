@@ -91,10 +91,10 @@ First, pick a battlefield: on the main menu, click **Battlefield** and choose Gr
 
 | Tower | What it's good at |
 |---|---|
-| 🧡 **Splash** | Throws rocks and bombs that hit a whole group |
-| 💚 **Sniper** | Shoots very far and hits hard |
-| ❤️ **Heavy** | Big damage against tough monsters |
-| 💙 **Rapid Fire** | Shoots very fast |
+| 🧡 **Splash** | Throws rocks and bombs that hit a whole group. Weaker against bosses |
+| 💚 **Sniper** | Shoots far and hits hard, but slowly. It cannot shoot monsters right next to it (the red ring) |
+| ❤️ **Heavy** | Big damage against tough monsters and bosses |
+| 💙 **Rapid Fire** | Shoots very fast. Great against flocks of flyers and fast packs |
 
 **Handy keys**
 
@@ -126,6 +126,8 @@ First, pick a battlefield: on the main menu, click **Battlefield** and choose Gr
 - ⚡ **A boss switched your tower off?** A number above the tower counts down. Wait and it comes back for free, or click the tower and press **Restart now** to pay a little gold and get it back at once.
 - 🔬 **Doctrines:** in each age the Tech screen offers two special upgrades. You can only pick one, so choose the one that fits your towers!
 - 🌈 **Late monsters with a coloured ring are special:** ice blue cannot be slowed, steel keeps more of its armour, violet flickers and cannot be hurt for a moment.
+- 💰 **You cannot afford everything.** Choose which towers to upgrade and which technologies to research.
+- 🔥 **Want a real challenge?** Choose **Hard**: faster monsters, more elites, special monsters earlier and less gold.
 - 😌 Too hard? Choose **Easy** when you start a new game.
 - 💾 The game saves by itself between waves. Click **Continue** to keep playing later.
 

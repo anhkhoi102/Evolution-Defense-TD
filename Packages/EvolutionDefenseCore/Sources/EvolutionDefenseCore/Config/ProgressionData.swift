@@ -101,4 +101,25 @@ extension GameConfiguration {
     }
 
     private func config(isBoss id: String) -> Bool { enemies[id]?.isBoss ?? false }
+
+    /// The waves of a match on a difficulty: the progression curve, then what the difficulty adds
+    /// or leaves out (traits only from its own stage, extra elite groups).
+    public func matchWaves(_ d: DifficultyDefinition) -> [WaveDefinition] {
+        progressionWaves(curve: d.curve ?? 1).map { w in
+            var w = w
+            if let from = d.traitsFromStage, w.number < from {
+                w.groups = w.groups.map { g in var g = g; g.trait = nil; return g }
+            }
+            if let from = d.extraElitesFromStage, w.number >= from, let share = d.extraEliteShare, share > 0,
+               let big = w.groups.filter({ !config(isBoss: $0.enemy) && $0.elite != true }).max(by: { $0.count < $1.count }) {
+                var extra = big
+                extra.count = max(1, Int((Double(big.count) * share).rounded()))
+                extra.elite = true
+                extra.interval = max(big.interval * 2, 1.2)
+                extra.delay = big.delay + Double(big.count) * big.interval * 0.5
+                w.groups.append(extra)
+            }
+            return w
+        }
+    }
 }

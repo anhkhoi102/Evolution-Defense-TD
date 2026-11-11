@@ -21,16 +21,17 @@ extension GameWorld {
                 events.append(.towerRecovered(t, paid: 0))
             }
             let detects = s.seesStealth
+            let blind = CGFloat(s.minRange ?? 0)
 
             if let current = t.target,
                !TargetingSystem.isValid(current, from: t.position, rangeSquared: range * range,
-                                        canTargetAir: s.canTargetAir, detectsStealth: detects) {
+                                        canTargetAir: s.canTargetAir, detectsStealth: detects, minRangeSquared: blind * blind) {
                 t.target = nil
             }
             if t.target == nil || t.retargetTimer <= 0 {
                 t.target = TargetingSystem.selectTarget(
                     from: enemies, towerPosition: t.position, range: range,
-                    priority: t.targeting, canTargetAir: s.canTargetAir, detectsStealth: detects)
+                    priority: t.targeting, canTargetAir: s.canTargetAir, detectsStealth: detects, minRange: blind)
                 t.retargetTimer = retargetInterval
             }
 
@@ -86,6 +87,7 @@ extension GameWorld {
         p.hit = hit
         p.canHitAir = s.canTargetAir
         p.edgeDamage = s.aoeEdgeDamage ?? 1
+        p.bossDamage = s.bossDamage ?? 1
         t.shotCount += 1
         p.chains = hit.chainEvery >= 1 && hit.chainTargets >= 1 && t.shotCount % Int(hit.chainEvery) == 0
         p.source = t
@@ -153,7 +155,8 @@ extension GameWorld {
 
     private func applyHit(_ p: Projectile, to e: Enemy, scale: Double = 1) {
         let h = p.hit
-        let (damage, critical) = conditionalDamage(h, base: p.damage * scale, critical: p.isCritical, on: e)
+        let (damage, critical) = conditionalDamage(h, base: p.damage * scale * (e.isBoss ? p.bossDamage : 1),
+                                                   critical: p.isCritical, on: e)
         let centre = e.position
         applyDamage(to: e, raw: damage, penetration: p.armorPenetration, type: p.damageType, source: p.source, shieldBonus: h.shieldBonus)
         if critical { events.append(.criticalHit(e, damage: damage)) }

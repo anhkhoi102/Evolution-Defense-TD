@@ -34,6 +34,8 @@ extension GameWorld {
             }
 
             let a = e.abilities
+            // Boss ability timers run faster on harder difficulties.
+            let adt = e.isBoss ? dt * (difficulty.bossAbilityRate ?? 1) : dt
             if let r = a.regen, e.hp < e.maxHP, time - e.lastDamageTime >= r.delayAfterHit {
                 e.hp = min(e.maxHP, e.hp + r.perSecond * dt)
             }
@@ -72,7 +74,7 @@ extension GameWorld {
                 }
             }
             if let s = a.summon {
-                e.summonTimer -= dt
+                e.summonTimer -= adt
                 if e.summonTimer <= 0 {
                     e.summonTimer += s.interval
                     for k in 0..<s.count {
@@ -82,15 +84,18 @@ extension GameWorld {
                 }
             }
             if let d = a.disableTowers {
-                e.disableTimer -= dt
+                e.disableTimer -= adt
                 if e.disableTimer <= 0 {
                     e.disableTimer += d.interval
                     disableTowers(near: e, d)
                 }
             }
             if let b = a.baseStrike {
-                e.strikeTimer -= dt
-                if e.strikeTimer <= 0 {
+                e.strikeTimer -= adt
+                // Avoidable: it only fires once the enemy is far enough along the road.
+                if e.strikeTimer <= 0, Double(e.distance / max(path.totalLength, 1)) < (b.minProgress ?? 0) {
+                    e.strikeTimer = 0
+                } else if e.strikeTimer <= 0 {
                     e.strikeTimer += b.interval
                     let lost = damageBase(b.damage)
                     waves.recordBaseDamage(lost)
@@ -113,7 +118,7 @@ extension GameWorld {
         let rules = config.rules.towerDisable ?? TowerDisableConfig()
         // Never more than a share of the player's towers at once (at least one), counting those already out.
         let alreadyOut = towers.filter { $0.isDisabled(at: time) }.count
-        let room = max(1, Int(Double(towers.count) * rules.maxShare)) - alreadyOut
+        let room = max(1, Int(Double(towers.count) * (difficulty.disableMaxShare ?? rules.maxShare))) - alreadyOut
         guard room > 0 else { return }
         let r2 = CGFloat(d.radius * d.radius)
         scratchTowers.removeAll(keepingCapacity: true)

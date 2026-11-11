@@ -13,7 +13,7 @@ struct DifficultyCurveTests {
 
     @Test func progressionTableIsWellFormed() {
         let phases = config.rules.progression ?? []
-        #expect(phases.map(\.name) == ["Learning", "Strategic", "Tactical", "Advanced", "Endgame", "Very Hard", "Expert"])
+        #expect(phases.map(\.name) == ["Learning", "Strategic", "Tactical", "Advanced", "Late", "Endgame", "Very Hard", "Expert"])
         #expect(phases.first?.fromWave == 1)
         #expect(phases.map(\.fromWave) == phases.map(\.fromWave).sorted(), "phases are in wave order")
         // Phase 1 is the authored baseline: the opening plays exactly what enemies.json / waves.json say.

@@ -33,8 +33,8 @@ struct DifficultyTests {
         #expect(easy.gold == de.startingGold && hard.gold == dh.startingGold)
         #expect(easy.research == de.startingResearch)
         let a = easy.debugSpawn("bear", atDistance: 100)!, b = hard.debugSpawn("bear", atDistance: 100)!
-        #expect(abs(a.maxHP - 240 * de.enemyHP) < 0.001)
-        #expect(abs(b.maxHP - 240 * dh.enemyHP) < 0.001)
+        #expect(abs(a.maxHP - a.definition.hp * de.enemyHP) < 0.001)
+        #expect(abs(b.maxHP - b.definition.hp * dh.enemyHP) < 0.001)
         #expect(abs(a.baseSpeed - 40 * de.enemySpeed) < 0.001)
         let g0 = easy.gold
         easy.applyDamage(to: a, raw: 1e6, penetration: 1e6, source: nil)

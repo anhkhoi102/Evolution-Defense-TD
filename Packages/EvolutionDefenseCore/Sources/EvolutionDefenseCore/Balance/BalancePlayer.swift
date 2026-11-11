@@ -19,6 +19,9 @@ public struct BalancePlayer: Sendable {
     public var upgradeOnlyBetweenWaves = false
     /// Highest level the player will upgrade to (5 = all).
     public var maxLevel = 5
+    /// Never sits on gold: when its preferred purchase is out of reach it buys the dearest thing it
+    /// can afford instead (another upgrade, or a new tower on a free pad). Closer to how a person plays.
+    public var adaptive = false
     /// Pays to restart towers a boss knocked out (false = always waits for the free recovery).
     public var paysRecovery = false
     /// Buys the top level once every pad is built and at `maxLevel`.
@@ -112,6 +115,23 @@ public struct BalancePlayer: Sendable {
             if canUpgrade, let t = w.towers.filter({ !$0.isMaxLevel && $0.level < maxLevel }).min(by: { $0.level < $1.level }),
                case .success = w.upgrade(t) {
                 progress = true; continue
+            }
+            // Adaptive: gold in hand is spent on the best thing it can buy now.
+            if adaptive, canUpgrade {
+                var best: (cost: Int, buy: () -> Bool)?
+                for t in w.towers where !t.isMaxLevel && t.level < maxLevel {
+                    if let c = w.upgradeCost(for: t), c <= w.gold, c > (best?.cost ?? 0) {
+                        best = (c, { if case .success = w.upgrade(t) { return true } else { return false } })
+                    }
+                }
+                if let next = plan.first(where: { w.tower(atSlot: $0.slot) == nil }), let def = config.towers[next.type] {
+                    let c = def.buildCost
+                    // A new tower only when no upgrade is affordable, or it is the dearer buy.
+                    if c <= w.gold, c > (best?.cost ?? 0) {
+                        best = (c, { if case .success = w.build(next.type, atSlot: next.slot) { return true } else { return false } })
+                    }
+                }
+                if let b = best, b.buy() { progress = true; continue }
             }
             // Mastery: once every pad is built and at the working level, the top level goes on the
             // towers in plan order, as far as the gold reaches.

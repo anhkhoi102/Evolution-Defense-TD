@@ -17,7 +17,7 @@ macOS 14+.
 | 4 | Polish: audio, animations, random events, difficulty, achievements, saves, perf mode | ✅ |
 | — | Visual overhaul: 2.5D tabletop art baked from CC0 3D kits, particle effects, shaders, UI skin, recorded sound effects | ✅ |
 
-Version **1.5.0**. See *Art & audio* below, [ASSETS.md](ASSETS.md) § 7 and [BALANCE.md](BALANCE.md).
+Version **1.6.0**. See *Art & audio* below, [ASSETS.md](ASSETS.md) § 7 and [BALANCE.md](BALANCE.md).
 
 ### Polish (Phase 4)
 

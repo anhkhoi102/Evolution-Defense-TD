@@ -160,6 +160,9 @@ public struct BaseStrikeAbility: Codable, Sendable, Equatable {
     public var name: String
     public var damage: Int
     public var interval: Double
+    /// The strike only fires once the enemy is this far along the road (0…1). A defence that holds
+    /// it back takes no damage from it. Omitted = fires anywhere.
+    public var minProgress: Double?
 }
 
 /// Optional behaviours. All fields are optional so new abilities can be

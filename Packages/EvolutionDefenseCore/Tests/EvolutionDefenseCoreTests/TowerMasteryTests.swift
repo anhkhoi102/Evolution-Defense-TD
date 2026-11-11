@@ -70,7 +70,7 @@ struct TowerMasteryTests {
         #expect((1...6).map { level(.splash, $0).aoeEdgeDamage != nil } == [false, false, true, true, true, true])
         for l in 4...6 { #expect(level(.splash, l).armorPenetration < level(.sniper, l).armorPenetration) }
         // Sniper: slow, hard shots at high levels.
-        #expect(level(.sniper, 5).attacksPerSecond < level(.sniper, 3).attacksPerSecond)
+        for l in 1...6 { #expect(level(.sniper, l).attacksPerSecond <= 0.9) }
         // Heavy reaches flyers from level 3.
         #expect((1...6).map { level(.heavy, $0).canTargetAir } == [false, false, true, true, true, true])
         // Old saves: a level-5 tower stays level 5 and still has stats.
@@ -290,7 +290,7 @@ struct TowerMasteryTests {
         // Level 6 alone costs well over half of everything before it.
         for (f, five) in zip(full, toFive) { #expect(f - five >= five * 6 / 10) }
         // Early levels are no dearer than before the rebalance.
-        #expect(config.tower(.splash).buildCost == 70 && config.tower(.sniper).buildCost == 60)
+        #expect(config.tower(.splash).buildCost == 70 && config.tower(.sniper).buildCost == 75)
         #expect(config.tower(.heavy).buildCost <= 90 && config.tower(.rapid).buildCost == 65)
     }
 }

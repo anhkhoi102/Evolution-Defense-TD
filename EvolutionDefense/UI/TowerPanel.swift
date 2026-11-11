@@ -409,7 +409,7 @@ private struct BuildPreviewInfo: View {
                 StatCell(label: "Range", value: fmt(s.range))
                 StatCell(label: "Cost", value: "\(s.cost)")
                 Text(specials(aoe: s.aoeRadius, pen: s.armorPenetration, air: s.canTargetAir, type: s.type,
-                              stealth: s.seesStealth, effects: s.hitEffects.labels).joined(separator: " · "))
+                              stealth: s.seesStealth, effects: s.limitLabels + s.hitEffects.labels).joined(separator: " · "))
                     .lineLimit(1)
                     .font(.system(size: 11, weight: .medium, design: .rounded)).foregroundStyle(Theme.accent(archetype))
             }

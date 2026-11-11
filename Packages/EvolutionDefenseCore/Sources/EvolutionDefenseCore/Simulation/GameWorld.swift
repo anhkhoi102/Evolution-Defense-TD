@@ -249,6 +249,8 @@ public final class GameWorld {
     public internal(set) var researchDiscount = 0
     /// Difficulty-curve phase of the current wave (refreshed every step, before spawning).
     public internal(set) var activePhase = ProgressionPhase.neutral
+    /// Number of the stage being played (kept beside `activePhase`; spawning must not read `waves`).
+    var activeStage = 1
 
     // Summon abilities (GameWorld+Summons). Not saved in checkpoints: a resumed
     // match starts with every ability ready.
@@ -285,7 +287,7 @@ public final class GameWorld {
         self.research = diff.startingResearch
         var timing = config.rules.waveTiming
         if let p = diff.preparationTime { timing.preparationTime = p }
-        self.waves = WaveManager(waves: config.progressionWaves(curve: diff.curve ?? 1), timing: timing)
+        self.waves = WaveManager(waves: config.matchWaves(diff), timing: timing)
         self.nextEventWave = config.rules.randomEvents.firstAfterWave
         self.rng = SeededRandom(seed: seed)
         self.eventRNG = SeededRandom(seed: seed ^ 0x5EED_E7E7)
@@ -356,7 +358,7 @@ public final class GameWorld {
     }
 
     public func sellValue(for t: Tower) -> Int {
-        Int((Double(t.totalInvested) * config.rules.economy.sellRefundRatio).rounded(.down))
+        Int((Double(t.totalInvested) * (difficulty.sellRefundRatio ?? config.rules.economy.sellRefundRatio)).rounded(.down))
     }
 
     /// Actual HP healed and gold charged for a repair option right now.
@@ -367,7 +369,7 @@ public final class GameWorld {
         let o = options[i]
         let heal = min(o.hp, maxBaseHP - baseHP)
         guard heal > 0 else { return (0, 0) }
-        let cost = Int((Double(o.cost) * Double(heal) / Double(o.hp)).rounded(.up))
+        let cost = Int((Double(o.cost) * (difficulty.repairCostMultiplier ?? 1) * Double(heal) / Double(o.hp)).rounded(.up))
         return (heal, cost)
     }
 
@@ -469,6 +471,7 @@ public final class GameWorld {
     private func beginWave(earlyBonus: Int) -> StartWaveResult {
         guard let wave = waves.beginNextWave(earlyStartBonus: earlyBonus) else { return .noWavesLeft }
         activePhase = config.rules.phase(forWave: wave.number, curve: difficulty.curve ?? 1)
+        activeStage = wave.number
         if earlyBonus > 0 {
             economy.earn(earlyBonus)
             stats.goldEarned += earlyBonus
@@ -486,6 +489,7 @@ public final class GameWorld {
         guard !phase.isOver else { return }
         time += dt
         activePhase = config.rules.phase(forWave: max(1, waves.waveNumber), curve: difficulty.curve ?? 1)
+        activeStage = max(1, waves.waveNumber)
 
         switch phase {
         case .preparation:
@@ -527,6 +531,9 @@ public final class GameWorld {
         let spread = CGFloat(config.rules.laneSpread)
         let offset = def.isBoss ? 0 : CGFloat.random(in: -spread...spread, using: &rng)
         var mods = modifiers
+        if !def.isBoss, let extra = difficulty.enemyArmorBonus, activeStage >= (difficulty.armorFromStage ?? 1) {
+            mods.armorBonus += extra
+        }
         mods.hp *= difficulty.enemyHP
         mods.speed *= difficulty.enemySpeed
         var reward = difficulty.goldMultiplier

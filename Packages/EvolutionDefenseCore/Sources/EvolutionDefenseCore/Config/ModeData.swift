@@ -26,6 +26,23 @@ public struct DifficultyDefinition: Codable, Sendable, Equatable {
     /// How strongly the difficulty curve (game.json → progression) applies:
     /// 1 = as configured, 0.5 = half the ramp, 0 = flat. nil = 1.
     public var curve: Double?
+
+    // What makes a harder difficulty different in kind, not just in health. All optional.
+    /// Extra armour on every non-boss enemy from `armorFromStage` on.
+    public var enemyArmorBonus: Double?
+    public var armorFromStage: Int?
+    /// From this stage, every stage gets one more elite group: `extraEliteShare` of its largest ordinary group.
+    public var extraElitesFromStage: Int?
+    public var extraEliteShare: Double?
+    /// Enemy traits (insulated, plated, phasing) written into stages before this one are left out.
+    public var traitsFromStage: Int?
+    /// How fast boss ability timers run (1.2 = abilities 20 % more often).
+    public var bossAbilityRate: Double?
+    /// Share of the towers a boss may have disabled at once (overrides game.json → towerDisable).
+    public var disableMaxShare: Double?
+    public var repairCostMultiplier: Double?
+    /// Share of a tower's cost returned on sale (overrides game.json → economy).
+    public var sellRefundRatio: Double?
 }
 
 /// How a match is set up. Saved with checkpoints.

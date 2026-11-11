@@ -82,10 +82,14 @@ public struct ResearchConfig: Codable, Sendable {
     public var eraCompletion: Int
     /// After this stage, only boss stages pay the perfect-wave point (omitted = every stage pays).
     public var perfectWaveUntil: Int?
+    /// Up to that stage, only every n-th stage pays it (omitted = every stage). Boss stages always pay.
+    public var perfectWaveEvery: Int?
 
     public func paysPerfect(stage: Int, isBoss: Bool) -> Bool {
-        guard let limit = perfectWaveUntil else { return true }
-        return stage <= limit || isBoss
+        if isBoss { return true }
+        if let limit = perfectWaveUntil, stage > limit { return false }
+        if let every = perfectWaveEvery, every > 1 { return stage % every == 0 }
+        return true
     }
 }
 

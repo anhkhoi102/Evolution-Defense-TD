@@ -66,8 +66,19 @@ public struct TowerLevelStats: Codable, Sendable, Equatable {
     /// Level whose base and weapon art this level uses (omitted = its own). A top level without
     /// its own model reuses the one below it; the renderer marks it with a glow.
     public var visualLevel: Int?
+    /// Blind spot: enemies closer than this cannot be targeted (omitted = none).
+    public var minRange: Double?
+    /// Share of the damage that reaches bosses (omitted = all of it).
+    public var bossDamage: Double?
 
     public var artLevel: Int { visualLevel ?? level }
+    /// What this level cannot do, for the tower panel (shown with the effect labels).
+    public var limitLabels: [String] {
+        var l: [String] = []
+        if let m = minRange, m > 0 { l.append("Blind spot \(Int(m))") }
+        if let b = bossDamage, b < 1 { l.append("\(Int((b * 100).rounded()))% vs bosses") }
+        return l
+    }
 
     public var attackInterval: Double { 1.0 / max(attacksPerSecond, 0.01) }
     public var damagePerSecond: Double { damage * attacksPerSecond }

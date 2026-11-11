@@ -21,7 +21,7 @@ struct TowerSnapshot: Equatable {
         init(_ s: TowerLevelStats) {
             name = s.name; damage = s.damage; attacksPerSecond = s.attacksPerSecond; range = s.range
             aoeRadius = s.aoeRadius; armorPenetration = s.armorPenetration; canTargetAir = s.canTargetAir
-            damageType = s.type; detectsStealth = s.seesStealth; effects = s.hitEffects.labels
+            damageType = s.type; detectsStealth = s.seesStealth; effects = s.limitLabels + s.hitEffects.labels
         }
     }
 

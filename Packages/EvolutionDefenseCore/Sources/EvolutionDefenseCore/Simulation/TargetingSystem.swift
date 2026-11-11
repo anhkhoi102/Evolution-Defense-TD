@@ -6,11 +6,10 @@ public enum TargetingSystem {
     /// Whether `enemy` is a legal target for a tower at `position`.
     @inline(__always)
     public static func isValid(_ enemy: Enemy, from position: CGPoint, rangeSquared: CGFloat,
-                               canTargetAir: Bool, detectsStealth: Bool = false) -> Bool {
-        enemy.isActive
-            && (canTargetAir || !enemy.isFlying)
-            && (detectsStealth || !enemy.isCloaked)
-            && enemy.position.distanceSquared(to: position) <= rangeSquared
+                               canTargetAir: Bool, detectsStealth: Bool = false, minRangeSquared: CGFloat = 0) -> Bool {
+        guard enemy.isActive, canTargetAir || !enemy.isFlying, detectsStealth || !enemy.isCloaked else { return false }
+        let d = enemy.position.distanceSquared(to: position)
+        return d <= rangeSquared && d >= minRangeSquared
     }
 
     public static func selectTarget(
@@ -19,9 +18,11 @@ public enum TargetingSystem {
         range: CGFloat,
         priority: TargetingPriority,
         canTargetAir: Bool,
-        detectsStealth: Bool = false
+        detectsStealth: Bool = false,
+        minRange: CGFloat = 0
     ) -> Enemy? {
         let rangeSq = range * range
+        let minSq = minRange * minRange
         var best: Enemy?
         var bestScore = -CGFloat.greatestFiniteMagnitude
         var bestTieBreak = -CGFloat.greatestFiniteMagnitude
@@ -29,7 +30,7 @@ public enum TargetingSystem {
         var bestBossProgress = -CGFloat.greatestFiniteMagnitude
 
         for e in enemies where isValid(e, from: towerPosition, rangeSquared: rangeSq,
-                                       canTargetAir: canTargetAir, detectsStealth: detectsStealth) {
+                                       canTargetAir: canTargetAir, detectsStealth: detectsStealth, minRangeSquared: minSq) {
             // (score, tieBreak): higher is better. Ties go to the enemy furthest along.
             let score: CGFloat
             switch priority {

@@ -349,12 +349,20 @@ struct AbilityTests {
         #expect(reinforcements >= 2)
     }
 
-    @Test func finalBossReachingTheBaseIsDefeat() {
+    @Test func finalBossReachingTheBaseHurtsBadlyButIsNotAnInstantLoss() {
         let w = world()
         w.debugSetBaseHP(100)
+        let damage = config.enemies["titanWarMachine"]!.baseDamage
+        #expect(damage >= 30 && damage < 100)
         w.debugSpawn("titanWarMachine", atDistance: w.path.totalLength - 0.1)
         w.step(dt)
-        #expect(w.phase == .defeat)
+        #expect(w.phase != .defeat && w.baseHP == 100 - damage)
+        // A base that is already weak still falls to it.
+        let weak = world()
+        weak.debugSetBaseHP(damage)
+        weak.debugSpawn("titanWarMachine", atDistance: weak.path.totalLength - 0.1)
+        weak.step(dt)
+        #expect(weak.phase == .defeat)
     }
 
     @Test func slowAndStunAffectMovementButBossesResistThem() {

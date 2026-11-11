@@ -21,6 +21,8 @@ final class GameScene: SKScene {
 
     private let rangeIndicator = SKShapeNode()
     private let aoeIndicator = SKShapeNode()
+    private let blindIndicator = SKShapeNode()
+    private var blindRadius: CGFloat = -1
     /// Name tag above the selected tower ("Sniper · Ballista").
     private let nameTag = SKShapeNode()
     private let nameTagLabel = SKLabelNode(fontNamed: Platform.fontExists("LilitaOne") ? "LilitaOne" : "AvenirNext-Heavy")
@@ -99,6 +101,13 @@ final class GameScene: SKScene {
         aoeIndicator.fillColor = PlatformColor(srgbRed: 1, green: 0.55, blue: 0.15, alpha: 0.12)
         aoeIndicator.strokeColor = PlatformColor(srgbRed: 1, green: 0.6, blue: 0.2, alpha: 0.8)
         aoeIndicator.lineWidth = 1.5
+        blindIndicator.zPosition = Layer.overlay
+        blindIndicator.isHidden = true
+        blindIndicator.isAntialiased = true
+        blindIndicator.fillColor = PlatformColor(srgbRed: 0.9, green: 0.2, blue: 0.2, alpha: 0.10)
+        blindIndicator.strokeColor = PlatformColor(srgbRed: 1, green: 0.4, blue: 0.35, alpha: 0.75)
+        blindIndicator.lineWidth = 1.5
+        worldRoot.addChild(blindIndicator)
         nameTag.zPosition = Layer.overlay + 1
         nameTag.isHidden = true
         nameTag.fillColor = PlatformColor(srgbRed: 0.09, green: 0.08, blue: 0.07, alpha: 0.88)
@@ -438,6 +447,7 @@ final class GameScene: SKScene {
         var showRange = false
         var showAoe = false
         var showName = false
+        var showBlind = false
         ghost.isHidden = true
 
         if let a = c.buildSelection, let slotID = hoverSlot, world.tower(atSlot: slotID) == nil,
@@ -445,6 +455,7 @@ final class GameScene: SKScene {
             let pos = world.config.map.slotPosition(slot)
             let stats = world.effectiveStats(a, level: 1)
             setRange(CGFloat(stats.range), at: proj.ground(pos))
+            if let blind = stats.minRange, blind > 0 { setBlind(CGFloat(blind), at: proj.ground(pos)); showBlind = true }
             showRange = true
             ghost.apply(art.towerBase(world.config.tower(a), level: 1))
             let head = art.towerHead(world.config.tower(a), level: 1)
@@ -468,6 +479,7 @@ final class GameScene: SKScene {
             if let snap = c.selectedTower, let t = world.tower(withID: snap.id) {
                 rangeIndicator.strokeColor = PlatformColor(white: 1, alpha: 0.55)
                 setRange(CGFloat(t.stats.range), at: proj.ground(t.position))
+                if let blind = t.stats.minRange, blind > 0 { setBlind(CGFloat(blind), at: proj.ground(t.position)); showBlind = true }
                 showRange = true
                 // Its kind and current form, so the tower can be told apart at a glance.
                 let kind = t.definition.displayName.replacingOccurrences(of: " Tower", with: "")
@@ -491,8 +503,19 @@ final class GameScene: SKScene {
             }
         }
         rangeIndicator.isHidden = !showRange
+        blindIndicator.isHidden = !showBlind
         aoeIndicator.isHidden = !showAoe
         nameTag.isHidden = !showName
+    }
+
+    /// The inner ring of a tower with a blind spot (the Sniper): nothing inside it can be shot.
+    private func setBlind(_ r: CGFloat, at p: CGPoint) {
+        if r != blindRadius {
+            blindRadius = r
+            let ry = r * proj.groundScaleY
+            blindIndicator.path = CGPath(ellipseIn: CGRect(x: -r, y: -ry, width: r * 2, height: ry * 2), transform: nil)
+        }
+        blindIndicator.position = p
     }
 
     private func setRange(_ r: CGFloat, at p: CGPoint) {

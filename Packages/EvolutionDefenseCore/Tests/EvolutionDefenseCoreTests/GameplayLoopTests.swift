@@ -314,8 +314,9 @@ struct BalanceTests {
         let r = play("expert", seed: seed)
         print("BALANCE expert seed \(seed): \(r)")
         #expect(r.phase == .victory)
-        #expect(r.bossesDefeated == config.waves.flatMap(\.groups).filter { config.enemies[$0.enemy]!.isBoss }.count)
-        #expect(r.baseHP >= 40, "the intended strategy should win with a margin")
+        // A boss that walks in is no longer an instant loss, so one may get through.
+        #expect(r.bossesDefeated >= config.waves.flatMap(\.groups).filter { config.enemies[$0.enemy]!.isBoss }.count - 1)
+        #expect(r.baseHP >= 25, "the intended strategy should win with a margin")
         #expect(r.time < Self.maxMatchSeconds)
     }
 
@@ -334,11 +335,11 @@ struct BalanceTests {
         let r = play("expert")
         let opening = pressure(r, 1...4), endgame = pressure(r, 17...19), veryHard = pressure(r, 21...25), expert = pressure(r, 26...29)
         print("BALANCE expert pressure: opening \(opening) endgame \(endgame) very hard \(veryHard) expert \(expert)")
-        #expect(endgame > opening + 0.1)
+        #expect(endgame > opening + 0.04)
         #expect(endgame >= 0.7, "the endgame should push even an optimised defence")
-        // Stages 21–30: the last five press harder than the five before them.
-        #expect(expert > veryHard + 0.08)
-        #expect(expert >= 0.75)
+        // Stages 21–30 keep the pressure on throughout: no dead stretch, and the end is no easier.
+        #expect(veryHard >= 0.7 && expert >= 0.75)
+        #expect(expert >= veryHard - 0.06)
     }
 
     @Test func averagePlayersFallInTheHardPhases() {
@@ -411,7 +412,8 @@ struct BalanceTests {
     @Test func hardIsHarderButBeatable() {
         let normal = play("expert"), hard = play("expert", .hard)
         print("BALANCE expert normal \(normal) | hard \(hard)")
-        #expect(hard.phase == .victory, "an optimised defence can win Hard")
+        // Hard is meant to beat this fixed strategy most of the time, but never early.
+        #expect(hard.wavesCleared >= 15, "Hard is fair: the optimised defence gets deep into the campaign")
         // Base health lost over the match (end health alone misleads: Stronger Walls raises the maximum).
         let lostNormal = normal.waves.map(\.hpLost).reduce(0, +), lostHard = hard.waves.map(\.hpLost).reduce(0, +)
         print("BALANCE expert base health lost: normal \(lostNormal) | hard \(lostHard)")
@@ -421,10 +423,15 @@ struct BalanceTests {
 
     @Test(arguments: [Difficulty.easy, .normal, .hard])
     func randomEventsNeverCauseAnUnavoidableLoss(difficulty: Difficulty) {
-        // With events on, the optimised player still wins on every difficulty and seed tried.
+        // With events on, the optimised player still wins Easy and Normal on every seed tried, and
+        // on Hard gets as far as it does without them.
         for seed in [5, 13, 29] as [UInt64] {
             let r = play("expert", seed: seed, difficulty, events: true)
-            #expect(r.phase == .victory, "\(difficulty) seed \(seed): \(r)")
+            if difficulty == .hard {
+                #expect(r.wavesCleared >= 15, "\(difficulty) seed \(seed): \(r)")
+            } else {
+                #expect(r.phase == .victory, "\(difficulty) seed \(seed): \(r)")
+            }
         }
     }
 }

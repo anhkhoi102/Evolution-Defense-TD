@@ -245,7 +245,7 @@ struct EnemyTraitTests {
     @Test func traitsAppearOnlyInTheLateStagesAndNeverOnBosses() {
         for wave in config.authoredWaves {
             for g in wave.groups where g.trait != nil {
-                #expect(wave.number >= 21, "stage \(wave.number)")
+                #expect(wave.number >= 11, "stage \(wave.number)")
                 #expect(config.enemies[g.enemy]?.isBoss == false)
             }
         }

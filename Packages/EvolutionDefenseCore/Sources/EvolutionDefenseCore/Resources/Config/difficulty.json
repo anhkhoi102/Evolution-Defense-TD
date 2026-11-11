@@ -1,13 +1,17 @@
 [
   { "id": "easy", "name": "Easy",
     "summary": "Weaker enemies, more gold, a longer countdown and a gentler difficulty curve. Good for learning the eras.",
-    "enemyHP": 0.75, "enemySpeed": 0.95, "goldMultiplier": 1.15, "startingGold": 280, "startingResearch": 3,
-    "preparationTime": 20, "curve": 0.5 },
+    "enemyHP": 0.8, "enemySpeed": 0.95, "goldMultiplier": 1.15, "startingGold": 280, "startingResearch": 3,
+    "preparationTime": 20, "curve": 0.5, "traitsFromStage": 21 },
   { "id": "normal", "name": "Normal",
-    "summary": "The intended challenge. Easy to start; from the Medieval Age you need a mixed defence, upgrades and research to survive.",
-    "enemyHP": 1.0, "enemySpeed": 1.0, "goldMultiplier": 1.0, "startingGold": 250, "startingResearch": 2, "curve": 1.0 },
+    "summary": "The intended challenge. Every stage presses a little harder than the last; you need a mixed defence and cannot afford everything.",
+    "enemyHP": 1.0, "enemySpeed": 1.0, "goldMultiplier": 1.0, "startingGold": 250, "startingResearch": 2, "curve": 1.0,
+    "traitsFromStage": 16 },
   { "id": "hard", "name": "Hard",
-    "summary": "Less gold and a short countdown. Every tower, upgrade and technology has to count.",
-    "enemyHP": 1.03, "enemySpeed": 1.0, "goldMultiplier": 0.95, "startingGold": 240, "startingResearch": 2,
-    "preparationTime": 12, "curve": 1.0 }
+    "summary": "Faster, armoured enemies, more elites, special enemies from stage 11, angrier bosses and less gold. For players who know every tower's job.",
+    "enemyHP": 1.06, "enemySpeed": 1.02, "goldMultiplier": 0.99, "startingGold": 250, "startingResearch": 2,
+    "preparationTime": 10, "curve": 1.0,
+    "enemyArmorBonus": 1, "armorFromStage": 18, "extraElitesFromStage": 14, "extraEliteShare": 0.1,
+    "traitsFromStage": 13, "bossAbilityRate": 1.0, "disableMaxShare": 0.34,
+    "repairCostMultiplier": 1.25, "sellRefundRatio": 0.6 }
 ]

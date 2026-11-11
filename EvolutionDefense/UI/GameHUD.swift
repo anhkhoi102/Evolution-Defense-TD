@@ -137,10 +137,6 @@ struct BaseHPBar: View {
             HStack {
                 Label("BASE", systemImage: "house.lodge.fill")
                     .font(.system(size: 11, weight: .heavy, design: .rounded)).foregroundStyle(Theme.text)
-                Text(status.label)
-                    .font(.system(size: 10, weight: .heavy, design: .rounded)).foregroundStyle(tint)
-                    .padding(.horizontal, 6).padding(.vertical, 1)
-                    .background(Capsule().fill(tint.opacity(0.16)))
                 Spacer()
                 if shield > 0 {
                     Label("\(shield)", systemImage: "bolt.shield.fill")
@@ -178,7 +174,7 @@ struct BaseHPBar: View {
             withAnimation(.easeOut(duration: 0.45)) { flash = false }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Base health \(hp) of \(maxHP), \(status.label)")
+        .accessibilityLabel("Base health \(hp) of \(maxHP)")
     }
 }
 

@@ -244,8 +244,8 @@ struct WaveTests {
         let w = makeWorld(gold: 5000)
         for s in w.config.map.buildSlots { w.build(s.id % 2 == 0 ? .sniper : .rapid, atSlot: s.id) }
         #expect(w.phase == .preparation)
-        // Countdown is held at its full 30 s, so starting now pays the full early bonus.
-        #expect(w.startNextWave() == .started(number: 1, earlyBonus: 30))
+        // Countdown is held at its full 30 s, so starting now pays the full early bonus (half a gold per second).
+        #expect(w.startNextWave() == .started(number: 1, earlyBonus: 15))
         #expect(w.startNextWave() == .waveAlreadyRunning, "cannot start a wave while one is running")
         #expect(w.phase == .waveInProgress)
         w.simulate(seconds: 90)
