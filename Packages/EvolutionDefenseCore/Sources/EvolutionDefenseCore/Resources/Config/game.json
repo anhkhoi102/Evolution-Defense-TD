@@ -33,7 +33,8 @@
   "research": {
     "startingPoints": 2,
     "perfectWave": 1,
-    "eraCompletion": 3
+    "eraCompletion": 3,
+    "perfectWaveUntil": 20
   },
   "randomEvents": {
     "firstAfterWave": 3,
@@ -70,17 +71,17 @@
     {
       "name": "Endgame",
       "fromWave": 17,
-      "enemyHP": 1.6,
+      "enemyHP": 1.5,
       "enemySpeed": 1.05,
       "spawnInterval": 0.75,
-      "enemyCount": 1.5,
+      "enemyCount": 1.42,
       "killReward": 0.6,
       "clearReward": 0.5
     },
     {
       "name": "Very Hard",
       "fromWave": 21,
-      "enemyHP": 1.9,
+      "enemyHP": 1.8,
       "enemySpeed": 1.06,
       "spawnInterval": 0.75,
       "enemyCount": 1.5,
@@ -90,11 +91,11 @@
     {
       "name": "Expert",
       "fromWave": 26,
-      "enemyHP": 2.2,
+      "enemyHP": 2.05,
       "enemySpeed": 1.1,
       "spawnInterval": 0.7,
       "enemyCount": 1.7,
-      "killReward": 0.45,
+      "killReward": 0.42,
       "clearReward": 0.4
     }
   ],
@@ -102,10 +103,21 @@
     "hp": 2.2,
     "armorBonus": 3,
     "speed": 1.08,
-    "reward": 2.5
+    "reward": 2.0
+  },
+  "towerDisable": {
+    "maxShare": 0.25,
+    "protection": 8,
+    "recoverCostFraction": 0.08,
+    "recoverCostMin": 15,
+    "recoverCostMax": 120
+  },
+  "traits": {
+    "phaseInterval": 5,
+    "phaseDuration": 1.2
   },
   "stars": {
-    "threeStarMaxDamageFraction": 0.1,
-    "twoStarMaxDamageFraction": 0.4
+    "threeStarMaxDamageFraction": 0.2,
+    "twoStarMaxDamageFraction": 0.5
   }
 }

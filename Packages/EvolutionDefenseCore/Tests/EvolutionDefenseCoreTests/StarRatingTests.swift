@@ -60,24 +60,25 @@ struct StarRatingTests {
     }
 
     @Test func theRatingCountsAllBaseDamageInTheMatch() {
-        // Wolf: 2 damage. Alpha Beast: 15. Thresholds: 10 and 40 of 100.
-        #expect(winMatch(leaks: ["wolf"]).matchStars == 3)
-        let two = winMatch(leaks: ["alphaBeast"])
-        #expect(two.baseDamageTaken == 15 && two.matchStars == 2)
-        let one = winMatch(leaks: ["alphaBeast", "alphaBeast", "alphaBeast"])
-        #expect(one.baseDamageTaken == 45 && one.matchStars == 1)
+        // Alpha Beast: 15 damage each. Thresholds: 20 and 50 of 100.
+        let three = winMatch(leaks: ["alphaBeast"])
+        #expect(three.baseDamageTaken == 15 && three.matchStars == 3)
+        let two = winMatch(leaks: ["alphaBeast", "alphaBeast", "alphaBeast"])
+        #expect(two.baseDamageTaken == 45 && two.matchStars == 2)
+        let one = winMatch(leaks: ["alphaBeast", "alphaBeast", "alphaBeast", "alphaBeast"])
+        #expect(one.baseDamageTaken == 60 && one.matchStars == 1)
     }
 
     @Test func repairingDoesNotImproveTheRating() {
         let w = GameWorld(config: shortConfig(), seed: 3)
         w.startNextWave()
-        for _ in 0..<3 { _ = w.debugSpawn("alphaBeast", atDistance: w.path.totalLength - 0.1) }
+        for _ in 0..<4 { _ = w.debugSpawn("alphaBeast", atDistance: w.path.totalLength - 0.1) }
         w.step(dt); clearStage(w)
         w.debugSetGold(100_000)
         _ = w.repairBase(optionIndex: config.rules.repair.options.count - 1)
-        #expect(w.baseHP > 55)
+        #expect(w.baseHP > 40)
         while !w.phase.isOver { w.startNextWave(); clearStage(w) }
-        #expect(w.baseDamageTaken == 45 && w.matchStars == 1)
+        #expect(w.baseDamageTaken == 60 && w.matchStars == 1)
     }
 
     @Test func aLostMatchHasNoStars() {
@@ -105,11 +106,11 @@ struct StarRatingTests {
     @Test func aWonMatchRecordsItsRatingAndProgress() {
         var p = PlayerProfile()
         let map = config.map.id
-        p.recordMatchEnd(winMatch(leaks: ["alphaBeast"]))
+        p.recordMatchEnd(winMatch(leaks: ["alphaBeast", "alphaBeast", "alphaBeast"]))
         #expect(p.bestStars(battlefield: map) == 2 && p.stagesCleared(battlefield: map) == 3)
         // A better win raises it, a worse one does not lower it.
         p.recordMatchEnd(winMatch())
-        p.recordMatchEnd(winMatch(leaks: ["alphaBeast", "alphaBeast", "alphaBeast"]))
+        p.recordMatchEnd(winMatch(leaks: ["alphaBeast", "alphaBeast", "alphaBeast", "alphaBeast"]))
         #expect(p.bestStars(battlefield: map) == 3 && p.totalStars == 3)
     }
 
@@ -141,5 +142,40 @@ struct StarRatingTests {
         json["damageTaken"] = nil
         let older = try JSONDecoder().decode(MatchCheckpoint.self, from: JSONSerialization.data(withJSONObject: json))
         #expect(try GameWorld(config: config, checkpoint: older).baseDamageTaken == 15)
+    }
+
+    // MARK: Saves from version 1.4.0
+
+    @Test func aSaveFromBeforeTheRebalanceStillLoads() throws {
+        // A 1.4.0 checkpoint: towers at level 5, no doctrines, no disable or trait data.
+        let w = GameWorld(config: config, options: MatchOptions(randomEvents: false), seed: 5)
+        w.debugSetGold(50_000)
+        for (i, s) in w.config.map.buildSlots.prefix(4).enumerated() {
+            w.build(TowerArchetype.allCases[i], atSlot: s.id)
+            let t = w.tower(atSlot: s.id)!
+            while t.level < 5 { w.upgrade(t) }
+        }
+        w.startNextWave(); clearStage(w)
+        var json = try JSONSerialization.jsonObject(with: JSONEncoder().encode(try #require(w.makeCheckpoint()))) as! [String: Any]
+        json["damageTaken"] = nil
+        json["researchedTechs"] = ["improvedArrows", "strongerWalls", "automatedWeapons", "plasmaTechnology", "noLongerExists"]
+        let old = try JSONDecoder().decode(MatchCheckpoint.self, from: JSONSerialization.data(withJSONObject: json))
+        let back = try GameWorld(config: config, checkpoint: old)
+        // Towers keep their level (5 is no longer the top, so they can now go one further).
+        #expect(back.towers.count == 4 && back.towers.allSatisfy { $0.level == 5 && !$0.isMaxLevel })
+        #expect(back.towers.allSatisfy { back.upgradeCost(for: $0) != nil })
+        // Technologies that still exist are kept with their new effects; unknown ones are dropped.
+        #expect(back.researchedTechs == ["improvedArrows", "strongerWalls", "automatedWeapons", "plasmaTechnology"])
+        #expect(back.phase == .preparation && back.waveNumber == 1)
+        // And it plays on.
+        back.startNextWave(); clearStage(back)
+        #expect(back.stats.wavesCleared == 2)
+    }
+
+    @Test func aProfileFromBeforeTheRebalanceKeepsItsProgress() throws {
+        let json = #"{"version":1,"totalKills":900,"matchStars":{"meadow":2},"stagesCleared":{"meadow":30,"desert":12},"records":{"normal":{"matches":4,"victories":1,"highestWave":30}},"settings":{"hero":"queen"}}"#
+        let p = try JSONDecoder().decode(PlayerProfile.self, from: Data(json.utf8))
+        #expect(p.bestStars(battlefield: "meadow") == 2 && p.stagesCleared(battlefield: "desert") == 12)
+        #expect(p.highestStageCleared == 30 && p.activeHero(in: config.summons)?.id == "queen")
     }
 }

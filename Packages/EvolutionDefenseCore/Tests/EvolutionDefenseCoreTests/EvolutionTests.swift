@@ -94,9 +94,13 @@ struct EraContentTests {
         #expect(p2.disableTowers != nil && p2.baseStrike != nil && p2.summon != nil)
     }
 
-    @Test func techTreeHasThreeTechsPerEra() {
-        #expect(config.techs.count == 12)
-        for era in Era.allCases { #expect(config.techs.filter { $0.era == era }.count == 3) }
+    @Test func techTreeHasThreeTechsAndOneDoctrinePairPerEra() {
+        #expect(config.techs.count == 20)
+        for era in Era.allCases {
+            #expect(config.techs.filter { $0.era == era && !$0.isDoctrine }.count == 3)
+            let doctrines = config.techs.filter { $0.era == era && $0.isDoctrine }
+            #expect(doctrines.count == 2 && Set(doctrines.map(\.group)).count == 1)
+        }
     }
 
     @Test func eraAdvancesAfterBossWaveAndPaysResearch() {
@@ -424,22 +428,26 @@ struct ResearchTests {
     }
 
     @Test func techChangesExistingAndFutureTowers() {
-        let w = world(gold: 1000, research: 100)
+        let w = world(gold: 1000, research: 100) { c in
+            if let i = c.techs.firstIndex(where: { $0.id == "gunpowder" }) { c.techs[i].era = .primitive }
+        }
         w.build(.sniper, atSlot: 3)
         let before = w.tower(atSlot: 3)!
         let base = before.stats.damage
-        w.research("improvedArrows")
-        #expect(abs(before.stats.damage - base * 1.10) < 0.0001)
-        #expect(before.baseStats.damage == base, "data stays untouched")
-        w.build(.sniper, atSlot: 4)
-        #expect(abs(w.tower(atSlot: 4)!.stats.damage - base * 1.10) < 0.0001)
-        // Splash unaffected by Improved Arrows.
-        w.build(.splash, atSlot: 5)
-        #expect(w.tower(atSlot: 5)!.stats.damage == config.tower(.splash).stats(level: 1).damage)
+        // Gunpowder: Splash and Heavy +15 % damage. (Sniper stands in for "unaffected".)
+        w.build(.heavy, atSlot: 9)
+        let heavy = w.tower(atSlot: 9)!
+        let heavyBase = heavy.stats.damage
+        w.research("gunpowder")
+        #expect(abs(heavy.stats.damage - heavyBase * 1.15) < 0.0001)
+        #expect(heavy.baseStats.damage == heavyBase, "data stays untouched")
+        w.build(.heavy, atSlot: 4)
+        #expect(abs(w.tower(atSlot: 4)!.stats.damage - heavyBase * 1.15) < 0.0001)
+        #expect(before.stats.damage == base, "Sniper is unaffected by Gunpowder")
         // Upgrades keep the bonus.
-        w.upgrade(before)
-        #expect(abs(before.stats.damage - config.tower(.sniper).stats(level: 2).damage * 1.10) < 0.0001)
-        #expect(w.effectiveStats(.sniper, level: 3).damage > config.tower(.sniper).stats(level: 3).damage)
+        w.upgrade(heavy)
+        #expect(abs(heavy.stats.damage - config.tower(.heavy).stats(level: 2).damage * 1.15) < 0.0001)
+        #expect(w.effectiveStats(.heavy, level: 3).damage > config.tower(.heavy).stats(level: 3).damage)
     }
 
     @Test func researchIsAllowedDuringAWave() {

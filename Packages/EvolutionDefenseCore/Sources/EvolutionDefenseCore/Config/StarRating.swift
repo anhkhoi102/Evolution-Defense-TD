@@ -9,7 +9,7 @@ public struct StarRatingConfig: Codable, Sendable, Equatable {
     /// The same for 2 stars.
     public var twoStarMaxDamageFraction: Double
 
-    public init(threeStarMaxDamageFraction: Double = 0.1, twoStarMaxDamageFraction: Double = 0.4) {
+    public init(threeStarMaxDamageFraction: Double = 0.2, twoStarMaxDamageFraction: Double = 0.5) {
         self.threeStarMaxDamageFraction = threeStarMaxDamageFraction
         self.twoStarMaxDamageFraction = twoStarMaxDamageFraction
     }

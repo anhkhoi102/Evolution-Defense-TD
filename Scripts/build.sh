@@ -38,6 +38,14 @@ xcodebuild -project EvolutionDefense.xcodeproj -scheme EvolutionDefense \
 PRODUCT="$DERIVED/Build/Products/$CONFIG/EvolutionDefense.app"
 [[ -d "$PRODUCT" ]] || { echo "error: $PRODUCT not found" >&2; exit 1; }
 
+# When only data files changed, Xcode can copy them into the app without signing it again.
+# A stale signature means: throw the built app away and build once more.
+if ! codesign --verify --strict "$PRODUCT" 2>/dev/null; then
+    echo "==> stale signature after a data-only change: rebuilding the app bundle"
+    rm -rf "$PRODUCT"
+    exec "$0" "$@"
+fi
+
 if [[ -d "$APP_OUT" && "$APP_OUT" == "$BUILD_DIR/"*.app ]]; then rm -r "$APP_OUT"; fi
 ditto "$PRODUCT" "$APP_OUT"
 codesign --verify --strict "$APP_OUT"

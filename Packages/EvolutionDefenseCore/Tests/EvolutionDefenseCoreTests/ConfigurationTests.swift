@@ -6,11 +6,11 @@ import Testing
 struct ConfigurationTests {
     let config = try! GameConfiguration.loadDefault()
 
-    @Test func loadsAllTowerArchetypesWithFiveLevels() {
+    @Test func loadsAllTowerArchetypesWithSixLevels() {
         for a in TowerArchetype.allCases {
             let t = config.tower(a)
-            #expect(t.levels.count == 5, "\(a) should have 5 levels")
-            #expect(t.levels.map(\.level) == [1, 2, 3, 4, 5])
+            #expect(t.levels.count == 6, "\(a) should have 6 levels")
+            #expect(t.levels.map(\.level) == [1, 2, 3, 4, 5, 6])
             #expect(t.buildCost > 0)
         }
     }

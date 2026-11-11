@@ -22,6 +22,24 @@ public enum TechEffectKind: String, Codable, Sendable {
     case leakDamageReduction
     /// Base gets a shield worth `value` HP at the start of each wave.
     case waveShield
+    /// Slows last (1 + value) times as long.
+    case slowDuration
+    /// A burning enemy that dies sets enemies within `value` points on fire.
+    case burnSpread
+    /// The third slow on an enemy within a few seconds freezes it for `value` seconds (bosses immune).
+    case freeze
+    /// Boss tower-disables last (1 − value) times as long.
+    case disableDuration
+    /// Instant tower recovery costs (1 − value) times as much.
+    case recoverCost
+    /// Stunned or frozen enemies take (1 + value) times the damage.
+    case controlledBonus
+    /// Chain lightning jumps to `value` more enemies.
+    case chainTargets
+    /// Expose also marks enemies within `value` points of the target.
+    case exposeRadius
+    /// Towers that keep firing at one target for 2 s attack (1 + value) times as fast.
+    case focusFire
 }
 
 public struct TechEffect: Codable, Sendable, Equatable {
@@ -49,6 +67,10 @@ public struct TechDefinition: Codable, Sendable, Identifiable, Equatable {
     /// SF Symbol name for the UI.
     public var icon: String
     public var effects: [TechEffect]
+    /// Doctrine group: only one technology of a group can be researched in a match.
+    public var group: String?
+
+    public var isDoctrine: Bool { group != nil }
 }
 
 /// Research Point income from game.json.
@@ -58,6 +80,13 @@ public struct ResearchConfig: Codable, Sendable {
     public var perfectWave: Int
     /// For clearing the last wave of an era.
     public var eraCompletion: Int
+    /// After this stage, only boss stages pay the perfect-wave point (omitted = every stage pays).
+    public var perfectWaveUntil: Int?
+
+    public func paysPerfect(stage: Int, isBoss: Bool) -> Bool {
+        guard let limit = perfectWaveUntil else { return true }
+        return stage <= limit || isBoss
+    }
 }
 
 /// Combined effect of every researched technology. Recomputed on purchase only.
@@ -70,12 +99,21 @@ public struct TechModifiers: Sendable, Equatable {
         public var armorPenetration = 0.0
         public var hit = HitEffects()
         public var detectsStealth = false
+        public var focusFire = 0.0
     }
 
     public var towers: [TowerArchetype: TowerMods] = [:]
     public var maxBaseHPBonus = 0
     public var leakDamageReduction = 0.0
     public var waveShield = 0
+    public var slowDuration = 1.0
+    public var burnSpreadRadius = 0.0
+    public var freezeSeconds = 0.0
+    public var disableDuration = 1.0
+    public var recoverCost = 1.0
+    public var controlledBonus = 0.0
+    public var chainExtraTargets = 0
+    public var exposeRadius = 0.0
 
     public init() {}
 
@@ -88,6 +126,14 @@ public struct TechModifiers: Sendable, Equatable {
                 case .maxBaseHP: maxBaseHPBonus += Int(v)
                 case .leakDamageReduction: leakDamageReduction = min(0.9, leakDamageReduction + v)
                 case .waveShield: waveShield += Int(v)
+                case .slowDuration: slowDuration += v
+                case .burnSpread: burnSpreadRadius = max(burnSpreadRadius, v)
+                case .freeze: freezeSeconds = max(freezeSeconds, v)
+                case .disableDuration: disableDuration = max(0.2, disableDuration - v)
+                case .recoverCost: recoverCost = max(0, recoverCost - v)
+                case .controlledBonus: controlledBonus += v
+                case .chainTargets: chainExtraTargets += Int(v)
+                case .exposeRadius: exposeRadius = max(exposeRadius, v)
                 default:
                     for a in TowerArchetype.allCases where e.applies(to: a) {
                         var m = towers[a]!
@@ -99,7 +145,8 @@ public struct TechModifiers: Sendable, Equatable {
                         case .armorPenetration: m.armorPenetration += v
                         case .onHit: if let h = e.hit { m.hit = m.hit.combined(with: h) }
                         case .stealthDetection: m.detectsStealth = true
-                        case .maxBaseHP, .leakDamageReduction, .waveShield: break
+                        case .focusFire: m.focusFire += v
+                        default: break
                         }
                         towers[a] = m
                     }
@@ -119,7 +166,9 @@ public struct TechModifiers: Sendable, Equatable {
         r.range = s.range * m.range
         r.aoeRadius = s.aoeRadius * m.aoeRadius
         r.armorPenetration = s.armorPenetration + m.armorPenetration
-        let hit = s.hitEffects.combined(with: m.hit)
+        var hit = s.hitEffects.combined(with: m.hit)
+        if hit.slow > 0 { hit.slowDuration *= slowDuration }
+        if hit.chainEvery > 0 { hit.chainTargets += Double(chainExtraTargets) }
         r.special = hit.isEmpty ? nil : hit
         r.detectsStealth = s.seesStealth || m.detectsStealth
         return r

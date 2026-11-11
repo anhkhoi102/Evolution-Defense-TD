@@ -128,6 +128,25 @@ public struct BroodAbility: Codable, Sendable, Equatable {
 }
 
 /// Knocks out nearby towers for a while (fire breath, EMP).
+/// Rules every boss tower-disable follows, from game.json → "towerDisable". Bosses only ever switch
+/// towers off for a while: nothing here (or anywhere) damages, destroys or removes a tower.
+public struct TowerDisableConfig: Codable, Sendable, Equatable {
+    /// Most towers that may be disabled at the same time, as a share of the player's towers (at least 1).
+    public var maxShare: Double
+    /// Seconds a tower cannot be disabled again after it recovers (either way).
+    public var protection: Double
+    /// Instant recovery price: this share of the gold spent on the tower, kept between the two limits.
+    public var recoverCostFraction: Double
+    public var recoverCostMin: Int
+    public var recoverCostMax: Int
+
+    public init(maxShare: Double = 0.25, protection: Double = 8, recoverCostFraction: Double = 0.08,
+                recoverCostMin: Int = 15, recoverCostMax: Int = 120) {
+        self.maxShare = maxShare; self.protection = protection; self.recoverCostFraction = recoverCostFraction
+        self.recoverCostMin = recoverCostMin; self.recoverCostMax = recoverCostMax
+    }
+}
+
 public struct DisableTowersAbility: Codable, Sendable, Equatable {
     public var name: String
     public var radius: Double

@@ -13,7 +13,7 @@ from tents to a castle, a factory and a shining future city.
 - 🐺 **19 kinds of enemies:** wolves, trolls, dragons, mutants and robots
 - 👑 **4 big bosses**, one at the end of each age
 - 🗺️ **3 battlefields:** Grassland, Desert and Lakeside
-- 🏰 **4 kinds of towers** that each grow through 5 levels
+- 🏰 **4 kinds of towers** that each grow through 6 levels
 
 ---
 
@@ -123,6 +123,9 @@ First, pick a battlefield: on the main menu, click **Battlefield** and choose Gr
 - 🗺️ **Every battlefield has its own creatures and bosses.** Skeletons and cactus folk in the Desert, frogs, mushrooms and a lake horror at the Lakeside.
 - 🔧 **Towers help each other.** Rapid Fire (level 3+) strips enemy armour, and Heavy (level 3+) marks a target so every tower hurts it more.
 - 👑 **Unlock new heroes!** Clear stage 10 to unlock the **Iron King** (super tough, slows enemies). Clear stage 20 to unlock the **Star Queen** (shoots magic from far away, even at flyers). Pick your hero when you start a new game.
+- ⚡ **A boss switched your tower off?** A number above the tower counts down. Wait and it comes back for free, or click the tower and press **Restart now** to pay a little gold and get it back at once.
+- 🔬 **Doctrines:** in each age the Tech screen offers two special upgrades. You can only pick one, so choose the one that fits your towers!
+- 🌈 **Late monsters with a coloured ring are special:** ice blue cannot be slowed, steel keeps more of its armour, violet flickers and cannot be hurt for a moment.
 - 😌 Too hard? Choose **Easy** when you start a new game.
 - 💾 The game saves by itself between waves. Click **Continue** to keep playing later.
 

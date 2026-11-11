@@ -195,7 +195,7 @@ private struct SelectedTowerInfo: View {
                         .font(.system(size: 11, weight: .bold, design: .rounded)).foregroundStyle(Theme.warn)
                 }
                 if tower.disabled {
-                    Label("Knocked out — recovering", systemImage: "bolt.slash.fill")
+                    Label("Knocked out · back in \(tower.disableSeconds)s", systemImage: "bolt.slash.fill")
                         .font(.system(size: 11, weight: .bold, design: .rounded)).foregroundStyle(Theme.research)
                 }
             }
@@ -220,12 +220,43 @@ private struct SelectedTowerInfo: View {
                         .background(RoundedRectangle(cornerRadius: 9).strokeBorder(Theme.good.opacity(0.5)))
                 } else {
                     HStack(spacing: 6) {
-                        sellButton
+                        if let cost = tower.recoverCost {
+                            recoverButton(cost)
+                        } else {
+                            sellButton
+                        }
                         upgradeButton
                     }
                 }
             }
         }
+    }
+
+    /// Instant recovery of a tower a boss knocked out. Waiting is free; this is the paid shortcut.
+    private func recoverButton(_ cost: Int) -> some View {
+        let affordable = controller.gold >= cost
+        return Button { controller.recoverSelected() } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "bolt.fill")
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("Restart now").font(.system(size: 11, weight: .heavy, design: .rounded)).lineLimit(1)
+                    HStack(spacing: 3) {
+                        Image(systemName: "circle.hexagongrid.circle.fill").font(.system(size: 9))
+                        Text("\(cost) · or wait").font(.system(size: 11, weight: .heavy, design: .rounded)).monospacedDigit()
+                    }
+                    .foregroundStyle(affordable ? Color.black.opacity(0.75) : Theme.danger)
+                }
+            }
+            .padding(.horizontal, 10).padding(.vertical, 4)
+            .frame(minWidth: 104, alignment: .leading)
+            .foregroundStyle(affordable ? Color.black.opacity(0.85) : Theme.textDim)
+            .background(RoundedRectangle(cornerRadius: 9).fill(affordable ? AnyShapeStyle(Theme.research) : AnyShapeStyle(Theme.panelHigh)))
+            .overlay(RoundedRectangle(cornerRadius: 9).strokeBorder(affordable ? Color.white.opacity(0.25) : Theme.danger.opacity(0.5)))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help(affordable ? "Pay \(cost) gold to restart this tower now (R)" : "Not enough gold. It recovers by itself in \(tower.disableSeconds)s")
+        .accessibilityLabel("Restart tower now for \(cost) gold")
     }
 
     @ViewBuilder private var upgradeButton: some View {

@@ -121,7 +121,7 @@ struct BossBar: View {
     }
 }
 
-/// Technology tree: three techs per era, bought with Research Points.
+/// Technology tree: three techs and a pair of doctrines (pick one) per era, bought with Research Points.
 /// Opening it pauses the preparation countdown.
 struct TechPanel: View {
     let controller: GameController
@@ -154,14 +154,24 @@ struct TechPanel: View {
                                 .font(.system(size: 11, weight: .heavy, design: .rounded)).tracking(1)
                                 .foregroundStyle(era <= controller.era ? Theme.text : Theme.textDim)
                         }
-                        ForEach(cards.filter { $0.tech.era == era }) { card in
+                        ForEach(cards.filter { $0.tech.era == era && !$0.tech.isDoctrine }) { card in
                             TechCardView(card: card, controller: controller)
+                        }
+                        // Doctrines: two per age, and only one of them can be taken.
+                        HStack(spacing: 5) {
+                            Image(systemName: "arrow.triangle.branch").font(.system(size: 9, weight: .bold))
+                            Text("DOCTRINE · CHOOSE ONE").font(.system(size: 9, weight: .heavy, design: .rounded)).tracking(0.8)
+                        }
+                        .foregroundStyle(Theme.gold.opacity(era <= controller.era ? 0.95 : 0.5))
+                        .padding(.top, 2)
+                        ForEach(cards.filter { $0.tech.era == era && $0.tech.isDoctrine }) { card in
+                            TechCardView(card: card, controller: controller, compact: true)
                         }
                     }
                     .frame(width: 214)
                 }
             }
-            Text("Research Points: defeat bosses, finish an era, or clear a wave without damage. Countdown paused · Esc or T to close")
+            Text("Research Points: defeat bosses, finish an age, or clear a stage without damage (after stage 20: boss stages only). You cannot buy everything. Countdown paused · Esc or T to close")
                 .font(.system(size: 11, design: .rounded)).foregroundStyle(Theme.textDim)
         }
         .padding(16)
@@ -174,15 +184,17 @@ struct TechPanel: View {
 private struct TechCardView: View {
     let card: TechCard
     let controller: GameController
+    var compact = false
 
     var body: some View {
         let t = card.tech
-        let tint = Theme.eraColor(t.era)
+        let tint = t.isDoctrine ? Theme.gold : Theme.eraColor(t.era)
         let (label, enabled, highlight): (String, Bool, Bool) = switch card.status {
         case .researched: ("Researched", false, false)
         case .available: ("Research · \(t.cost) RP", true, true)
         case .unaffordable(let n): ("Needs \(n) RP", false, false)
         case .locked(let era): ("Unlocks in \(era.displayName)", false, false)
+        case .excluded(let other): ("Chose \(other)", false, false)
         }
         VStack(alignment: .leading, spacing: 5) {
             HStack(spacing: 6) {
@@ -211,11 +223,17 @@ private struct TechCardView: View {
             .disabled(!enabled)
         }
         .padding(10)
-        .frame(height: 122)
+        .frame(height: compact ? 108 : 112)
         .background(RoundedRectangle(cornerRadius: 10).fill(card.status == .researched ? tint.opacity(0.12) : Theme.panelHigh))
         .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(card.status == .researched ? Theme.good.opacity(0.5)
                                                                   : highlight ? Theme.research.opacity(0.6) : Theme.stroke))
-        .opacity({ if case .locked = card.status { return 0.55 } else { return 1 } }())
+        .opacity({
+            switch card.status {
+            case .locked: return 0.55
+            case .excluded: return 0.4
+            default: return 1
+            }
+        }())
     }
 }
 
@@ -264,6 +282,17 @@ struct PauseMenu: View {
 
 struct MatchEndView: View {
     let controller: GameController
+    private func resultLine(_ icon: String, _ label: String, _ value: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon).font(.system(size: 15, weight: .bold)).foregroundStyle(Theme.gold)
+            VStack(alignment: .leading, spacing: 0) {
+                Text(label.uppercased()).font(.system(size: 9, weight: .heavy, design: .rounded)).tracking(0.8).foregroundStyle(Theme.textDim)
+                Text(value).font(Theme.display(18)).monospacedDigit().foregroundStyle(Theme.text)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
     var body: some View {
         let won = controller.phase == .victory
         let tint = won ? Theme.gold : Theme.danger
@@ -272,13 +301,25 @@ struct MatchEndView: View {
             VStack(spacing: 14) {
                 Image(systemName: won ? "crown.fill" : "house.lodge.fill")
                     .font(.system(size: 44, weight: .bold)).foregroundStyle(tint)
-                Text(won ? "VICTORY" : "DEFEAT")
-                    .font(Theme.display(46)).foregroundStyle(Theme.text)
-                Text(won ? "Your civilisation outlasted every era." : "The base has fallen in the \(controller.era.displayName).")
+                Text(won ? "CAMPAIGN COMPLETE" : "DEFEAT")
+                    .font(Theme.display(won ? 40 : 46)).foregroundStyle(Theme.text)
+                Text(won ? "All \(controller.totalWaves) stages cleared. Your civilisation outlasted every era."
+                         : "The base has fallen in the \(controller.era.displayName).")
                     .font(.system(size: 14, design: .rounded)).foregroundStyle(Theme.textDim)
                 if won {
                     StarRow(stars: controller.matchStars, size: 34, animated: true)
-                    Text(controller.matchStars == StarRatingConfig.maxStars ? "Perfect defence!" : "Lose less base health to earn more stars.")
+                    // The campaign result: what the rating was worked out from.
+                    let rule = controller.config.rules.stars ?? StarRatingConfig()
+                    let lost = controller.world.baseDamageTaken, maxHP = controller.world.maxBaseHP
+                    HStack(spacing: 18) {
+                        resultLine("heart.slash.fill", "Base health lost", "\(lost) of \(maxHP)")
+                        resultLine("figure.walk.arrival", "Enemies that got through", "\(controller.stats.enemiesLeaked)")
+                    }
+                    .padding(.horizontal, 14).padding(.vertical, 8)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(Theme.gold.opacity(0.10)))
+                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Theme.gold.opacity(0.35)))
+                    Text(controller.matchStars == StarRatingConfig.maxStars ? "Perfect defence!"
+                         : "3 stars: lose \(Int(Double(maxHP) * rule.threeStarMaxDamageFraction)) health or less · 2 stars: \(Int(Double(maxHP) * rule.twoStarMaxDamageFraction)) or less")
                         .font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(Theme.gold)
                 }
                 HStack(spacing: 22) {

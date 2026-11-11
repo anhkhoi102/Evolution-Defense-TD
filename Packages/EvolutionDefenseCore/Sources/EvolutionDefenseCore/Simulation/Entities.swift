@@ -69,6 +69,22 @@ public final class Enemy {
     /// Towers that last applied each effect: the extra damage it enables is credited to them.
     weak var shredSource: Tower?
     weak var exposeSource: Tower?
+    /// Frozen solid until this time (a stun with its own look).
+    public internal(set) var frozenUntil: Double = 0
+    /// No new stun or freeze takes hold before this time (limits crowd control).
+    var controlImmuneUntil: Double = 0
+    /// Slows counted towards a freeze, and when that count started.
+    var slowHits = 0
+    var slowHitsSince: Double = -100
+    /// A boss can next be interrupted at this time.
+    var interruptReadyAt: Double = 0
+
+    public var isFrozen: Bool { frozenUntil > 0 }
+    /// Late-game trait (insulated, plated, phasing), if any.
+    public internal(set) var trait: EnemyTrait?
+    /// Phasing: out of reach of damage until this time, and when the next flicker starts.
+    public internal(set) var phasedUntil: Double = 0
+    var nextPhaseAt: Double = 0
 
     public var isShredded: Bool { shredAmount > 0 }
     public var isExposed: Bool { exposeAmount > 0 }
@@ -138,11 +154,23 @@ public final class Tower {
     public internal(set) var lastFireTime: Double = -100
     /// Knocked out (fire breath, EMP) until this simulation time.
     public internal(set) var disabledUntil: Double = -1
+    /// How long the current knock-out lasts in all (for the countdown ring).
+    public internal(set) var disabledDuration: Double = 0
+    /// Cannot be knocked out again before this time (set when it recovers).
+    public internal(set) var protectedUntil: Double = -1
+
+    /// Seconds until it works again (0 when it is working).
+    public func disableRemaining(at time: Double) -> Double { max(0, disabledUntil - time) }
     /// Allied tower from a Reinforcement event: can't be sold or upgraded, leaves after the wave.
     public internal(set) var isTemporary = false
     /// Attack-speed factor from a Mechanical Breakdown event (1 = normal).
     public internal(set) var eventSpeedFactor = 1.0
     var retargetTimer: Double = 0
+    /// Shots fired (chain lightning counts them).
+    var shotCount = 0
+    /// The target it has been firing at, and since when (focus fire).
+    weak var focusTarget: Enemy?
+    var focusSince: Double = 0
 
     /// Effective stats: this level's data with all researched tech applied.
     public internal(set) var stats: TowerLevelStats
@@ -194,6 +222,10 @@ public final class Projectile {
     var damageType: DamageType = .physical
     var hit = HitEffects()
     var canHitAir = false
+    /// Damage at the edge of the blast as a fraction of the centre's.
+    var edgeDamage: Double = 1
+    /// This shot arcs on to more enemies.
+    var chains = false
     weak var source: Tower?
 
     /// 0…1 progress of the flight, for arc height in the renderer.

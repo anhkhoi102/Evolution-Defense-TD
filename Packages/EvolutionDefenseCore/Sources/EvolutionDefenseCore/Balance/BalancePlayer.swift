@@ -19,6 +19,10 @@ public struct BalancePlayer: Sendable {
     public var upgradeOnlyBetweenWaves = false
     /// Highest level the player will upgrade to (5 = all).
     public var maxLevel = 5
+    /// Pays to restart towers a boss knocked out (false = always waits for the free recovery).
+    public var paysRecovery = false
+    /// Buys the top level once every pad is built and at `maxLevel`.
+    public var mastery = true
     /// Uses the summon abilities (militia on crowds, hero on bosses / elites).
     public var summons = false
 
@@ -36,9 +40,11 @@ public struct BalancePlayer: Sendable {
     }
 
     /// Tech in the order the player buys it (saving up when the next one is too expensive).
-    public static let techPriority = ["improvedArrows", "gunpowder", "fireTechnology", "advancedTraps", "ballisticResearch",
-                                      "automatedWeapons", "plasmaTechnology", "aiTargeting", "advancedExplosives",
-                                      "strongerWalls", "heavyArmor", "energyShield"]
+    /// Doctrines: the first of each pair listed here is the one this player picks.
+    public static let techPriority = ["advancedTraps", "improvedArrows", "trappers", "gunpowder", "fireTechnology", "cryoShells",
+                                      "ballisticResearch", "aiTargeting", "automatedWeapons", "overpressure", "plasmaTechnology",
+                                      "advancedExplosives", "teslaCoils", "strongerWalls", "heavyArmor", "energyShield",
+                                      "hunters", "incendiary", "fieldEngineers", "targetPainter"]
 
     /// A mixed defence on the strongest pads: the reference "good" plan.
     public static let goodPlan: [Slot] = [
@@ -75,12 +81,21 @@ public struct BalancePlayer: Sendable {
         }
     }
 
+    /// Restarts every knocked-out tower it can afford (checked together with the summons).
+    func recoverTowers(_ w: GameWorld) {
+        guard paysRecovery, w.phase == .waveInProgress else { return }
+        for t in w.towers where t.isDisabled(at: w.time) { w.recover(t) }
+    }
+
     func act(_ w: GameWorld, config: GameConfiguration) {
         let preparing = w.phase == .preparation
         var progress = true
         while progress {
             progress = false
-            if research, let id = Self.techPriority.first(where: { !w.isResearched($0) && (config.tech($0)?.era ?? .futuristic) <= w.currentEra }),
+            if research, let id = Self.techPriority.first(where: { id in
+                guard let t = config.tech(id), !w.isResearched(id), t.era <= w.currentEra else { return false }
+                return w.chosenDoctrine(excluding: t) == nil
+            }),
                case .success = w.research(id) {
                 progress = true; continue
             }
@@ -95,6 +110,13 @@ public struct BalancePlayer: Sendable {
                 progress = true; continue
             }
             if canUpgrade, let t = w.towers.filter({ !$0.isMaxLevel && $0.level < maxLevel }).min(by: { $0.level < $1.level }),
+               case .success = w.upgrade(t) {
+                progress = true; continue
+            }
+            // Mastery: once every pad is built and at the working level, the top level goes on the
+            // towers in plan order, as far as the gold reaches.
+            if canUpgrade, mastery, allMaxed, plan.allSatisfy({ w.tower(atSlot: $0.slot) != nil }) || w.towers.count >= plan.count,
+               let t = plan.compactMap({ w.tower(atSlot: $0.slot) }).first(where: { !$0.isMaxLevel }),
                case .success = w.upgrade(t) {
                 progress = true
             }
@@ -113,6 +135,9 @@ public struct BalancePlayer: Sendable {
         public var enemies = 0
         /// Gold unspent when the wave started (slack in the economy).
         public var goldAtStart = 0
+        /// Research Points unspent and technologies owned when the wave started.
+        public var researchAtStart = 0
+        public var techsAtStart = 0
         public var towers = 0
         public var levels = 0
         public var duration: Double = 0
@@ -163,14 +188,15 @@ public struct BalancePlayer: Sendable {
         while !w.phase.isOver && w.time < 60 * 45 {
             let preparing = w.phase == .preparation
             if (preparing && !wasPreparing) || ticks % 180 == 0 { act(w, config: config) }
-            if ticks % 30 == 0 { useSummons(w) }
+            if ticks % 30 == 0 { useSummons(w); recoverTowers(w) }
             wasPreparing = preparing
             ticks += 1
             w.step(dt)
             w.drainEvents { e in
                 switch e {
                 case .waveStarted(let n, _):
-                    current = WaveReport(number: n, goldAtStart: w.gold, towers: w.towers.count,
+                    current = WaveReport(number: n, goldAtStart: w.gold, researchAtStart: w.research,
+                                         techsAtStart: w.researchedTechs.count, towers: w.towers.count,
                                          levels: w.towers.reduce(0) { $0 + $1.level })
                     hpAtStart = w.baseHP; startTime = w.time
                 case .enemyReachedBase(let enemy, _):
@@ -244,8 +270,17 @@ extension BalancePlayer {
         // Every strategy that upgrades ends up using all pads: once its towers are maxed it keeps building.
         let full = goodPlan + extra
         func monoPlan(_ t: TowerArchetype) -> [Slot] { full.map { Slot($0.slot, t) } }
+        /// A fixed two-type line-up: the pads alternate between the two towers.
+        func pairPlan(_ a: TowerArchetype, _ b: TowerArchetype) -> [Slot] {
+            full.enumerated().map { Slot($1.slot, $0 % 2 == 0 ? a : b) }
+        }
         return [
         BalancePlayer(name: "expert (8 mixed, tech)", plan: full, maxTowers: 8),
+        {
+            var p = BalancePlayer(name: "payer (expert, restarts towers)", plan: full, maxTowers: 8)
+            p.paysRecovery = true
+            return p
+        }(),
         BalancePlayer(name: "spread (12 mixed, tech)", plan: full, maxTowers: 12),
         BalancePlayer(name: "focused, no tech", plan: full, maxTowers: 8, research: false),
         BalancePlayer(name: "casual (between waves, no tech)", plan: full, maxTowers: 8, research: false,
@@ -254,6 +289,11 @@ extension BalancePlayer {
         BalancePlayer(name: "only sniper", plan: monoPlan(.sniper), maxTowers: 8),
         BalancePlayer(name: "only heavy", plan: monoPlan(.heavy), maxTowers: 8),
         BalancePlayer(name: "only rapid", plan: monoPlan(.rapid), maxTowers: 8),
+        BalancePlayer(name: "pair sniper+splash", plan: pairPlan(.sniper, .splash), maxTowers: 8),
+        BalancePlayer(name: "pair heavy+splash", plan: pairPlan(.heavy, .splash), maxTowers: 8),
+        BalancePlayer(name: "pair heavy+sniper", plan: pairPlan(.heavy, .sniper), maxTowers: 8),
+        BalancePlayer(name: "pair rapid+heavy", plan: pairPlan(.rapid, .heavy), maxTowers: 8),
+        BalancePlayer(name: "pair rapid+splash", plan: pairPlan(.rapid, .splash), maxTowers: 8),
         BalancePlayer(name: "L1 spam (16 towers, no upgrades)", plan: full,
                       maxTowers: 16, upgrades: false),
         BalancePlayer(name: "passive (2 towers)", plan: Array(goodPlan.prefix(2)), maxTowers: 2, upgrades: false,

@@ -23,6 +23,7 @@ struct TowerEffectTests {
             for l in config.tower(a).levels {
                 let h = l.hitEffects
                 #expect((h.shred > 0) == (a == .rapid && l.level >= 3), "\(a) L\(l.level) shred")
+                if l.level > 5 { continue }   // level 6 is covered by TowerMasteryTests
                 #expect((h.expose > 0) == (a == .heavy && l.level >= 3), "\(a) L\(l.level) expose")
             }
         }

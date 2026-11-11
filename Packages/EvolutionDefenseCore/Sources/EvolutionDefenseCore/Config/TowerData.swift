@@ -60,6 +60,14 @@ public struct TowerLevelStats: Codable, Sendable, Equatable {
     public var special: HitEffects?
     /// Sees cloaked enemies.
     public var detectsStealth: Bool?
+    /// Blast falloff: damage at the edge of the blast as a fraction of the centre's (the inner half
+    /// of the radius takes full damage). Omitted = no falloff.
+    public var aoeEdgeDamage: Double?
+    /// Level whose base and weapon art this level uses (omitted = its own). A top level without
+    /// its own model reuses the one below it; the renderer marks it with a glow.
+    public var visualLevel: Int?
+
+    public var artLevel: Int { visualLevel ?? level }
 
     public var attackInterval: Double { 1.0 / max(attacksPerSecond, 0.01) }
     public var damagePerSecond: Double { damage * attacksPerSecond }
@@ -77,7 +85,7 @@ public struct HitEffects: Codable, Sendable, Equatable {
     /// Burn damage per second as a fraction of the hit's raw damage. Ignores armor.
     public var burn: Double
     public var burnDuration: Double
-    /// Seconds the target is stunned (bosses are immune).
+    /// Seconds the target is stunned (bosses are immune; no new stun for a while afterwards).
     public var stun: Double
     public var critChance: Double
     /// Damage multiplier on a critical hit.
@@ -91,15 +99,65 @@ public struct HitEffects: Codable, Sendable, Equatable {
     /// for `exposeDuration` seconds (bosses: half as long). Never stacks.
     public var expose: Double
     public var exposeDuration: Double
+    /// Execute: this much more damage (0.5 = +50 %) to targets below `executeThreshold` health
+    /// (bosses: half the bonus).
+    public var execute: Double
+    public var executeThreshold: Double
+    /// Chance of a critical hit (×`critMultiplier`) when the target is Exposed.
+    public var exposedCritChance: Double
+    /// Interrupt: seconds added to a boss's ability timers (each boss at most once per `interruptCooldown`).
+    public var interrupt: Double
+    /// Chain lightning: every `chainEvery`-th shot jumps to `chainTargets` more enemies within
+    /// `chainRange` of the target for `chainDamage` × the hit, carrying this hit's other effects.
+    public var chainEvery: Double
+    public var chainTargets: Double
+    public var chainRange: Double
+    public var chainDamage: Double
+    /// Burning ground: the blast leaves a fire for `groundDuration` seconds that burns ground enemies
+    /// on it for this fraction of the hit per second. One fire per tower.
+    public var groundBurn: Double
+    public var groundDuration: Double
+    /// More damage (0.2 = +20 %) to enemies that are slowed or burning.
+    public var afflictedBonus: Double
+    /// More damage to enemies above 80 % health.
+    public var healthyBonus: Double
+    /// Extra multiplier against energy shields for energy weapons (0.5 = shields break 50 % faster still).
+    public var shieldBonus: Double
+    /// Piercing shot: the shot carries on in a straight line through up to `pierceTargets` more
+    /// enemies behind the target (within `pierceLength`), each for `pierceDamage` × the hit.
+    public var pierceTargets: Double
+    public var pierceDamage: Double
+    public var pierceLength: Double
 
-    public init(slow: Double = 0, slowDuration: Double = 0, burn: Double = 0, burnDuration: Double = 0,
-                stun: Double = 0, critChance: Double = 0, critMultiplier: Double = 1,
-                shred: Double = 0, shredCap: Double = 0, shredDuration: Double = 0,
-                expose: Double = 0, exposeDuration: Double = 0) {
-        self.slow = slow; self.slowDuration = slowDuration; self.burn = burn; self.burnDuration = burnDuration
-        self.stun = stun; self.critChance = critChance; self.critMultiplier = critMultiplier
-        self.shred = shred; self.shredCap = shredCap; self.shredDuration = shredDuration
-        self.expose = expose; self.exposeDuration = exposeDuration
+    public init(slow: Double = 0, slowDuration: Double = 0, burn: Double = 0, burnDuration: Double = 0, stun: Double = 0, critChance: Double = 0, critMultiplier: Double = 1, shred: Double = 0, shredCap: Double = 0, shredDuration: Double = 0, expose: Double = 0, exposeDuration: Double = 0, execute: Double = 0, executeThreshold: Double = 0, exposedCritChance: Double = 0, interrupt: Double = 0, chainEvery: Double = 0, chainTargets: Double = 0, chainRange: Double = 0, chainDamage: Double = 0, groundBurn: Double = 0, groundDuration: Double = 0, afflictedBonus: Double = 0, healthyBonus: Double = 0, shieldBonus: Double = 0, pierceTargets: Double = 0, pierceDamage: Double = 0, pierceLength: Double = 0) {
+        self.slow = slow
+        self.slowDuration = slowDuration
+        self.burn = burn
+        self.burnDuration = burnDuration
+        self.stun = stun
+        self.critChance = critChance
+        self.critMultiplier = critMultiplier
+        self.shred = shred
+        self.shredCap = shredCap
+        self.shredDuration = shredDuration
+        self.expose = expose
+        self.exposeDuration = exposeDuration
+        self.execute = execute
+        self.executeThreshold = executeThreshold
+        self.exposedCritChance = exposedCritChance
+        self.interrupt = interrupt
+        self.chainEvery = chainEvery
+        self.chainTargets = chainTargets
+        self.chainRange = chainRange
+        self.chainDamage = chainDamage
+        self.groundBurn = groundBurn
+        self.groundDuration = groundDuration
+        self.afflictedBonus = afflictedBonus
+        self.healthyBonus = healthyBonus
+        self.shieldBonus = shieldBonus
+        self.pierceTargets = pierceTargets
+        self.pierceDamage = pierceDamage
+        self.pierceLength = pierceLength
     }
 
     public init(from decoder: Decoder) throws {
@@ -116,9 +174,25 @@ public struct HitEffects: Codable, Sendable, Equatable {
         shredDuration = try c.decodeIfPresent(Double.self, forKey: .shredDuration) ?? 0
         expose = try c.decodeIfPresent(Double.self, forKey: .expose) ?? 0
         exposeDuration = try c.decodeIfPresent(Double.self, forKey: .exposeDuration) ?? 0
+        execute = try c.decodeIfPresent(Double.self, forKey: .execute) ?? 0
+        executeThreshold = try c.decodeIfPresent(Double.self, forKey: .executeThreshold) ?? 0
+        exposedCritChance = try c.decodeIfPresent(Double.self, forKey: .exposedCritChance) ?? 0
+        interrupt = try c.decodeIfPresent(Double.self, forKey: .interrupt) ?? 0
+        chainEvery = try c.decodeIfPresent(Double.self, forKey: .chainEvery) ?? 0
+        chainTargets = try c.decodeIfPresent(Double.self, forKey: .chainTargets) ?? 0
+        chainRange = try c.decodeIfPresent(Double.self, forKey: .chainRange) ?? 0
+        chainDamage = try c.decodeIfPresent(Double.self, forKey: .chainDamage) ?? 0
+        groundBurn = try c.decodeIfPresent(Double.self, forKey: .groundBurn) ?? 0
+        groundDuration = try c.decodeIfPresent(Double.self, forKey: .groundDuration) ?? 0
+        afflictedBonus = try c.decodeIfPresent(Double.self, forKey: .afflictedBonus) ?? 0
+        healthyBonus = try c.decodeIfPresent(Double.self, forKey: .healthyBonus) ?? 0
+        shieldBonus = try c.decodeIfPresent(Double.self, forKey: .shieldBonus) ?? 0
+        pierceTargets = try c.decodeIfPresent(Double.self, forKey: .pierceTargets) ?? 0
+        pierceDamage = try c.decodeIfPresent(Double.self, forKey: .pierceDamage) ?? 0
+        pierceLength = try c.decodeIfPresent(Double.self, forKey: .pierceLength) ?? 0
     }
 
-    public var isEmpty: Bool { slow == 0 && burn == 0 && stun == 0 && critChance == 0 && shred == 0 && expose == 0 }
+    public var isEmpty: Bool { self == HitEffects() }
 
     /// Strongest of each effect (effects from levels and tech don't stack additively).
     public func combined(with o: HitEffects) -> HitEffects {
@@ -135,18 +209,43 @@ public struct HitEffects: Codable, Sendable, Equatable {
         r.shredDuration = max(r.shredDuration, o.shredDuration)
         r.expose = max(r.expose, o.expose)
         r.exposeDuration = max(r.exposeDuration, o.exposeDuration)
+        r.execute = max(r.execute, o.execute)
+        r.executeThreshold = max(r.executeThreshold, o.executeThreshold)
+        r.exposedCritChance = max(r.exposedCritChance, o.exposedCritChance)
+        r.interrupt = max(r.interrupt, o.interrupt)
+        if o.chainEvery > 0 && (r.chainEvery == 0 || o.chainEvery < r.chainEvery) { r.chainEvery = o.chainEvery }
+        r.chainTargets = max(r.chainTargets, o.chainTargets)
+        r.chainRange = max(r.chainRange, o.chainRange)
+        r.chainDamage = max(r.chainDamage, o.chainDamage)
+        r.groundBurn = max(r.groundBurn, o.groundBurn)
+        r.groundDuration = max(r.groundDuration, o.groundDuration)
+        r.afflictedBonus = max(r.afflictedBonus, o.afflictedBonus)
+        r.healthyBonus = max(r.healthyBonus, o.healthyBonus)
+        r.shieldBonus = max(r.shieldBonus, o.shieldBonus)
+        r.pierceTargets = max(r.pierceTargets, o.pierceTargets)
+        r.pierceDamage = max(r.pierceDamage, o.pierceDamage)
+        r.pierceLength = max(r.pierceLength, o.pierceLength)
         return r
     }
 
     /// Short labels for the UI.
     public var labels: [String] {
         var l: [String] = []
-        if slow > 0 { l.append("Slows \(Int((slow * 100).rounded()))%") }
+        func pct(_ v: Double) -> Int { Int((v * 100).rounded()) }
+        if slow > 0 { l.append("Slows \(pct(slow))%") }
         if burn > 0 { l.append("Burns") }
+        if groundBurn > 0 { l.append("Burning ground") }
         if stun > 0 { l.append("Stuns \(String(format: "%.1f", stun))s") }
-        if critChance > 0 { l.append("\(Int((critChance * 100).rounded()))% crit ×\(String(format: "%.1f", critMultiplier))") }
+        if critChance > 0 { l.append("\(pct(critChance))% crit ×\(String(format: "%.1f", critMultiplier))") }
         if shred > 0 { l.append("Shreds armour (up to −\(Int(shredCap)))") }
-        if expose > 0 { l.append("Exposes +\(Int((expose * 100).rounded()))% damage") }
+        if expose > 0 { l.append("Exposes +\(pct(expose))% damage") }
+        if execute > 0 { l.append("Execute +\(pct(execute))% under \(pct(executeThreshold))% health") }
+        if exposedCritChance > 0 { l.append("\(pct(exposedCritChance))% crit on Exposed") }
+        if chainEvery > 0 { l.append("Chain lightning ×\(Int(chainTargets))") }
+        if pierceTargets > 0 { l.append("Pierces \(Int(pierceTargets)) more in line") }
+        if interrupt > 0 { l.append("Interrupts bosses") }
+        if afflictedBonus > 0 { l.append("+\(pct(afflictedBonus))% vs slowed or burning") }
+        if healthyBonus > 0 { l.append("+\(pct(healthyBonus))% vs healthy") }
         return l
     }
 }
@@ -159,7 +258,7 @@ public struct TowerDefinition: Codable, Sendable {
     /// Visual asset key (`tower.<key>.<level>.base/head` in the asset manifest).
     /// Defaults to the archetype name.
     public var visual: String?
-    /// Linear upgrade path (level 1…5). The array form leaves room for
+    /// Linear upgrade path (level 1…6). The array form leaves room for
     /// branching upgrades later (e.g. a `branches` field per level).
     public var levels: [TowerLevelStats]
 

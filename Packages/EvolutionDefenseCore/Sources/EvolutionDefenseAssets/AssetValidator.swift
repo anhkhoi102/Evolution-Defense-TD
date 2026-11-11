@@ -21,8 +21,8 @@ public enum AssetValidator {
         for a in TowerArchetype.allCases {
             let t = config.tower(a)
             for l in t.levels {
-                ids.append(AssetID.towerBase(t.visualKey, level: l.level))
-                ids.append(AssetID.towerHead(t.visualKey, level: l.level))
+                ids.append(AssetID.towerBase(t.visualKey, level: l.artLevel))
+                ids.append(AssetID.towerHead(t.visualKey, level: l.artLevel))
                 ids.append(AssetID.projectile(l.projectileAsset))
             }
         }

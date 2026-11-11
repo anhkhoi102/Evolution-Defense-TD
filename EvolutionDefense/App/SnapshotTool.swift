@@ -120,9 +120,9 @@ enum SnapshotTool {
         // Gallery of every evolution level.
         c.world.debugSetGold(50_000)
         let plan: [(Int, TowerArchetype, Int)] = [
-            (3, .sniper, 5), (4, .rapid, 5), (9, .heavy, 5), (12, .splash, 5), (10, .sniper, 3), (14, .rapid, 3), (5, .splash, 3),
-            (1, .heavy, 2), (2, .splash, 2), (6, .sniper, 4), (7, .rapid, 2), (8, .heavy, 4), (11, .splash, 4),
-            (13, .rapid, 4), (15, .sniper, 2), (16, .heavy, 3)]
+            (3, .sniper, 6), (4, .rapid, 6), (9, .heavy, 6), (12, .splash, 6), (10, .sniper, 3), (14, .rapid, 3), (5, .splash, 3),
+            (1, .heavy, 2), (2, .splash, 2), (6, .sniper, 5), (7, .rapid, 2), (8, .heavy, 5), (11, .splash, 5),
+            (13, .rapid, 5), (15, .sniper, 2), (16, .heavy, 4)]
         for (slot, a, level) in plan {
             if c.world.tower(atSlot: slot) == nil { c.selectBuild(a); c.clickSlot(slot) }
             if let t = c.world.tower(atSlot: slot) { while t.level < level { c.world.upgrade(t) } }
@@ -197,6 +197,16 @@ enum SnapshotTool {
         c.scene.fastForward(seconds: 0.15)
         await pause(0.5)
         capture(out.appendingPathComponent("14-dragon-fire-breath.png"))
+        // A knocked-out tower selected: countdown above it, "Restart now" in the panel.
+        if let t = c.world.towers.first(where: { $0.isDisabled(at: c.world.time) }) {
+            c.clickSlot(t.slotID)
+            await pause(0.4)
+            capture(out.appendingPathComponent("14b-tower-knocked-out.png"))
+            c.recoverSelected()
+            await pause(0.3)
+            capture(out.appendingPathComponent("14c-tower-restarted.png"))
+            c.cancelInteraction()
+        }
 
         // Industrial: mutants and swarms.
         evolve(c, to: 4)
@@ -244,6 +254,44 @@ enum SnapshotTool {
         await pause(0.6)
         capture(out.appendingPathComponent("22-records.png"))
         router.menuPanel = .none
+
+        // A late stage with trait enemies on the road (stage 22: plated, phasing and flyers).
+        router.newGame()
+        await pause(1.0)
+        if let g = router.game {
+            g.world.debugSetGold(1_000_000)
+            g.world.debugSkipToWave(22)
+            for (k, s) in g.world.config.map.buildSlots.enumerated() {
+                let a: TowerArchetype = [.splash, .sniper, .heavy, .rapid][k % 4]
+                if case .success = g.world.build(a, atSlot: s.id), let t = g.world.tower(atSlot: s.id) { while !t.isMaxLevel { g.world.upgrade(t) } }
+            }
+            g.startNextWave()
+            await waitFor(g, 40) { $0.world.enemies.filter { $0.trait != nil }.count >= 6 }
+            g.scene.fastForward(seconds: 1.5)
+            await pause(0.6)
+            capture(out.appendingPathComponent("23-late-stage-traits.png"))
+            g.exitToMenu()
+            await pause(0.5)
+        }
+        // The campaign result screen: the last stage won with a full top-level defence.
+        router.newGame()
+        await pause(1.0)
+        if let g = router.game {
+            g.world.debugSetGold(1_000_000)
+            g.world.debugSkipToWave(30)
+            for (k, s) in g.world.config.map.buildSlots.enumerated() {
+                let a: TowerArchetype = [.splash, .sniper, .heavy, .rapid][k % 4]
+                if case .success = g.world.build(a, atSlot: s.id), let t = g.world.tower(atSlot: s.id) { while !t.isMaxLevel { g.world.upgrade(t) } }
+            }
+            g.startNextWave()
+            var guardSteps = 0
+            while !g.world.phase.isOver && guardSteps < 120 { g.scene.fastForward(seconds: 5); guardSteps += 1 }
+            await pause(1.6)
+            capture(out.appendingPathComponent("24-campaign-result.png"))
+            print("SNAPSHOT result phase=\(g.world.phase) stars=\(g.world.matchStars) lost=\(g.world.baseDamageTaken)")
+            g.exitToMenu()
+            await pause(0.4)
+        }
         print("SNAPSHOT phase=\(c.world.phase) wave=\(c.world.waveNumber)/\(c.world.totalWaves) baseHP=\(c.world.baseHP) kills=\(c.world.stats.enemiesKilled) leaked=\(c.world.stats.enemiesLeaked) bosses=\(c.world.stats.bossesDefeated) techs=\(c.world.researchedTechs.count) time=\(Int(c.world.time))s")
     }
 

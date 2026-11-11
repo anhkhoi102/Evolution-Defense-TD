@@ -110,11 +110,11 @@ func runBalance(_ args: [String]) {
     let p = profiles[min(max(0, pick), profiles.count - 1)]
     let r = p.play(config: config, seed: seedList[0], options: MatchOptions(difficulty: difficulty, randomEvents: false, battlefield: mapID, hero: heroArg(args)))
     print("\nDetail: \(p.name), seed \(seedList[0])")
-    print("  wave  deepest  hpLost  leaks  enemies  goldAtStart  towers  levels  duration  leaked")
+    print("  wave  deepest  hpLost  leaks  enemies  goldAtStart  RP  techs  towers  levels  duration  leaked")
     for w in r.waves {
         let leaked = w.leaksByEnemy.sorted { $0.value > $1.value }.map { "\($0.key)×\($0.value)" }.joined(separator: " ")
-        print(String(format: "  %4d    %3d%%    %4d   %4d     %4d         %4d      %2d      %2d     %4.0fs  ",
-                     w.number, Int(w.deepestProgress * 100), w.hpLost, w.leaks, w.enemies, w.goldAtStart, w.towers, w.levels, w.duration) + leaked)
+        print(String(format: "  %4d    %3d%%    %4d   %4d     %4d         %4d  %2d    %2d      %2d      %2d     %4.0fs  ",
+                     w.number, Int(w.deepestProgress * 100), w.hpLost, w.leaks, w.enemies, w.goldAtStart, w.researchAtStart, w.techsAtStart, w.towers, w.levels, w.duration) + leaked)
     }
 }
 

@@ -260,8 +260,11 @@ final class ArtLibrary {
 
     func enemy(_ def: EnemyDefinition) -> SpriteAsset { sprite(AssetID.enemy(def.visual)) }
     func summon(_ ability: SummonAbilityDefinition) -> SpriteAsset { sprite(AssetID.summon(ability.visual)) }
-    func towerBase(_ def: TowerDefinition, level: Int) -> SpriteAsset { sprite(AssetID.towerBase(def.visualKey, level: level)) }
-    func towerHead(_ def: TowerDefinition, level: Int) -> SpriteAsset { sprite(AssetID.towerHead(def.visualKey, level: level)) }
+    func towerBase(_ def: TowerDefinition, level: Int) -> SpriteAsset { sprite(AssetID.towerBase(def.visualKey, level: artLevel(def, level))) }
+    func towerHead(_ def: TowerDefinition, level: Int) -> SpriteAsset { sprite(AssetID.towerHead(def.visualKey, level: artLevel(def, level))) }
+    /// The highest level at or below `level` that the pack has art for (a new top level reuses
+    /// the model below it until it gets its own; the renderer marks it with a glow).
+    func artLevel(_ def: TowerDefinition, _ level: Int) -> Int { def.stats(level: level).artLevel }
     /// Hot path (every shot): cached by visual key so no id string is built per call.
     func projectile(_ visual: String) -> SpriteAsset {
         if let s = projectileCache[visual] { return s }

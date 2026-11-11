@@ -56,6 +56,10 @@ public struct RulesConfig: Codable, Sendable {
     public var elite: EliteConfig?
     /// Star rating thresholds for a won match.
     public var stars: StarRatingConfig?
+    /// Limits and prices of boss tower-disables.
+    public var towerDisable: TowerDisableConfig?
+    /// Timing of late-game enemy traits.
+    public var traits: TraitConfig?
 }
 
 public enum ConfigurationError: Error, CustomStringConvertible {

@@ -1,5 +1,41 @@
 import Foundation
 
+/// A late-game twist on an ordinary enemy (wave groups with "trait"). Each one blunts one kind of
+/// answer without making any tower useless.
+public enum EnemyTrait: String, Codable, Sendable, CaseIterable {
+    /// Cannot be slowed or frozen.
+    case insulated
+    /// Armour Shred only works at half strength.
+    case plated
+    /// Every few seconds it flickers out and takes no damage for a moment: burst is wasted, steady fire is not.
+    case phasing
+
+    public var displayName: String {
+        switch self {
+        case .insulated: "Insulated"
+        case .plated: "Plated"
+        case .phasing: "Phasing"
+        }
+    }
+    public var summary: String {
+        switch self {
+        case .insulated: "Cannot be slowed or frozen"
+        case .plated: "Armour Shred works at half strength"
+        case .phasing: "Flickers out and takes no damage for a moment"
+        }
+    }
+}
+
+/// Timing of the phasing trait, from game.json → "traits".
+public struct TraitConfig: Codable, Sendable, Equatable {
+    /// Seconds between flickers, and how long each one lasts.
+    public var phaseInterval: Double
+    public var phaseDuration: Double
+    public init(phaseInterval: Double = 5, phaseDuration: Double = 1.2) {
+        self.phaseInterval = phaseInterval; self.phaseDuration = phaseDuration
+    }
+}
+
 /// A batch of identical enemies inside a wave.
 public struct SpawnGroup: Codable, Sendable {
     public var enemy: String
@@ -14,12 +50,15 @@ public struct SpawnGroup: Codable, Sendable {
     public var armorBonus: Double?
     /// Elite group: stats from game.json → "elite", marked on screen.
     public var elite: Bool?
+    /// Late-game trait carried by every enemy of the group.
+    public var trait: EnemyTrait?
 
     public init(enemy: String, count: Int, interval: Double, delay: Double,
-                hpMultiplier: Double? = nil, speedMultiplier: Double? = nil, armorBonus: Double? = nil, elite: Bool? = nil) {
+                hpMultiplier: Double? = nil, speedMultiplier: Double? = nil, armorBonus: Double? = nil, elite: Bool? = nil,
+                trait: EnemyTrait? = nil) {
         self.enemy = enemy; self.count = count; self.interval = interval; self.delay = delay
         self.hpMultiplier = hpMultiplier; self.speedMultiplier = speedMultiplier; self.armorBonus = armorBonus
-        self.elite = elite
+        self.elite = elite; self.trait = trait
     }
 }
 
@@ -29,8 +68,9 @@ public struct SpawnModifiers: Sendable, Equatable {
     public var speed: Double = 1
     public var armorBonus: Double = 0
     public var elite = false
-    public init(hp: Double = 1, speed: Double = 1, armorBonus: Double = 0, elite: Bool = false) {
-        self.hp = hp; self.speed = speed; self.armorBonus = armorBonus; self.elite = elite
+    public var trait: EnemyTrait?
+    public init(hp: Double = 1, speed: Double = 1, armorBonus: Double = 0, elite: Bool = false, trait: EnemyTrait? = nil) {
+        self.hp = hp; self.speed = speed; self.armorBonus = armorBonus; self.elite = elite; self.trait = trait
     }
 }
 

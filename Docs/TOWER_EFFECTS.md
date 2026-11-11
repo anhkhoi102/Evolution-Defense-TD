@@ -1,5 +1,7 @@
 # Tower effects: Armour Shred and Expose
 
+> **Later additions (Phase 2 of the gameplay rebalance):** level 6, blast falloff, burning ground, Execute, chain lightning, Interrupt, freeze and the doctrines are described in [GAMEPLAY_AUDIT_V2.md](GAMEPLAY_AUDIT_V2.md), sections 2.3–2.4 and 6.
+
 Implemented 10 November 2026 from [TOWER_BALANCE_PROPOSAL.md](TOWER_BALANCE_PROPOSAL.md) (step 1).
 The level-4 upgrade choice (step 2 of the proposal) is **not** built.
 

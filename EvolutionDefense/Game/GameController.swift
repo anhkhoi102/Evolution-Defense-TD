@@ -40,6 +40,9 @@ struct TowerSnapshot: Equatable {
     /// Extra damage the team dealt thanks to this tower's Armour Shred or Expose.
     var assistDamage: Int
     var disabled: Bool
+    /// Whole seconds until a disabled tower works again, and the gold to restart it now.
+    var disableSeconds: Int
+    var recoverCost: Int?
     /// Reinforcement tower: can't be upgraded or sold.
     var isTemporary: Bool
     var brokenDown: Bool
@@ -55,6 +58,8 @@ struct TowerSnapshot: Equatable {
         sellValue = world.sellValue(for: t)
         targeting = t.targeting; kills = t.kills; damageDealt = Int(t.damageDealt.rounded()); assistDamage = Int(t.assistDamage.rounded())
         disabled = t.isDisabled(at: world.time)
+        disableSeconds = Int(t.disableRemaining(at: world.time).rounded(.up))
+        recoverCost = world.recoverCost(for: t)
         isTemporary = t.isTemporary
         brokenDown = t.eventSpeedFactor < 1
     }
@@ -116,11 +121,12 @@ struct EnemyIntel: Identifiable, Equatable {
 
     static func == (a: EnemyIntel, b: EnemyIntel) -> Bool { a.id == b.id && a.count == b.count }
 
-    init(_ d: EnemyDefinition, count: Int, elites: Int = 0) {
+    init(_ d: EnemyDefinition, count: Int, elites: Int = 0, groupTraits: [EnemyTrait] = []) {
         id = d.id; name = d.displayName; self.count = count; isBoss = d.isBoss; isFlying = d.isFlying
         definition = d
         var t: [String] = []
         if elites > 0 { t.append(elites == count ? "Elite" : "\(elites) elite") }
+        for trait in groupTraits { t.append(trait.displayName) }
         if d.isFlying { t.append("Flying") }
         if d.armor >= 8 { t.append("Armored") }
         let r = d.resistance
@@ -319,13 +325,17 @@ final class GameController {
         guard let wave = intelWave else { return [] }
         var counts: [String: Int] = [:]
         var elites: [String: Int] = [:]
+        var traits: [String: [EnemyTrait]] = [:]
         var order: [String] = []
         for g in wave.groups {
             if counts[g.enemy] == nil { order.append(g.enemy) }
             counts[g.enemy, default: 0] += g.count
             if g.elite == true { elites[g.enemy, default: 0] += g.count }
+            if let t = g.trait, traits[g.enemy]?.contains(t) != true { traits[g.enemy, default: []].append(t) }
         }
-        return order.compactMap { id in config.enemies[id].map { EnemyIntel($0, count: counts[id]!, elites: elites[id] ?? 0) } }
+        return order.compactMap { id in
+            config.enemies[id].map { EnemyIntel($0, count: counts[id]!, elites: elites[id] ?? 0, groupTraits: traits[id] ?? []) }
+        }
             .sorted { ($0.isBoss ? 1 : 0, $0.definition.hp) > ($1.isBoss ? 1 : 0, $1.definition.hp) }
     }
 
@@ -517,6 +527,24 @@ final class GameController {
         refreshHUD()
     }
 
+    /// Pays to restart the selected tower now instead of waiting for it to recover.
+    func recoverSelected() {
+        guard let id = selectedTower?.id, let t = world.tower(withID: id) else { return }
+        switch world.recover(t) {
+        case .success(let cost):
+            showToast("\(t.name) restarted for \(cost) gold", .success)
+            audio.play(.build)
+        case .insufficientGold(let need, let have):
+            showToast("Not enough gold to restart — need \(need), have \(have). It will recover by itself", .warning)
+            audio.play(.error)
+        case .notDisabled:
+            showToast("\(t.name) is already working", .info)
+        case .unknownTower, .matchOver:
+            break
+        }
+        refreshHUD()
+    }
+
     /// First press arms the button, second press sells (prevents accidental sales).
     func sellSelected() {
         guard let id = selectedTower?.id, let t = world.tower(withID: id) else { return }
@@ -566,6 +594,8 @@ final class GameController {
             audio.play(.error)
         case .eraLocked(let era):
             showToast("Available in the \(era.displayName)", .info)
+        case .excluded(let other):
+            showToast("You chose \(other) for this age", .info)
         case .alreadyResearched, .unknownTech, .matchOver:
             break
         }
@@ -632,7 +662,7 @@ final class GameController {
         case "3": selectBuild(.heavy)
         case "4": selectBuild(.rapid)
         case "u": upgradeSelected()
-        case "r": toggleRepairPanel()
+        case "r": if selectedTower?.recoverCost != nil { recoverSelected() } else { toggleRepairPanel() }
         case "t": toggleTechPanel()
         case "n", "\r": startNextWave()
         case "f": toggleSpeed()
@@ -671,7 +701,7 @@ final class GameController {
         case .enemyPhaseChanged(let e, let name) where e.isBoss:
             showBanner(Banner(title: name.uppercased(), subtitle: e.definition.displayName.uppercased() + " · NEW PHASE", kind: .phase))
         case .towersDisabled(let ts, _, let ability, let duration):
-            showToast("\(ability)! \(ts.count) tower\(ts.count == 1 ? "" : "s") knocked out for \(Int(duration))s", .warning)
+            showToast("\(ability)! \(ts.count) tower\(ts.count == 1 ? "" : "s") knocked out for \(Int(duration.rounded()))s. Click one to restart it now, or wait", .warning)
         case .baseStruck(_, let ability, let dmg):
             baseHitCount += 1
             if dmg > 0 { showToast("\(ability) hit the base (−\(dmg) HP)", .warning) }

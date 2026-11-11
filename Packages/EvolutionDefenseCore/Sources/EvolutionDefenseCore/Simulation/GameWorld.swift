@@ -52,12 +52,23 @@ public enum StartWaveResult: Equatable, Sendable {
     case matchOver
 }
 
+public enum RecoverResult: Equatable, Sendable {
+    case success(cost: Int)
+    /// The tower is working (it recovered by itself, or was already restarted).
+    case notDisabled
+    case insufficientGold(needed: Int, available: Int)
+    case unknownTower
+    case matchOver
+}
+
 public enum ResearchResult: Equatable, Sendable {
     case success(cost: Int)
     case unknownTech
     case alreadyResearched
     case eraLocked(requires: Era)
     case insufficientResearch(needed: Int, available: Int)
+    /// Another technology of the same doctrine group was already chosen.
+    case excluded(by: String)
     case matchOver
 }
 
@@ -66,15 +77,33 @@ public enum TechStatus: Equatable, Sendable {
     case available
     case unaffordable(needed: Int)
     case locked(requires: Era)
+    /// The other doctrine of its pair was chosen instead.
+    case excluded(by: String)
 }
 
 /// Things that happened during a step. The renderer/audio/UI drain these each frame.
 /// Team effects towers put on enemies (Docs/TOWER_EFFECTS.md).
-public enum TowerStatus: Sendable { case shred, expose }
+/// A patch of burning ground: ground enemies on it keep burning.
+public struct BurnZone: Sendable {
+    public var towerID: Int
+    public var position: CGPoint
+    public var radius: Double
+    public var dps: Double
+    public var until: Double
+    var nextTick: Double
+}
+
+public enum TowerStatus: Sendable { case shred, expose, freeze, execute, interrupt }
 
 public enum GameEvent {
     /// A tower effect took hold on an enemy that did not have it (for markers and sounds).
     case statusApplied(Enemy, TowerStatus)
+    /// Chain lightning jumped from the first point through the others.
+    case chainLightning([CGPoint])
+    /// A piercing shot carried on from its target to the last enemy it went through.
+    case piercingShot(from: CGPoint, to: CGPoint)
+    /// A blast left burning ground.
+    case groundFire(position: CGPoint, radius: Double, duration: Double)
     case enemySpawned(Enemy)
     case bossSpawned(Enemy)
     case enemyKilled(Enemy, reward: Int)
@@ -108,6 +137,8 @@ public enum GameEvent {
     case summonExpired(SummonUnit)
     case summonReady(SummonAbilityDefinition)
     case towersDisabled([Tower], by: Enemy, ability: String, duration: Double)
+    /// A disabled tower works again (`paid` = gold for an instant recovery, 0 = it recovered by itself).
+    case towerRecovered(Tower, paid: Int)
     case baseStruck(by: Enemy, ability: String, damage: Int)
     case researchEarned(amount: Int, reason: String)
     case techResearched(TechDefinition)
@@ -229,6 +260,8 @@ public final class GameWorld {
     var summonReadyAnnounced: Set<String> = []
     /// Summon abilities used this match.
     public internal(set) var summonsCalled = 0
+    /// Burning ground left by blasts (one per tower).
+    public internal(set) var burnZones: [BurnZone] = []
     /// Base HP lost over the whole match (repairs don't reduce it): what the star rating looks at.
     public internal(set) var baseDamageTaken = 0
     /// The match's star rating: 1–3 once it is won, 0 before that or after a defeat.
@@ -290,6 +323,36 @@ public final class GameWorld {
     /// Gold needed for the tower's next level, or nil at max level.
     public func upgradeCost(for t: Tower) -> Int? {
         t.isMaxLevel ? nil : t.definition.stats(level: t.level + 1).cost
+    }
+
+    /// Gold to restart a disabled tower right now (nil when it is working).
+    public func recoverCost(for t: Tower) -> Int? {
+        guard t.isDisabled(at: time) else { return nil }
+        let c = config.rules.towerDisable ?? TowerDisableConfig()
+        let raw = Double(t.totalInvested) * c.recoverCostFraction
+        let price = min(Double(c.recoverCostMax), max(Double(c.recoverCostMin), raw)) * modifiers.recoverCost
+        return max(1, Int(price.rounded()))
+    }
+
+    /// Instant recovery: pays once and puts the same tower back to work. Waiting costs nothing.
+    @discardableResult
+    public func recover(_ t: Tower) -> RecoverResult {
+        if phase.isOver { return .matchOver }
+        guard towersBySlot[t.slotID] === t else { return .unknownTower }
+        guard let cost = recoverCost(for: t) else { return .notDisabled }
+        guard economy.spend(cost) else { return .insufficientGold(needed: cost, available: gold) }
+        stats.goldSpent += cost
+        endDisable(t)
+        events.append(.towerRecovered(t, paid: cost))
+        return .success(cost: cost)
+    }
+
+    /// Puts a tower back to work and starts its protection against the next disable.
+    func endDisable(_ t: Tower) {
+        t.disabledUntil = -1
+        t.disabledDuration = 0
+        t.protectedUntil = time + (config.rules.towerDisable ?? TowerDisableConfig()).protection
+        t.retargetTimer = 0
     }
 
     public func sellValue(for t: Tower) -> Int {
@@ -435,6 +498,7 @@ public final class GameWorld {
             return
         }
         updateEnemyAbilities(dt)
+        updateBurnZones()
         if phase == .defeat { return }
         moveEnemies(dt)
         if phase == .defeat { return }
@@ -489,6 +553,10 @@ public final class GameWorld {
         let e = Enemy(id: makeID(), definition: def, modifiers: mods, laneOffset: offset)
         e.rewardMultiplier = reward
         e.isElite = mods.elite && !def.isBoss
+        if !def.isBoss, let trait = mods.trait {
+            e.trait = trait
+            if trait == .phasing { e.nextPhaseAt = time + (config.rules.traits ?? TraitConfig()).phaseInterval * 0.6 }
+        }
         e.isSpawnedMinion = minion
         e.distance = max(0, distance)
         let s = path.sample(at: e.distance, segmentHint: &e.segmentHint)
@@ -558,6 +626,7 @@ public final class GameWorld {
 
     private func checkWaveCompletion() {
         guard phase == .waveInProgress, waves.spawningFinished, enemies.isEmpty else { return }
+        burnZones.removeAll()
         let n = waves.waveNumber
         let econ = config.rules.economy
         let wave = waves.currentWave
@@ -571,7 +640,7 @@ public final class GameWorld {
 
         var research = 0
         let rc = config.rules.research
-        if perfect && rc.perfectWave > 0 {
+        if perfect && rc.perfectWave > 0 && rc.paysPerfect(stage: n, isBoss: wave?.isBossWave ?? false) {
             research += rc.perfectWave
             events.append(.researchEarned(amount: rc.perfectWave, reason: "Perfect wave"))
         }

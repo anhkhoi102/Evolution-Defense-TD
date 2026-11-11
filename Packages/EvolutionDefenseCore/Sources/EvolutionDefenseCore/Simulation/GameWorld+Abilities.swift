@@ -17,6 +17,12 @@ extension GameWorld {
             if e.slowAmount > 0 && time >= e.slowUntil { e.slowAmount = 0 }
             if e.shredAmount > 0 && time >= e.shredUntil { e.shredAmount = 0; e.shredCap = 0 }
             if e.exposeAmount > 0 && time >= e.exposeUntil { e.exposeAmount = 0 }
+            if e.frozenUntil > 0 && time >= e.frozenUntil { e.frozenUntil = 0 }
+            if e.trait == .phasing && time >= e.nextPhaseAt {
+                let tc = config.rules.traits ?? TraitConfig()
+                e.phasedUntil = time + tc.phaseDuration
+                e.nextPhaseAt = time + tc.phaseInterval
+            }
             if e.burnDPS > 0 {
                 if time >= e.burnUntil {
                     e.burnDPS = 0
@@ -104,19 +110,28 @@ extension GameWorld {
 
     /// Knocks out the towers closest to `e` within the ability radius.
     private func disableTowers(near e: Enemy, _ d: DisableTowersAbility) {
+        let rules = config.rules.towerDisable ?? TowerDisableConfig()
+        // Never more than a share of the player's towers at once (at least one), counting those already out.
+        let alreadyOut = towers.filter { $0.isDisabled(at: time) }.count
+        let room = max(1, Int(Double(towers.count) * rules.maxShare)) - alreadyOut
+        guard room > 0 else { return }
         let r2 = CGFloat(d.radius * d.radius)
         scratchTowers.removeAll(keepingCapacity: true)
-        for t in towers where t.position.distanceSquared(to: e.position) <= r2 {
+        // Towers that are out, or just came back, are left alone: the player gets time to respond.
+        for t in towers where !t.isDisabled(at: time) && time >= t.protectedUntil
+            && t.position.distanceSquared(to: e.position) <= r2 {
             scratchTowers.append(t)
         }
         guard !scratchTowers.isEmpty else { return }
         scratchTowers.sort { $0.position.distanceSquared(to: e.position) < $1.position.distanceSquared(to: e.position) }
-        let hit = Array(scratchTowers.prefix(max(1, d.maxTowers)))
+        let hit = Array(scratchTowers.prefix(min(room, max(1, d.maxTowers))))
+        let duration = d.duration * modifiers.disableDuration
         for t in hit {
-            t.disabledUntil = max(t.disabledUntil, time + d.duration)
+            t.disabledUntil = time + duration
+            t.disabledDuration = duration
             t.target = nil
         }
-        events.append(.towersDisabled(hit, by: e, ability: d.name, duration: d.duration))
+        events.append(.towersDisabled(hit, by: e, ability: d.name, duration: duration))
     }
 
     /// Boss phase transitions and brood spawns after damage.

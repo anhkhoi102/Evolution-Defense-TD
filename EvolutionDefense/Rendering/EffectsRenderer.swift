@@ -261,6 +261,56 @@ final class EffectsRenderer {
         spawn(fx("ring"), at: p, layer: airLayer, life: 0.5, from: 0.9, to: 1.3, alpha: 0.9, tint: cyan)
     }
 
+    private static let lightning = PlatformColor(srgbRed: 0.6, green: 0.9, blue: 1, alpha: 1)
+    private static let ice = PlatformColor(srgbRed: 0.75, green: 0.95, blue: 1, alpha: 1)
+    private static let fire = PlatformColor(srgbRed: 1, green: 0.5, blue: 0.12, alpha: 1)
+
+    /// Chain lightning: a bright arc from each struck enemy to the next.
+    func chainLightning(_ points: [CGPoint]) {
+        for (a, b) in zip(points, points.dropFirst()) {
+            spawn(fx("spark"), at: a, layer: airLayer, life: 0.1, from: 1.2, to: 0.8, alpha: 1, blend: .add,
+                  tint: Self.lightning, target: b, rotation: (b - a).angle, lift: 12)
+            if !lightweight {
+                spawn(fx("spark"), at: b, layer: airLayer, life: 0.16, from: 0.5, to: 1.3, alpha: 0.9, blend: .add,
+                      tint: Self.lightning, lift: 12)
+            }
+        }
+    }
+
+    /// A piercing shot: a thin white streak on from the target through the enemies behind it.
+    func piercingShot(from a: CGPoint, to b: CGPoint) {
+        guard !lightweight else { return }
+        spawn(fx("spark"), at: a, layer: airLayer, life: 0.09, from: 0.9, to: 0.6, alpha: 0.95, blend: .add,
+              tint: .white, target: b, rotation: (b - a).angle, lift: 12)
+    }
+
+    /// Burning ground: a ring of fire that stays as long as the fire does.
+    func groundFire(at p: CGPoint, radius: CGFloat, duration: Double) {
+        let scale = radius * 2 / fxWidth("ring")
+        spawn(fx("ring"), at: p, layer: groundLayer, life: duration, from: scale * 0.85, to: scale, alpha: 0.75,
+              blend: .add, tint: Self.fire, flat: true)
+        spawn(fx("scorch"), at: p, layer: groundLayer, life: duration + 1, from: scale * 0.9, to: scale * 0.9, alpha: 0.5, flat: true)
+        if !lightweight { emit(0, at: p, count: 10, spread: radius * 0.7) }
+    }
+
+    /// An enemy froze solid.
+    func frozen(at p: CGPoint) {
+        spawn(fx("ring"), at: p, layer: airLayer, life: 0.35, from: 0.3, to: 0.9, alpha: 0.9, blend: .add, tint: Self.ice, lift: 10)
+        if !lightweight, texts.count < 24 { text("FROZEN", at: CGPoint(x: p.x, y: p.y + 18), color: Self.ice, size: 11, life: 0.6) }
+    }
+
+    /// A boss ability was pushed back.
+    func interrupted(at p: CGPoint) {
+        text("INTERRUPTED", at: CGPoint(x: p.x, y: p.y + 30), color: PlatformColor(srgbRed: 0.8, green: 0.6, blue: 1, alpha: 1), size: 14, life: 0.9)
+    }
+
+    /// An Execute hit landed on a wounded enemy.
+    func execute(at p: CGPoint) {
+        guard !lightweight else { return }
+        spawn(fx("spark"), at: p, layer: airLayer, life: 0.18, from: 0.6, to: 1.6, alpha: 0.95, blend: .add,
+              tint: PlatformColor(srgbRed: 1, green: 0.25, blue: 0.25, alpha: 1), lift: 12)
+    }
+
     func critical(at p: CGPoint) {
         guard !lightweight, texts.count < 24 else { return }
         text("CRIT", at: CGPoint(x: p.x + 10, y: p.y + 14), color: PlatformColor(srgbRed: 1, green: 0.55, blue: 0.2, alpha: 1), size: 12, life: 0.5)

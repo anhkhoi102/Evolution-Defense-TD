@@ -8,6 +8,6 @@
     "enemyHP": 1.0, "enemySpeed": 1.0, "goldMultiplier": 1.0, "startingGold": 250, "startingResearch": 2, "curve": 1.0 },
   { "id": "hard", "name": "Hard",
     "summary": "Less gold and a short countdown. Every tower, upgrade and technology has to count.",
-    "enemyHP": 1.0, "enemySpeed": 1.0, "goldMultiplier": 0.95, "startingGold": 240, "startingResearch": 2,
+    "enemyHP": 1.03, "enemySpeed": 1.0, "goldMultiplier": 0.95, "startingGold": 240, "startingResearch": 2,
     "preparationTime": 12, "curve": 1.0 }
 ]

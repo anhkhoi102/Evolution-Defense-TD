@@ -102,6 +102,8 @@ final class EnemyRenderer {
             var tint = SIMD4<Float>(0, 0, 0, 0)
             if (now - e.lastHitTime) < 0.07 {
                 tint = Self.flashTint
+            } else if e.isFrozen {
+                tint = Self.freezeTint
             } else if now < e.stunnedUntil {
                 tint = Self.stunTint
             } else if e.isBurning {
@@ -119,7 +121,8 @@ final class EnemyRenderer {
                 Shaders.setTint(v.body, tint)
             }
             // Cloaked enemies are barely visible shimmer.
-            v.body.alpha = e.isCloaked ? (lightweight ? 0.25 : 0.22 + 0.08 * CGFloat(sin(now * 10 + Double(e.id)))) : 1
+            v.body.alpha = e.isCloaked ? (lightweight ? 0.25 : 0.22 + 0.08 * CGFloat(sin(now * 10 + Double(e.id))))
+                : (now < e.phasedUntil ? 0.35 : 1)          // phasing: flickered out, nothing lands
             // Bosses "breathe" so they read as alive even when slowed.
             if e.isBoss && !lightweight {
                 let s = 1 + bossBreathing * CGFloat(sin(now * 3.2))
@@ -220,6 +223,14 @@ final class EnemyRenderer {
     private static let stunTint = SIMD4<Float>(1, 0.95, 0.45, 0.45)
     private static let burnTint = SIMD4<Float>(1, 0.42, 0.08, 0.3)
     private static let slowTint = SIMD4<Float>(0.62, 0.86, 1, 0.42)
+    static func traitColor(_ t: EnemyTrait) -> PlatformColor {
+        switch t {
+        case .insulated: PlatformColor(srgbRed: 0.6, green: 0.95, blue: 1, alpha: 1)
+        case .plated: PlatformColor(srgbRed: 0.85, green: 0.85, blue: 0.9, alpha: 1)
+        case .phasing: PlatformColor(srgbRed: 0.75, green: 0.5, blue: 1, alpha: 1)
+        }
+    }
+    private static let freezeTint = SIMD4<Float>(0.82, 0.96, 1, 0.72)
     private static let enrageTint = SIMD4<Float>(1, 0.15, 0.1, 0.2)
     private static let eliteTint = SIMD4<Float>(1, 0.8, 0.3, 0.2)
     /// 0…1 pulse, quantised to 6 steps.
@@ -254,12 +265,14 @@ final class EnemyRenderer {
         v.barFill.size = CGSize(width: v.barWidth, height: e.isBoss ? 5 : 3)
         // Elites: a pulsing gold ring on the ground, a slightly larger body and a
         // gold health-bar frame. Visual only: the hit radius stays the same.
-        v.isElite = e.isElite
-        v.barBack.color = e.isElite ? Self.eliteGold.withAlphaComponent(0.9) : PlatformColor(white: 0, alpha: 0.65)
-        if e.isElite {
-            v.body.setScale(eliteScale)
+        // Late-game traits use the same ring in their own colour (ice blue, steel, violet).
+        let ringColor: PlatformColor? = e.isElite ? Self.eliteGold : e.trait.map(Self.traitColor)
+        v.isElite = ringColor != nil
+        v.barBack.color = ringColor?.withAlphaComponent(0.9) ?? PlatformColor(white: 0, alpha: 0.65)
+        if let ringColor {
+            if e.isElite { v.body.setScale(eliteScale) }
             v.eliteRing.apply(art.fx("ring"))
-            v.eliteRing.color = Self.eliteGold
+            v.eliteRing.color = ringColor
             v.eliteRing.colorBlendFactor = 1
             v.eliteRing.blendMode = .add
             let w = max(e.radius * 3.4, sprite.size.width * 0.95)   // visible around big sprites too
@@ -302,6 +315,13 @@ final class TowerVisual {
     let base = SKSpriteNode()
     let head = SKSpriteNode()
     let disabledMark = SKSpriteNode()
+    /// Seconds left on a knock-out, shown above the tower, with a ring that empties as it recovers.
+    let countdown = SKLabelNode(fontNamed: Platform.fontExists("LilitaOne") ? "LilitaOne" : "AvenirNext-Heavy")
+    let countdownRing = SKShapeNode()
+    var countdownShown = -1
+    var ringStep = -1
+    /// Golden ground glow under a tower at its top (mastery) level.
+    let masteryGlow = SKSpriteNode()
     var pips: [SKSpriteNode] = []
     var level = 0
     var displayedAngle: CGFloat = .pi / 2
@@ -320,6 +340,23 @@ final class TowerVisual {
         disabledMark.zPosition = 3
         disabledMark.isHidden = true
         root.addChild(disabledMark)
+        countdown.fontSize = 17
+        countdown.fontColor = PlatformColor(srgbRed: 0.55, green: 0.85, blue: 1, alpha: 1)
+        countdown.verticalAlignmentMode = .center
+        countdown.horizontalAlignmentMode = .center
+        countdown.zPosition = 5
+        countdown.isHidden = true
+        root.addChild(countdown)
+        countdownRing.lineWidth = 3.5
+        countdownRing.strokeColor = PlatformColor(srgbRed: 0.55, green: 0.85, blue: 1, alpha: 0.95)
+        countdownRing.fillColor = PlatformColor(srgbRed: 0.05, green: 0.08, blue: 0.14, alpha: 0.82)
+        countdownRing.lineCap = .round
+        countdownRing.zPosition = 4
+        countdownRing.isHidden = true
+        root.addChild(countdownRing)
+        masteryGlow.zPosition = -1
+        masteryGlow.isHidden = true
+        root.addChild(masteryGlow)
     }
 }
 
@@ -391,6 +428,20 @@ final class TowerRenderer {
         v.fireClip = head.animations["fire"]
         v.headFrame = -1
         for (i, pip) in v.pips.enumerated() { pip.apply(art.ui(i < t.level ? "levelPip.on" : "levelPip.off")) }
+        // Top level: a golden ring on the ground and a warm tint, so mastery reads at a glance.
+        let mastered = art.artLevel(t.definition, t.level) != t.level
+        v.masteryGlow.isHidden = !mastered
+        if mastered {
+            let ring = art.fx("ring")
+            v.masteryGlow.apply(ring)
+            v.masteryGlow.color = PlatformColor(srgbRed: 1, green: 0.72, blue: 0.15, alpha: 1)
+            v.masteryGlow.colorBlendFactor = 1
+            v.masteryGlow.blendMode = .add
+            let s = 96 / max(1, ring.size.width)
+            v.masteryGlow.xScale = s
+            v.masteryGlow.yScale = s * art.view.groundScaleY
+            v.masteryGlow.position = CGPoint(x: 0, y: -6)
+        }
     }
 
     func sync(world: GameWorld, dt: Double) {
@@ -398,16 +449,37 @@ final class TowerRenderer {
         for t in world.towers {
             guard let v = visuals[t.id] else { continue }
             if v.level != t.level { refreshArt(t, v) }
+            if !v.masteryGlow.isHidden { v.masteryGlow.alpha = 0.8 + 0.2 * CGFloat(sin(world.time * 3 + Double(t.id))) }
             let disabled = t.isDisabled(at: world.time)
             if disabled != v.showsDisabled {
                 v.showsDisabled = disabled
                 v.disabledMark.isHidden = !disabled
+                v.countdown.isHidden = !disabled
+                v.countdownRing.isHidden = !disabled
+                v.countdownShown = -1
+                v.ringStep = -1
+                let y = art.layout("tower.countdown.offsetY", 62)
+                v.countdown.position = CGPoint(x: 0, y: y)
+                v.countdownRing.position = CGPoint(x: 0, y: y)
                 for n in [v.base, v.head] {
                     n.color = PlatformColor(srgbRed: 0.25, green: 0.35, blue: 0.55, alpha: 1)
                     n.colorBlendFactor = disabled ? 0.55 : 0
                 }
             }
             if disabled {
+                // Countdown above the tower: whole seconds, and a ring that empties in 24 steps
+                // (redrawn only when the step changes).
+                let left = t.disableRemaining(at: world.time)
+                let secs = Int(left.rounded(.up))
+                if secs != v.countdownShown { v.countdownShown = secs; v.countdown.text = "\(secs)" }
+                let step = t.disabledDuration > 0 ? Int((left / t.disabledDuration * 24).rounded(.up)) : 24
+                if step != v.ringStep {
+                    v.ringStep = step
+                    let path = CGMutablePath()
+                    path.addEllipse(in: CGRect(x: -15, y: -15, width: 30, height: 30))
+                    v.countdownRing.path = path
+                    v.countdownRing.strokeColor = v.countdownRing.strokeColor.withAlphaComponent(0.25 + 0.7 * CGFloat(step) / 24)
+                }
                 v.disabledMark.setScale(1 + 0.12 * CGFloat(sin(world.time * 12)))
                 continue
             }

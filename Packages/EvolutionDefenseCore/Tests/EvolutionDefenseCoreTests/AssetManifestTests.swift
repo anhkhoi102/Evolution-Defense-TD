@@ -21,9 +21,10 @@ struct AssetManifestTests {
         let m = try manifest("asset_manifest.placeholder.json")
         let issues = AssetValidator.validate(m, config: config)
         #expect(issues.isEmpty, "\(issues)")
-        // Every tower level has its own base + head (upgrade variants).
+        // Every tower level up to 5 has its own base + head (upgrade variants); the top level
+        // may reuse the model below it (the renderer marks it with a glow).
         for a in TowerArchetype.allCases {
-            for l in 1...config.tower(a).maxLevel {
+            for l in 1...5 {
                 #expect(m.sprites[AssetID.towerBase(config.tower(a).visualKey, level: l)] != nil)
             }
         }

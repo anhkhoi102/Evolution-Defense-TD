@@ -304,7 +304,19 @@ final class GameScene: SKScene {
         case .statusApplied(let enemy, let status):
             // First time an effect takes hold on an enemy: a short cue (bosses and elites only for Expose,
             // so a crowded road stays quiet).
-            if status == .expose, enemy.isBoss || enemy.isElite { audio.play(.click, volume: 0.8) }
+            switch status {
+            case .expose: if enemy.isBoss || enemy.isElite { audio.play(.click, volume: 0.8) }
+            case .freeze: effects.frozen(at: enemy.position)
+            case .execute: effects.execute(at: enemy.position)
+            case .interrupt: effects.interrupted(at: enemy.position); audio.play(.click, volume: 0.9)
+            case .shred: break
+            }
+        case .chainLightning(let points):
+            effects.chainLightning(points)
+        case .piercingShot(let from, let to):
+            effects.piercingShot(from: from, to: to)
+        case .groundFire(let position, let radius, let duration):
+            effects.groundFire(at: position, radius: CGFloat(radius), duration: duration)
         case .summonDeployed(let ability, let units, let at):
             effects.summonArrive(at: units.map(\.position), centre: at, hero: ability.kind == .hero)
             audio.play(ability.kind == .hero ? .eventGood : .build)

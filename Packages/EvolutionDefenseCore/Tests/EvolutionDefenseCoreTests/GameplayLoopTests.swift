@@ -134,7 +134,7 @@ struct ManagementTests {
         let t = try! #require(w.tower(atSlot: 5))
         var invested = config.tower(.splash).buildCost
         var lastDamage = t.stats.damage
-        for level in 2...5 {
+        for level in 2...config.tower(.splash).maxLevel {
             let cost = config.tower(.splash).stats(level: level).cost
             let gold0 = w.gold
             #expect(w.upgradeCost(for: t) == cost)
@@ -149,7 +149,7 @@ struct ManagementTests {
         }
         #expect(w.upgradeCost(for: t) == nil)
         #expect(w.upgrade(t) == .maxLevel)
-        #expect(w.stats.upgradesBought == 4)
+        #expect(w.stats.upgradesBought == 5)
     }
 
     @Test func upgradeWithoutEnoughGoldChangesNothing() {
@@ -412,7 +412,10 @@ struct BalanceTests {
         let normal = play("expert"), hard = play("expert", .hard)
         print("BALANCE expert normal \(normal) | hard \(hard)")
         #expect(hard.phase == .victory, "an optimised defence can win Hard")
-        #expect(hard.baseHP < normal.baseHP)
+        // Base health lost over the match (end health alone misleads: Stronger Walls raises the maximum).
+        let lostNormal = normal.waves.map(\.hpLost).reduce(0, +), lostHard = hard.waves.map(\.hpLost).reduce(0, +)
+        print("BALANCE expert base health lost: normal \(lostNormal) | hard \(lostHard)")
+        #expect(lostHard >= lostNormal)
         #expect(play("casual", .hard).wavesCleared <= play("casual").wavesCleared)
     }
 
